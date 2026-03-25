@@ -100,17 +100,17 @@ const doubaoConfig = {
   urlPatterns: ['doubao.com'],
 
   selectors: {
-    conversation: null, // 待填入：对话容器选择器 (优先使用此嵌套模式)
-    question: '.message-content.message-box-content-otxGGw.send-message-box-content-N1r3Gh.samantha-message-box-content-Qjmpja',
-    answer: '.message-content.message-box-content-otxGGw.receive-message-box-content-_lREFj.samantha-message-box-content-Qjmpja',
-    search: '.search-result-collapse-header-O_cFO3'
+    conversation: '.container-PvPoAn', // 对话容器
+    question: 'div[data-testid="send_message"]', // 问题
+    answer: 'div[data-testid="receive_message"]', // 回答
+    search: '.search-result-collapse-header-O_cFO3' // 搜索结果
   },
 
   features: {
     hasSearch: true,
-    searchAsText: true,  // 搜索结果直接取文本
+    searchAsText: true,
     titleFromFirstQuestion: true,
-    useTextContent: true  // 直接用 textContent 而不是 extractContent
+    useTextContent: true
   }
 };
 

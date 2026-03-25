@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "AI Chat Exporter",
   "version": "1.5.2",
-  "description": "Export DeepSeek, YuanBao AI, ChatGPT, Doubao, Gemini, Grok and Kimi chat conversations to Markdown format.",
+  "description": "Export AI chat conversations to Markdown format. Supports popular AI platforms.",
   "permissions": ["activeTab", "downloads", "scripting", "tabs", "notifications"],
   "background": {
     "service_worker": "src/background.js",
