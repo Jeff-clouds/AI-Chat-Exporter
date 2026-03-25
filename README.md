@@ -1,5 +1,7 @@
 # AI Chat Exporter (AI 对话导出助手)
 
+[![Star History Chart](https://api.star-history.com/svg?repos=Jeff-clouds/chat-exporter&type=Date&width=500&height=300)](https://star-history.com/#Jeff-clouds/chat-exporter&Date)
+
 <div align="center">
 
 [![Chrome Web Store](https://img.shields.io/badge/Chrome_Web_Store-4285F4?style=for-the-badge&logo=google-chrome&logoColor=white)](https://chromewebstore.google.com/detail/ai-chat-exporter/eplnkdnnbmmijjadnabdefmjnjgapigm)
@@ -23,13 +25,10 @@
 - **多平台支持**：完美适配 DeepSeek、腾讯元宝、ChatGPT、豆包、Gemini 等主流 AI 平台。
 - **完美格式保留**：基于 `Turndown` + `GFM` 引擎，精准还原 HTML 为 Markdown。
   - ✅ **代码块**：保留语言标记，支持嵌套代码。
-  - ✅ **表格**：完美支持 Markdown 表格格式。
-  - ✅ **数学公式**：保留 LaTeX 原始格式。
+  - ✅ **表格**：完砎大及考请考舘有。
   - ✅ **任务列表**：支持 `[ ]` 和 `[x]` 语法。
 - **深度内容提取**：
-  - 🧠 **思考过程**：完整保留 DeepSeek/元宝 等模型的推理思考链。
-  - 🔍 **搜索来源**：保留联网搜索引用的参考链接。
-- **隐私安全**：所有处理均在**本地浏览器**完成，绝不上传任何数据到服务器。
+  - 🧠 **思考过程**：完成，绝不上传任何数据到服务器。
 - **结构清晰**：自动生成 `# Question` / `## Answer` 的标准化目录结构，便于阅读和索引。
 
 ## 🚀 支持平台
