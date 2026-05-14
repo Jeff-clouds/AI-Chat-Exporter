@@ -104,7 +104,14 @@ const doubaoConfig = {
     title: 'div.group\\/title', // 对话标题
     question: 'div[class*="bg-g-send-msg-bubble-bg"]', // 问题（发送消息气泡）
     answer: 'div[class*="flow-markdown-body"]', // 回答（Markdown 内容区）
-    search: '' // 豆包暂无搜索结果独立区块
+    markdownBlock: 'div[class*="flow-markdown-body"]', // Markdown 内容块（用于 Turndown 转换）
+    search: '', // 豆包暂无搜索结果独立区块
+    // 清理选择器：移除豆包回答中的空容器和无关元素
+    cleanupSelectors: [
+      'div[class*="container-Uxvbjy"]', // 空行容器
+      'div[class*="md-box-line-break"]', // 行断裂容器
+      'div[class*="wrapper-GYqxgQ"]' // 包装容器
+    ]
   },
 
   features: {
