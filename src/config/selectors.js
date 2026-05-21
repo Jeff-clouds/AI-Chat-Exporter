@@ -41,6 +41,13 @@ const deepseekConfig = {
 
 /**
  * YuanBao AI 平台配置
+ * 
+ * DOM 结构更新：2026-05-21
+ * 元宝升级到 deepsearch 组件体系，旧 reasoner 组件已废弃。
+ * - thinking: .hyc-component-reasoner__think → .hyc-component-deepsearch-cot__think
+ * - search: 搜索结果已整合进 thinking 流程，不再有独立 search-list 容器
+ * - markdownBlock: .hyc-component-reasoner__text → .hyc-common-markdown
+ * - title: header 只显示 bot 名 "元宝"，改用 first question 作为标题
  */
 const yuanbaoConfig = {
   name: 'YuanBao AI',
@@ -48,27 +55,29 @@ const yuanbaoConfig = {
 
   selectors: {
     conversation: null, // 待填入：对话容器选择器 (优先使用此嵌套模式)
-    title: '.agent-dialogue__content--common__header',
+    title: '.agent-dialogue__content--common__header', // 仅显示 "元宝" bot 名
     question: '.agent-chat__bubble--human',
     answer: '.agent-chat__bubble--ai',
-    thinking: '.hyc-component-reasoner__think',
-    search: '.hyc-component-reasoner__search-list',
-    markdownBlock: '.hyc-component-reasoner__text',
+    thinking: '.hyc-component-deepsearch-cot__think', // 新 deepsearch 组件
+    search: '', // 搜索结果已整合进 thinking 流程
+    markdownBlock: '.hyc-common-markdown', // 新通用 markdown 渲染组件
     codeBlock: '.hyc-common-markdown__code pre.hyc-common-markdown__code-lan',
     codeLanguage: '.hyc-common-markdown__code__hd__l',
     cleanupSelectors: [
       '.hyc-common-markdown__sup',
       'sup',
       '[class*="video"]',
-      '[class*="card-box"]'
+      '[class*="card-box"]',
+      '.hyc-component-deepsearch-cot__think__content__item__docs' // 搜索引用列表（已嵌入 thinking）
     ]
   },
 
   features: {
     hasThinking: true,
-    hasSearch: true,
+    hasSearch: false, // 搜索已整合进 thinking 流程
     hasCodeBlocks: true,
-    searchWithLinks: true  // 元宝特殊：搜索结果带链接
+    titleFromFirstQuestion: true, // header 只显示 "元宝"，改用 first question
+    searchWithLinks: false
   }
 };
 

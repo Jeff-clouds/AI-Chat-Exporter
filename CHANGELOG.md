@@ -1,5 +1,15 @@
 # 更新日志 / Changelog
 
+## [1.5.4] - 2026-05-21
+
+### 修复问题 / Fixed
+
+- 修复元宝平台选择器失效：DOM 升级到 deepsearch 组件体系
+  - thinking: `.hyc-component-reasoner__think` → `.hyc-component-deepsearch-cot__think`
+  - markdownBlock: `.hyc-component-reasoner__text` → `.hyc-common-markdown`
+  - search: 搜索结果已整合进 thinking，不再独立
+  - title: header 只显示 bot 名，改用 `titleFromFirstQuestion` 提取对话标题
+
 ## [1.5.3] - 2026-05-21
 
 ### 优化改进 / Improved
