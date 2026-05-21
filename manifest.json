@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AI Chat Exporter",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "description": "Export AI chat conversations to Markdown format. Supports popular AI platforms.",
   "permissions": ["activeTab", "downloads", "scripting", "tabs", "notifications"],
   "background": {
