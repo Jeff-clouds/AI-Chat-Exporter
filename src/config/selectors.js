@@ -350,7 +350,12 @@ function _extractContent(answerBlock, selectors) {
     return answerBlock.textContent.trim();
   }
 
-  const markdownBlocks = Array.from(answerBlock.querySelectorAll(selectors.markdownBlock));
+  // querySelectorAll 不匹配元素自身。当 answer 和 markdownBlock 选择器相同时
+  //（如豆包的 flow-markdown-body），需要额外检查 answerBlock 本身。
+  const descendantBlocks = Array.from(answerBlock.querySelectorAll(selectors.markdownBlock));
+  const selfMatch = answerBlock.matches(selectors.markdownBlock) ? [answerBlock] : [];
+  const markdownBlocks = [...selfMatch, ...descendantBlocks];
+
   if (markdownBlocks.length === 0) return '';
 
   const parts = markdownBlocks
