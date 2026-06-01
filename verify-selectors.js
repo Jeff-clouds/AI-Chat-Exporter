@@ -26,8 +26,8 @@ const { chromium } = require('playwright');
   // Selectors from selectors.js
   const selectors = {
     title: 'div.group\\/title',
-    question: 'div[class*="bg-g-send-msg-bubble-bg"]',
-    answer: 'div[class*="flow-markdown-body"]'
+    question: 'div[class*="send-msg-bubble"], div[class*="bg-g-send-msg-bubble-bg"]',
+    answer: 'div[class*="conversation-page-message-host"]'
   };
   
   console.log('\n🔍 选择器验证结果:\n');

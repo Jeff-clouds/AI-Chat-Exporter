@@ -16,9 +16,8 @@
 const deepseekConfig = {
   name: 'DeepSeek',
   urlPatterns: ['deepseek.com', 'deepseek.ai'],
-
   selectors: {
-    conversation: null, // 待填入：对话容器选择器 (优先使用此嵌套模式)
+    conversation: null,
     title: '.f8d1e4c0',
     question: '._9663006',
     answer: '._4f9bf79._43c05b5',
@@ -52,13 +51,12 @@ const deepseekConfig = {
 const yuanbaoConfig = {
   name: 'YuanBao AI',
   urlPatterns: ['yuanbao.tencent.com'],
-
   selectors: {
-    conversation: null, // 待填入：对话容器选择器 (优先使用此嵌套模式)
-    title: '.agent-dialogue__content--common__header', // 仅显示 "元宝" bot 名
+    conversation: null,
+    title: '.agent-dialogue__content--common__header',
     question: '.agent-chat__bubble--human',
     answer: '.agent-chat__bubble--ai',
-    thinking: '.hyc-component-deepsearch-cot__think', // 新 deepsearch 组件
+    thinking: '.hyc-component-deepsearch-cot__think, .hyc-component-reasoner__think',
     search: '', // 搜索结果已整合进 thinking 流程
     markdownBlock: '.hyc-common-markdown', // 新通用 markdown 渲染组件
     codeBlock: '.hyc-common-markdown__code pre.hyc-common-markdown__code-lan',
@@ -87,17 +85,20 @@ const yuanbaoConfig = {
 const chatgptConfig = {
   name: 'ChatGPT',
   urlPatterns: ['chatgpt.com'],
-
   selectors: {
-    conversation: '[data-testid^="conversation-turn-"]', // 增加 conversation 容器，使用 data-testid 鲁棒性更高
-    question: '[data-turn="user"] .whitespace-pre-wrap',
+    conversation: null, // ChatGPT 的 turn 容器按角色拆开，不适合作为成对问答容器
+    title: null,
+    turn: '[data-turn]',
+    question: '[data-turn="user"]',
     answer: '[data-turn="assistant"]',
-    markdownBlock: '.markdown.prose'
+    thinking: null,
+    markdownBlock: '.markdown.prose, .markdown'
   },
 
   features: {
     hasCodeBlocks: true,
-    titleFromFirstQuestion: true  // 用第一个问题作为标题
+    titleFromFirstQuestion: true,  // 用第一个问题作为标题
+    pairByTurns: true
   }
 };
 
@@ -107,16 +108,18 @@ const chatgptConfig = {
 const doubaoConfig = {
   name: 'Doubao',
   urlPatterns: ['doubao.com'],
-
   selectors: {
-    conversation: null, // 豆包 DOM 扁平，无稳定 item 容器，使用 flat 模式
-    title: 'div.group\\/title', // 对话标题
-    question: 'div[class*="bg-g-send-msg-bubble-bg"]', // 问题（发送消息气泡）
-    answer: 'div[class*="flow-markdown-body"]', // 回答（Markdown 内容区）
-    markdownBlock: 'div[class*="flow-markdown-body"]', // Markdown 内容块（用于 Turndown 转换）
+    conversation: null,
+    title: 'div.group\\/title',
+    question: 'div[class*="send-msg-bubble"], div[class*="bg-g-send-msg-bubble-bg"]',
+    answer: 'div[class*="conversation-page-message-host"]',
+    thinking: null,
+    markdownBlock: 'div[class*="conversation-page-message-host"]', // 回答内容容器
     search: '', // 豆包暂无搜索结果独立区块
-    // 清理选择器：移除豆包回答中的空容器和无关元素
     cleanupSelectors: [
+      'div[class*="send-msg-bubble"]', // 去掉嵌在回答宿主中的提问气泡
+      'div[class*="message-action-bar"]',
+      'div[class*="entry-btn-title"]',
       'div[class*="container-Uxvbjy"]', // 空行容器
       'div[class*="md-box-line-break"]', // 行断裂容器
       'div[class*="wrapper-GYqxgQ"]' // 包装容器
@@ -136,12 +139,12 @@ const doubaoConfig = {
 const geminiConfig = {
   name: 'Gemini',
   urlPatterns: ['gemini.google.com'],
-
   selectors: {
-    conversation: '.conversation-container', // 待填入：对话容器选择器 (优先使用此嵌套模式)
+    conversation: '.conversation-container',
     title: '.conversation-title-container',
     question: '.user-query-container',
     answer: '.response-container',
+    thinking: null,
     markdownBlock: '.markdown'
   },
 
@@ -156,15 +159,24 @@ const geminiConfig = {
 const grokConfig = {
   name: 'Grok',
   urlPatterns: ['grok.com'],
-
   selectors: {
     conversation: null,
-    question: '.message-bubble:not(:has(.response-content-markdown))',
-    answer: '.response-content-markdown',
-    markdownBlock: null // Grok seems to have direct markdown or simple structure
+    title: null,
+    question: '[data-testid="user-message"]',
+    answer: '[data-testid="assistant-message"]',
+    thinking: null,
+    markdownBlock: '.response-content-markdown',
+    cleanupSelectors: [
+      'button',
+      'svg',
+      '.inline-media-container',
+      '[data-testid*="action"]'
+    ]
   },
 
-  features: {}
+  features: {
+    titleFromFirstQuestion: true
+  }
 };
 
 /**
@@ -173,11 +185,12 @@ const grokConfig = {
 const kimiConfig = {
   name: 'Kimi',
   urlPatterns: ['kimi.com', 'moonshot.cn'],
-
   selectors: {
     conversation: null,
+    title: null,
     question: '.user-content',
     answer: '.chat-content-item.chat-content-item-assistant .markdown-container, .markdown-body .markdown-container, [class*="assistant"] .markdown-container',
+    thinking: null,
     markdownBlock: null // Kimi usually has markdown-container
   },
 
@@ -251,23 +264,80 @@ export function extractUnifiedData(url) {
 
   // 2. 如果没有找到 items 或没配置 conversation 选择器，回退到扁平模式 (Flat Mode)
   if (conversations.length === 0) {
-    const questions = document.querySelectorAll(selectors.question);
-    const answers = document.querySelectorAll(selectors.answer);
-    const count = Math.min(questions.length, answers.length);
+    if (features.pairByTurns && selectors.turn) {
+      const pairedTurns = _extractConversationsByTurns(selectors, features);
+      conversations.push(...pairedTurns);
 
-    if (features.titleFromFirstQuestion && !selectors.title) {
-      title = questions[0]?.textContent?.trim().substring(0, 50) || title;
-    }
+      if (features.titleFromFirstQuestion && !selectors.title) {
+        title = pairedTurns[0]?.question?.substring(0, 50) || title;
+      }
+    } else {
+      const questions = document.querySelectorAll(selectors.question);
+      const answers = document.querySelectorAll(selectors.answer);
+      const count = Math.min(questions.length, answers.length);
 
-    for (let i = 0; i < count; i++) {
-      const question = questions[i]?.textContent?.trim() || '';
-      const answerBlock = answers[i];
-      const answer = _processAnswer(answerBlock, selectors, features);
-      conversations.push({ question, answer });
+      if (features.titleFromFirstQuestion && !selectors.title) {
+        title = questions[0]?.textContent?.trim().substring(0, 50) || title;
+      }
+
+      for (let i = 0; i < count; i++) {
+        const question = questions[i]?.textContent?.trim() || '';
+        const answerBlock = answers[i];
+        const answer = _processAnswer(answerBlock, selectors, features);
+        conversations.push({ question, answer });
+      }
     }
   }
 
   return { title, conversations, platform: name, url };
+}
+
+function _extractConversationsByTurns(selectors, features) {
+  const turns = Array.from(document.querySelectorAll(selectors.turn));
+  const conversations = [];
+  let pendingQuestion = '';
+
+  turns.forEach(turn => {
+    const role = turn.getAttribute('data-turn');
+    if (role === 'user') {
+      const question = _extractQuestionText(turn);
+      if (question) pendingQuestion = question;
+      return;
+    }
+
+    if (role === 'assistant') {
+      const answer = _processAnswer(turn, selectors, features);
+      const hasMeaningfulContent =
+        answer.content ||
+        answer.thinking ||
+        answer.search ||
+        (answer.codeBlocks && answer.codeBlocks.length > 0);
+
+      if (pendingQuestion && hasMeaningfulContent) {
+        conversations.push({ question: pendingQuestion, answer });
+        pendingQuestion = '';
+      }
+    }
+  });
+
+  return conversations;
+}
+
+function _extractQuestionText(questionBlock) {
+  const candidates = [
+    '.whitespace-pre-wrap',
+    '[dir="auto"]',
+    'p',
+    'div'
+  ];
+
+  for (const selector of candidates) {
+    const element = questionBlock.querySelector(selector);
+    const text = element?.textContent?.trim();
+    if (text) return text;
+  }
+
+  return questionBlock.textContent?.trim() || '';
 }
 
 function _processAnswer(answerBlock, selectors, features) {
