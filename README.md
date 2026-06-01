@@ -1,6 +1,9 @@
 # AI Chat Exporter (AI 对话导出助手)
 
-[![Star History Chart](https://api.star-history.com/svg?repos=Jeff-clouds/chat-exporter&type=Date&width=500&height=300)](https://star-history.com/#Jeff-clouds/chat-exporter&Date)
+> 👋 作者：**Jeff（大王）** — 独立开发者
+> 📱 小红书 ID：[王路飞汐汐](https://www.xiaohongshu.com/user/profile/5cb950aa0000000011035bef)（206524823）
+> 🔗 即刻 ID：[王路飞汐汐](https://okjk.co/uFbsJq)
+> ⚠️ 为方便后续更新，请尽量使用**应用商店**安装。
 
 <div align="center">
 
@@ -25,10 +28,10 @@
 - **多平台支持**：完美适配 DeepSeek、腾讯元宝、ChatGPT、豆包、Gemini 等主流 AI 平台。
 - **完美格式保留**：基于 `Turndown` + `GFM` 引擎，精准还原 HTML 为 Markdown。
   - ✅ **代码块**：保留语言标记，支持嵌套代码。
-  - ✅ **表格**：完砎大及考请考舘有。
+  - ✅ **表格**：完整保留表格结构与内容。
   - ✅ **任务列表**：支持 `[ ]` 和 `[x]` 语法。
 - **深度内容提取**：
-  - 🧠 **思考过程**：完成，绝不上传任何数据到服务器。
+  - 🧠 **思考过程**：完整保留 AI 的思考/推理过程。
 - **结构清晰**：自动生成 `# Question` / `## Answer` 的标准化目录结构，便于阅读和索引。
 
 ## 🚀 支持平台
@@ -50,7 +53,19 @@
 - **Chrome 用户**：[前往 Chrome 应用商店下载](https://chromewebstore.google.com/detail/ai-chat-exporter/eplnkdnnbmmijjadnabdefmjnjgapigm)
 - **Edge 用户**：[前往 Edge 插件商店下载](https://microsoftedge.microsoft.com/addons/detail/ai-chat-exporter/kjhchmmjjffhhgaoocijicockllaoaah)
 
-### 方式二：手动安装（开发者模式）
+### 方式二：Releases 下载压缩包（免安装版）
+
+适合不想走应用商店、或无法访问商店的用户：
+
+1. 前往 [GitHub Releases 页面](https://github.com/Jeff-clouds/chat-exporter/releases) 下载最新版本的 `.zip` 压缩包。
+2. 解压到本地文件夹。
+3. 打开 Chrome/Edge 浏览器，进入扩展管理页 (`chrome://extensions/` 或 `edge://extensions/`)。
+4. 开启右上角的 **"开发者模式"**。
+5. 点击 **"加载已解压的扩展程序"**，选择解压后的文件夹。
+
+> 💡 历史版本也可在 Releases 页面下载，方便回退到稳定版本。
+
+### 方式三：手动安装（开发者模式）
 
 如果您想体验最新开发版功能：
 
@@ -97,6 +112,26 @@ npm install
 cp node_modules/turndown/dist/turndown.js src/lib/
 cp node_modules/turndown-plugin-gfm/dist/turndown-plugin-gfm.js src/lib/
 ```
+
+## 📝 更新日志
+
+| 日期 | 版本 | 更新内容 |
+|------|------|----------|
+| 2026-05-21 | v1.5.4 | 修复豆包平台对话提取问题 |
+| 2026-05-14 | v1.5.3 | 优化豆包平台支持，修复思考过程提取 |
+| 2026-01-28 | v1.5.0 | 新增多平台支持，优化格式保留 |
+
+> 📦 完整更新记录请查看 [GitHub Releases](https://github.com/Jeff-clouds/chat-exporter/releases)
+
+## 🗄️ 已归档插件
+
+以下插件已停止维护，仅供学习参考：
+
+| 插件 | 功能 | 下载 |
+|------|------|------|
+| **deepseek.auto-refresh v0.5** | DeepSeek 无限重试 | [GitHub](https://github.com/Jeff-clouds/chat-exporter/releases) |
+| **okjike-domain-redirect v1.0** | 即刻旧域名跳转新域名 | [GitHub](https://github.com/Jeff-clouds/chat-exporter/releases) |
+| **Deepseek.Chat.Viewer v1.0** | 一键收起 DeepSeek 思考过程，查看问题大纲 | [GitHub](https://github.com/Jeff-clouds/ChatNavigator) |
 
 ## 📄 隐私政策
 
