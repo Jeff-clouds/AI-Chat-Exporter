@@ -17,11 +17,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('Current tab URL:', tab.url);
 
                 // Check if it's a supported website
-                const supportedSites = ['deepseek.com', 'deepseek.ai', 'yuanbao.tencent.com', 'chatgpt.com', 'doubao.com', 'gemini.google.com'];
+                const supportedSites = [
+                    'deepseek.com',
+                    'deepseek.ai',
+                    'yuanbao.tencent.com',
+                    'chatgpt.com',
+                    'doubao.com',
+                    'gemini.google.com',
+                    'grok.com',
+                    'kimi.com',
+                    'moonshot.cn'
+                ];
                 const isSupported = supportedSites.some(site => tab.url.includes(site));
 
                 if (!isSupported) {
-                    alert('This extension only supports DeepSeek, YuanBao AI, ChatGPT, Doubao, and Gemini.\nPlease open the corresponding chat page first.');
+                    alert('This extension only supports DeepSeek, YuanBao AI, ChatGPT, Doubao, Gemini, Grok, and Kimi.\nPlease open the corresponding chat page first.');
                     return;
                 }
 
