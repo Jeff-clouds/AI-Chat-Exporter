@@ -1,0 +1,106 @@
+{
+  "timestamp": "2026-06-04T19:58:00+08:00",
+  "scope": "Manual DOM selector audit via cua-driver (user Chrome profile with login sessions)",
+  "platforms": {
+    "deepseek": {
+      "name": "DeepSeek",
+      "url": "https://chat.deepseek.com/a/chat/s/c731cccb-0f0d-4993-9332-3e86299d81db",
+      "status": "PASS",
+      "exporter": {
+        "title": { "selector": ".f8d1e4c0", "status": "PASS", "count": 1 },
+        "question": { "selector": "._9663006", "status": "PASS", "count": 3 },
+        "answer": { "selector": "._4f9bf79._43c05b5", "status": "PASS", "count": 3 },
+        "thinking": { "selector": ".ds-think-content, ._74c0879", "status": "PASS", "count": 6 },
+        "markdownBlock": { "selector": ".ds-markdown", "status": "PASS", "count": 6 },
+        "search": { "selector": ".a6d716f5.db5991dd", "status": "MISS (no search in conversation)", "count": 0 },
+        "codeBlock": { "selector": ".md-code-block", "status": "MISS (no code in conversation)", "count": 0 }
+      },
+      "outline": "Same selectors, all PASS (no markdownBlock needed)"
+    },
+    "yuanbao": {
+      "name": "YuanBao",
+      "url": "https://yuanbao.tencent.com/chat/naQivTmsDa/105fec2b-3cf5-4382-92d7-e09e60da4b7b",
+      "status": "PASS",
+      "exporter": {
+        "title": { "selector": ".agent-dialogue__content--common__header", "status": "PASS", "count": 1 },
+        "question": { "selector": ".agent-chat__bubble--human", "status": "PASS", "count": 3 },
+        "answer": { "selector": ".agent-chat__bubble--ai", "status": "PASS", "count": 3 },
+        "thinking": { "selector": ".hyc-component-deepsearch-cot__think, .hyc-component-reasoner__think", "status": "PASS", "count": 3 },
+        "markdownBlock": { "selector": ".hyc-common-markdown", "status": "PASS", "count": 7 },
+        "codeBlock": { "selector": ".hyc-common-markdown__code pre.hyc-common-markdown__code-lan", "status": "MISS (no code in conversation)", "count": 0 }
+      },
+      "outline": "Same selectors, all PASS"
+    },
+    "chatgpt": {
+      "name": "ChatGPT",
+      "url": "https://chatgpt.com/c/69393a71-a410-8329-b70a-c1bab3d8b2fd",
+      "status": "PASS",
+      "exporter": {
+        "turn": { "selector": "[data-turn]", "status": "PASS", "count": 4 },
+        "question": { "selector": "[data-turn=\"user\"]", "status": "PASS", "count": 2 },
+        "answer": { "selector": "[data-turn=\"assistant\"]", "status": "PASS", "count": 2 },
+        "markdownBlock": { "selector": ".markdown.prose, .markdown", "status": "PASS", "count": 4 }
+      },
+      "outline": "Same selectors, all PASS"
+    },
+    "doubao": {
+      "name": "Doubao",
+      "url": "https://www.doubao.com/chat/38425731801360898",
+      "status": "PASS",
+      "exporter": {
+        "title": { "selector": "div.group\\/title", "status": "PASS", "count": 1 },
+        "question": { "selector": "div[class*=\"send-msg-bubble\"], div[class*=\"bg-g-send-msg-bubble-bg\"]", "status": "PASS", "count": 4 },
+        "answer": { "selector": "div[class*=\"conversation-page-message-host\"]", "status": "PASS", "count": 1 },
+        "markdownBlock": { "selector": "div[class*=\"conversation-page-message-host\"]", "status": "PASS", "count": 1 }
+      },
+      "outline": "Same selectors (title escape variant works: div.group\\/title = div[class*='group/title']), all PASS"
+    },
+    "gemini": {
+      "name": "Gemini",
+      "url": "https://gemini.google.com/app/404aea77190bc75f",
+      "status": "PASS",
+      "exporter": {
+        "conversation": { "selector": ".conversation-container", "status": "PASS", "count": 2 },
+        "question": { "selector": ".user-query-container", "status": "PASS", "count": 6 },
+        "answer": { "selector": ".response-container", "status": "PASS", "count": 2 },
+        "markdownBlock": { "selector": ".markdown", "status": "PASS", "count": 2 }
+      },
+      "outline": "Same selectors, all PASS"
+    },
+    "grok": {
+      "name": "Grok",
+      "url": "https://grok.com/c/7bb32de1-a9f4-4ba0-99b9-f4760eca1335",
+      "status": "BLOCKED (Cloudflare)",
+      "error": "Cloudflare security verification blocked access. Cannot test DOM selectors.",
+      "note": "Previous audit (2026-06-03) also failed with connection reset."
+    },
+    "kimi": {
+      "name": "Kimi",
+      "url": "https://www.kimi.com/chat/19d04d17-fca2-8505-8000-09c908509e39",
+      "status": "PASS",
+      "exporter": {
+        "question": { "selector": ".user-content", "status": "PASS", "count": 1 },
+        "answer": { "selector": ".chat-content-item.chat-content-item-assistant .markdown-container, .markdown-body .markdown-container, [class*=\"assistant\"] .markdown-container", "status": "PASS", "count": 4 }
+      },
+      "outline": "Same selectors, all PASS"
+    }
+  },
+  "summary": {
+    "pass": 6,
+    "blocked": 1,
+    "fail": 0,
+    "details": {
+      "DeepSeek": "✅ PASS",
+      "YuanBao": "✅ PASS",
+      "ChatGPT": "✅ PASS",
+      "Doubao": "✅ PASS",
+      "Gemini": "✅ PASS",
+      "Grok": "⚠️ BLOCKED (Cloudflare)",
+      "Kimi": "✅ PASS"
+    }
+  },
+  "crossProjectDifferences": {
+    "markdownBlock": "Exporter has markdownBlock selectors for all platforms; Outline does not (by design - Outline extracts headings, not markdown content)",
+    "doubao.title_escaping": "Exporter uses JS string 'div.group\\/title', Outline uses JSON 'div.group\\/title'. Both work identically in DOM queries."
+  }
+}

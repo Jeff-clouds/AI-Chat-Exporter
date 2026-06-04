@@ -24,50 +24,16 @@ const REPORT_DIR = join(EXPORTER_DIR, 'scripts', 'reports');
 
 const CDP_ENDPOINT = process.env.CHROME_CDP_ENDPOINT || 'http://127.0.0.1:9222';
 
-const TARGETS = [
-  {
-    key: 'grok',
-    outlineKey: 'GROK',
-    name: 'Grok',
-    url: 'https://grok.com/c/7bb32de1-a9f4-4ba0-99b9-f4760eca1335?rid=b681c7a6-8574-494a-a2ff-978622800359',
-  },
-  {
-    key: 'yuanbao',
-    outlineKey: 'YUANBAO',
-    name: 'YuanBao',
-    url: 'https://yuanbao.tencent.com/chat/naQivTmsDa/105fec2b-3cf5-4382-92d7-e09e60da4b7b',
-  },
-  {
-    key: 'chatgpt',
-    outlineKey: 'CHATGPT',
-    name: 'ChatGPT',
-    url: 'https://chatgpt.com/c/69393a71-a410-8329-b70a-c1bab3d8b2fd',
-  },
-  {
-    key: 'doubao',
-    outlineKey: 'DOUBAO',
-    name: 'Doubao',
-    url: 'https://www.doubao.com/chat/38425731801360898',
-  },
-  {
-    key: 'gemini',
-    outlineKey: 'GEMINI',
-    name: 'Gemini',
-    url: 'https://gemini.google.com/app/404aea77190bc75f',
-  },
-  {
-    key: 'kimi',
-    outlineKey: 'KIMI',
-    name: 'Kimi',
-    url: 'https://www.kimi.com/chat/19d04d17-fca2-8505-8000-09c908509e39?chat_enter_method=history',
-  },
-  {
-    key: 'deepseek',
-    outlineKey: 'DEEPSEEK',
-    name: 'DeepSeek',
-    url: 'https://chat.deepseek.com/a/chat/s/c731cccb-0f0d-4993-9332-3e86299d81db',
-  },
-];
+// Load test URLs from test-urls.json (single source of truth)
+const TEST_URLS_PATH = join(__dirname, 'test-urls.json');
+const testUrlsData = JSON.parse(readFileSync(TEST_URLS_PATH, 'utf8'));
+const OUTLINE_KEY_MAP = { deepseek: 'DEEPSEEK', yuanbao: 'YUANBAO', chatgpt: 'CHATGPT', doubao: 'DOUBAO', gemini: 'GEMINI', grok: 'GROK', kimi: 'KIMI' };
+const TARGETS = Object.entries(testUrlsData.platforms).map(([key, info]) => ({
+  key,
+  outlineKey: OUTLINE_KEY_MAP[key] || key.toUpperCase(),
+  name: info.name,
+  url: info.url,
+}));
 
 const LOGIN_INDICATORS = [
   '登录',
@@ -96,13 +62,21 @@ function parseExporterSelectors() {
 
     while ((match = re.exec(block)) !== null) {
       const raw = match[2];
-      selectors[match[1]] = raw === 'null' ? null : raw.slice(1, -1);
+      selectors[match[1]] = raw === 'null' ? null : decodeStringLiteral(raw);
     }
 
     result[target.key] = selectors;
   }
 
   return result;
+}
+
+function decodeStringLiteral(raw) {
+  try {
+    return Function(`"use strict"; return (${raw});`)();
+  } catch {
+    return raw.slice(1, -1);
+  }
 }
 
 function parseOutlineSelectors() {
