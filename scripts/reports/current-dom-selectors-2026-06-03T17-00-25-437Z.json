@@ -1,0 +1,692 @@
+{
+  "timestamp": "2026-06-03T17:00:25.431Z",
+  "cdpEndpoint": "ws://127.0.0.1:9222/devtools/browser/889ea82a-07bf-4752-bdab-20384886cdb3",
+  "scope": "DOM selector audit only; extension runtime was not tested",
+  "platforms": [
+    {
+      "key": "grok",
+      "name": "Grok",
+      "targetUrl": "https://grok.com/c/7bb32de1-a9f4-4ba0-99b9-f4760eca1335?rid=b681c7a6-8574-494a-a2ff-978622800359",
+      "elapsedMs": 452,
+      "overall": "ERROR",
+      "error": "page.goto: net::ERR_CONNECTION_RESET at https://grok.com/c/7bb32de1-a9f4-4ba0-99b9-f4760eca1335?rid=b681c7a6-8574-494a-a2ff-978622800359\nCall log:\n\u001b[2m  - navigating to \"https://grok.com/c/7bb32de1-a9f4-4ba0-99b9-f4760eca1335?rid=b681c7a6-8574-494a-a2ff-978622800359\", waiting until \"domcontentloaded\"\u001b[22m\n"
+    },
+    {
+      "key": "yuanbao",
+      "name": "YuanBao",
+      "targetUrl": "https://yuanbao.tencent.com/chat/naQivTmsDa/105fec2b-3cf5-4382-92d7-e09e60da4b7b",
+      "elapsedMs": 5289,
+      "page": {
+        "title": "元宝-腾讯旗下全能AI助手",
+        "url": "https://yuanbao.tencent.com/chat/naQivTmsDa/105fec2b-3cf5-4382-92d7-e09e60da4b7b",
+        "bodyTextLength": 51,
+        "bodySample": "搜索 元宝 全部收藏 前往下载中心 未登录 登录 安装电脑版 内容由AI生成，仅供参考",
+        "needsLogin": true,
+        "headingCount": 0
+      },
+      "exporter": {
+        "title": {
+          "selector": ".agent-dialogue__content--common__header",
+          "valid": true,
+          "elements": 1,
+          "partCounts": [
+            {
+              "selector": ".agent-dialogue__content--common__header",
+              "elements": 1
+            }
+          ],
+          "status": "PASS"
+        },
+        "question": {
+          "selector": ".agent-chat__bubble--human",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": ".agent-chat__bubble--human",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "answer": {
+          "selector": ".agent-chat__bubble--ai",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": ".agent-chat__bubble--ai",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "thinking": {
+          "selector": ".hyc-component-deepsearch-cot__think, .hyc-component-reasoner__think",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": ".hyc-component-deepsearch-cot__think",
+              "elements": 0
+            },
+            {
+              "selector": ".hyc-component-reasoner__think",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "markdownBlock": {
+          "selector": ".hyc-common-markdown",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": ".hyc-common-markdown",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "codeBlock": {
+          "selector": ".hyc-common-markdown__code pre.hyc-common-markdown__code-lan",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": ".hyc-common-markdown__code pre.hyc-common-markdown__code-lan",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "codeLanguage": {
+          "selector": ".hyc-common-markdown__code__hd__l",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": ".hyc-common-markdown__code__hd__l",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        }
+      },
+      "outline": {
+        "title": {
+          "selector": ".agent-dialogue__content--common__header",
+          "valid": true,
+          "elements": 1,
+          "partCounts": [
+            {
+              "selector": ".agent-dialogue__content--common__header",
+              "elements": 1
+            }
+          ],
+          "status": "PASS"
+        },
+        "question": {
+          "selector": ".agent-chat__bubble--human",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": ".agent-chat__bubble--human",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "answer": {
+          "selector": ".agent-chat__bubble--ai",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": ".agent-chat__bubble--ai",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "thinking": {
+          "selector": ".hyc-component-deepsearch-cot__think, .hyc-component-reasoner__think",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": ".hyc-component-deepsearch-cot__think",
+              "elements": 0
+            },
+            {
+              "selector": ".hyc-component-reasoner__think",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "HEADINGS": {
+          "selector": "h1, h2, h3, h4, h5, h6",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": "h1",
+              "elements": 0
+            },
+            {
+              "selector": "h2",
+              "elements": 0
+            },
+            {
+              "selector": "h3",
+              "elements": 0
+            },
+            {
+              "selector": "h4",
+              "elements": 0
+            },
+            {
+              "selector": "h5",
+              "elements": 0
+            },
+            {
+              "selector": "h6",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        }
+      },
+      "overall": "SKIP_LOGIN"
+    },
+    {
+      "key": "chatgpt",
+      "name": "ChatGPT",
+      "targetUrl": "https://chatgpt.com/c/69393a71-a410-8329-b70a-c1bab3d8b2fd",
+      "elapsedMs": 88,
+      "overall": "ERROR",
+      "error": "page.goto: net::ERR_CONNECTION_RESET at https://chatgpt.com/c/69393a71-a410-8329-b70a-c1bab3d8b2fd\nCall log:\n\u001b[2m  - navigating to \"https://chatgpt.com/c/69393a71-a410-8329-b70a-c1bab3d8b2fd\", waiting until \"domcontentloaded\"\u001b[22m\n"
+    },
+    {
+      "key": "doubao",
+      "name": "Doubao",
+      "targetUrl": "https://www.doubao.com/chat/38425731801360898",
+      "elapsedMs": 4017,
+      "page": {
+        "title": "豆包 - 字节跳动旗下 AI 智能助手",
+        "url": "https://www.doubao.com/chat",
+        "bodyTextLength": 89,
+        "bodySample": "豆包 新对话 ⌘ K AI 创作 关于豆包 新对话 内容由豆包 AI 生成，请仔细甄别 下载电脑版 登录 你好，我是豆包 快速 PPT 生成 图像生成 翻译 编程 深入研究 更多",
+        "needsLogin": true,
+        "headingCount": 0
+      },
+      "exporter": {
+        "title": {
+          "selector": "div.group\\\\/title",
+          "valid": false,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": "div.group\\\\/title",
+              "elements": -1
+            }
+          ],
+          "status": "ERROR"
+        },
+        "question": {
+          "selector": "div[class*=\"send-msg-bubble\"], div[class*=\"bg-g-send-msg-bubble-bg\"]",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": "div[class*=\"send-msg-bubble\"]",
+              "elements": 0
+            },
+            {
+              "selector": "div[class*=\"bg-g-send-msg-bubble-bg\"]",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "answer": {
+          "selector": "div[class*=\"conversation-page-message-host\"]",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": "div[class*=\"conversation-page-message-host\"]",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "markdownBlock": {
+          "selector": "div[class*=\"conversation-page-message-host\"]",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": "div[class*=\"conversation-page-message-host\"]",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        }
+      },
+      "outline": {
+        "title": {
+          "selector": "div.group\\/title",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": "div.group\\/title",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "question": {
+          "selector": "div[class*=\"send-msg-bubble\"], div[class*=\"bg-g-send-msg-bubble-bg\"]",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": "div[class*=\"send-msg-bubble\"]",
+              "elements": 0
+            },
+            {
+              "selector": "div[class*=\"bg-g-send-msg-bubble-bg\"]",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "answer": {
+          "selector": "div[class*=\"conversation-page-message-host\"]",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": "div[class*=\"conversation-page-message-host\"]",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "HEADINGS": {
+          "selector": "h1, h2, h3, h4, h5, h6",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": "h1",
+              "elements": 0
+            },
+            {
+              "selector": "h2",
+              "elements": 0
+            },
+            {
+              "selector": "h3",
+              "elements": 0
+            },
+            {
+              "selector": "h4",
+              "elements": 0
+            },
+            {
+              "selector": "h5",
+              "elements": 0
+            },
+            {
+              "selector": "h6",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        }
+      },
+      "overall": "SKIP_LOGIN"
+    },
+    {
+      "key": "gemini",
+      "name": "Gemini",
+      "targetUrl": "https://gemini.google.com/app/404aea77190bc75f",
+      "elapsedMs": 20010,
+      "overall": "ERROR",
+      "error": "page.goto: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"https://gemini.google.com/app/404aea77190bc75f\", waiting until \"domcontentloaded\"\u001b[22m\n"
+    },
+    {
+      "key": "kimi",
+      "name": "Kimi",
+      "targetUrl": "https://www.kimi.com/chat/19d04d17-fca2-8505-8000-09c908509e39?chat_enter_method=history",
+      "elapsedMs": 3713,
+      "page": {
+        "title": "Kimi AI 官网 - K2.6 上线",
+        "url": "https://www.kimi.com/",
+        "bodyTextLength": 363,
+        "bodySample": "新建会话 ⌘ K PPT 文档 深度研究 网站 表格 Agent 集群 Kimi Code Kimi Claw 历史会话 登录以同步历史会话 获取应用程序 关于我们 Language 帮助 登录 展开导航 尽管问... Agent K2.6 快速 Kimi桌面端已就位 Agent并行，处理本地文件，办公搭子已上线 WebBridge 接入浏览器 让 AI 像人一样使用浏览器 Kimi Claw 已就位！ 一键部署 OpenClaw，Kimi 24小时为你干活 Kimi桌面端已",
+        "needsLogin": true,
+        "headingCount": 0
+      },
+      "exporter": {
+        "question": {
+          "selector": ".user-content",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": ".user-content",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "answer": {
+          "selector": ".chat-content-item.chat-content-item-assistant .markdown-container, .markdown-body .markdown-container, [class*=\"assistant\"] .markdown-container",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": ".chat-content-item.chat-content-item-assistant .markdown-container",
+              "elements": 0
+            },
+            {
+              "selector": ".markdown-body .markdown-container",
+              "elements": 0
+            },
+            {
+              "selector": "[class*=\"assistant\"] .markdown-container",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        }
+      },
+      "outline": {
+        "question": {
+          "selector": ".user-content",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": ".user-content",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "answer": {
+          "selector": ".chat-content-item.chat-content-item-assistant .markdown-container, .markdown-body .markdown-container, [class*=\"assistant\"] .markdown-container",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": ".chat-content-item.chat-content-item-assistant .markdown-container",
+              "elements": 0
+            },
+            {
+              "selector": ".markdown-body .markdown-container",
+              "elements": 0
+            },
+            {
+              "selector": "[class*=\"assistant\"] .markdown-container",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "HEADINGS": {
+          "selector": "h1, h2, h3, h4, h5, h6",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": "h1",
+              "elements": 0
+            },
+            {
+              "selector": "h2",
+              "elements": 0
+            },
+            {
+              "selector": "h3",
+              "elements": 0
+            },
+            {
+              "selector": "h4",
+              "elements": 0
+            },
+            {
+              "selector": "h5",
+              "elements": 0
+            },
+            {
+              "selector": "h6",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        }
+      },
+      "overall": "SKIP_LOGIN"
+    },
+    {
+      "key": "deepseek",
+      "name": "DeepSeek",
+      "targetUrl": "https://chat.deepseek.com/a/chat/s/c731cccb-0f0d-4993-9332-3e86299d81db",
+      "elapsedMs": 3674,
+      "page": {
+        "title": "DeepSeek - 探索未至之境",
+        "url": "https://chat.deepseek.com/sign_in",
+        "bodyTextLength": 108,
+        "bodySample": "+86 发送验证码 注册登录即代表已阅读并同意我们的 用户协议 与 隐私政策，未注册的手机号将自动注册 登录 密码登录 使用 Apple 账号登录 微信扫码登录 浙ICP备2023025841号 · 联系我们",
+        "needsLogin": true,
+        "headingCount": 0
+      },
+      "exporter": {
+        "title": {
+          "selector": ".f8d1e4c0",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": ".f8d1e4c0",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "question": {
+          "selector": "._9663006",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": "._9663006",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "answer": {
+          "selector": "._4f9bf79._43c05b5",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": "._4f9bf79._43c05b5",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "thinking": {
+          "selector": ".ds-think-content, ._74c0879",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": ".ds-think-content",
+              "elements": 0
+            },
+            {
+              "selector": "._74c0879",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "search": {
+          "selector": ".a6d716f5.db5991dd",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": ".a6d716f5.db5991dd",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "markdownBlock": {
+          "selector": ".ds-markdown",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": ".ds-markdown",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "codeBlock": {
+          "selector": ".md-code-block",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": ".md-code-block",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "codeLanguage": {
+          "selector": ".md-code-block-infostring",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": ".md-code-block-infostring",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        }
+      },
+      "outline": {
+        "title": {
+          "selector": ".f8d1e4c0",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": ".f8d1e4c0",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "question": {
+          "selector": "._9663006",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": "._9663006",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "answer": {
+          "selector": "._4f9bf79._43c05b5",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": "._4f9bf79._43c05b5",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "thinking": {
+          "selector": ".ds-think-content, ._74c0879",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": ".ds-think-content",
+              "elements": 0
+            },
+            {
+              "selector": "._74c0879",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "HEADINGS": {
+          "selector": "h1, h2, h3, h4, h5, h6",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": "h1",
+              "elements": 0
+            },
+            {
+              "selector": "h2",
+              "elements": 0
+            },
+            {
+              "selector": "h3",
+              "elements": 0
+            },
+            {
+              "selector": "h4",
+              "elements": 0
+            },
+            {
+              "selector": "h5",
+              "elements": 0
+            },
+            {
+              "selector": "h6",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        }
+      },
+      "overall": "SKIP_LOGIN"
+    }
+  ],
+  "summary": [
+    "Grok: ERROR",
+    "YuanBao: SKIP_LOGIN",
+    "ChatGPT: ERROR",
+    "Doubao: SKIP_LOGIN",
+    "Gemini: ERROR",
+    "Kimi: SKIP_LOGIN",
+    "DeepSeek: SKIP_LOGIN"
+  ]
+}
