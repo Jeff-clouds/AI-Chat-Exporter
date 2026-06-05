@@ -39,3 +39,8 @@ yarn-error.log*
 .env
 .env.local
 .env.*.local
+
+# License signing secrets
+license-private-key*.json
+license-private-key*.jwk
+license-private-key*.pem

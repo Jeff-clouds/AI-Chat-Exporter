@@ -2,6 +2,7 @@ import { getPlatformConfig } from '../export/config/selectors.js';
 import { markdownGenerator } from '../export/utils/markdown-generator.js';
 import { downloadManager } from '../export/utils/download-manager.js';
 import { sanitizeFilename } from '../export/utils/sanitizer.js';
+import { activateLicense, canUse, getLicenseStatus } from './license.js';
 
 // 注册侧面板
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
@@ -42,7 +43,7 @@ async function getActiveTab() {
     return tab;
 }
 
-async function handleExportFullChat() {
+async function extractCurrentChatData() {
     const tab = await getActiveTab();
 
     if (!isSupportedUrl(tab.url || '')) {
@@ -91,6 +92,11 @@ async function handleExportFullChat() {
         answerIndex: index
     }));
 
+    return unifiedData;
+}
+
+async function handleExportFullChat() {
+    const unifiedData = await extractCurrentChatData();
     const markdown = markdownGenerator.generate(unifiedData);
     const filename = sanitizeFilename(unifiedData.title);
     downloadManager.downloadMarkdown(markdown, filename);
@@ -98,6 +104,50 @@ async function handleExportFullChat() {
     return {
         platform: unifiedData.platform,
         count: unifiedData.conversations.length
+    };
+}
+
+async function handleExportSelectedChat(questionIndexes = []) {
+    if (!await canUse('selected_markdown_export')) {
+        throw new Error('勾选局部导出是 Pro 功能，请先激活授权码');
+    }
+
+    const selectedIndexes = Array.from(new Set(
+        questionIndexes
+            .map(index => Number(index))
+            .filter(index => Number.isInteger(index) && index >= 0)
+    )).sort((a, b) => a - b);
+
+    if (selectedIndexes.length === 0) {
+        throw new Error('请先勾选要导出的对话');
+    }
+
+    const unifiedData = await extractCurrentChatData();
+    const selectedSet = new Set(selectedIndexes);
+    const conversations = unifiedData.conversations.filter((conversation, index) => {
+        const questionIndex = Number.isInteger(conversation.questionIndex)
+            ? conversation.questionIndex
+            : index;
+        return selectedSet.has(questionIndex);
+    });
+
+    if (conversations.length === 0) {
+        throw new Error('未找到勾选的对话内容，请刷新页面后重试');
+    }
+
+    const selectedData = {
+        ...unifiedData,
+        title: `${unifiedData.title}-selected`,
+        conversations
+    };
+
+    const markdown = markdownGenerator.generate(selectedData);
+    const filename = sanitizeFilename(selectedData.title);
+    downloadManager.downloadMarkdown(markdown, filename);
+
+    return {
+        platform: unifiedData.platform,
+        count: conversations.length
     };
 }
 
@@ -115,6 +165,30 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 });
                 sendResponse({ success: false, error: error.message });
             });
+        return true;
+    }
+
+    if (request && request.action === 'exportSelectedChat') {
+        handleExportSelectedChat(request.questionIndexes || [])
+            .then(result => sendResponse({ success: true, ...result }))
+            .catch(error => {
+                console.error('AI Chat Knowledge Suite selected export failed:', error);
+                sendResponse({ success: false, error: error.message });
+            });
+        return true;
+    }
+
+    if (request && request.action === 'getLicenseStatus') {
+        getLicenseStatus()
+            .then(status => sendResponse({ success: true, status }))
+            .catch(error => sendResponse({ success: false, error: error.message }));
+        return true;
+    }
+
+    if (request && request.action === 'activateLicense') {
+        activateLicense(request.code || '')
+            .then(status => sendResponse({ success: true, status }))
+            .catch(error => sendResponse({ success: false, error: error.message }));
         return true;
     }
 });

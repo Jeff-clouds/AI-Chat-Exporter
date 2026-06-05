@@ -8,6 +8,7 @@
 
 - 读取当前打开的 AI 对话页面内容，用于生成页面大纲和导出 Markdown 文件
 - 在浏览器本地处理页面内容，不会收集或传输任何用户数据
+- 在本地保存 Pro 授权码状态，用于解锁付费功能
 - 不会记录或存储任何对话内容
 - 不会追踪用户的浏览行为
 
@@ -21,6 +22,7 @@
 - `tabs`: 用于识别支持的网站
 - `downloads`: 用于保存导出的Markdown文件到用户本地设备
 - `notifications`: 用于通知用户导出过程的状态和提供反馈
+- `storage`: 用于在本地保存授权码激活状态
 - `host_permissions`: 用于识别和访问支持平台上的AI对话内容
 
 ### 3. 支持的网站
@@ -58,6 +60,7 @@ This extension only processes data within the following scope:
 
 - Reads current AI chat page content to generate page outlines and export Markdown files
 - Processes page content locally in the browser
+- Stores Pro license activation status locally
 - Does not collect or transmit any user data
 - Does not record or store any conversation content
 - Does not track user browsing behavior
@@ -72,6 +75,7 @@ The permissions requested by this extension are used for:
 - `tabs`: Identifying supported websites
 - `downloads`: Saving exported Markdown files to the user's local device
 - `notifications`: Informing users about the status of their export process and providing feedback when the export is complete
+- `storage`: Saving local license activation status
 - `host_permissions`: Identifying and accessing AI chat content on supported platforms (DeepSeek and YuanBao AI) for exporting conversations
 
 ### 3. Supported Websites

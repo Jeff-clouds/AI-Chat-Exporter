@@ -3,6 +3,9 @@ let currentTabId = null;
 
 // 全局状态：是否所有目录都已收起
 let allCollapsed = false;
+let selectionMode = false;
+let currentOutlineData = [];
+const selectedQuestionIndexes = new Set();
 
 const SUPPORTED_URL_SNIPPETS = [
     'deepseek.com',
@@ -63,6 +66,8 @@ window.addEventListener('load', () => {
     // 初始化一键操作按钮
     initializeToggleAllButton();
     initializeExportButton();
+    initializeSelectionControls();
+    initializeLicenseControls();
 });
 
 // 监听标签切换
@@ -181,12 +186,159 @@ function initializeExportButton() {
     });
 }
 
+function setExportStatus(message, tone = 'neutral') {
+    const exportStatus = document.getElementById('export-status');
+    if (!exportStatus) return;
+    exportStatus.textContent = message;
+    exportStatus.dataset.tone = tone;
+}
+
+function getQuestionIndex(question) {
+    const index = question?.metadata?.index;
+    return Number.isInteger(index) ? index : null;
+}
+
+function initializeSelectionControls() {
+    const toggleSelectionButton = document.getElementById('toggle-selection-mode');
+    const exportSelectedButton = document.getElementById('export-selected-chat');
+
+    if (toggleSelectionButton) {
+        toggleSelectionButton.addEventListener('click', () => {
+            selectionMode = !selectionMode;
+            if (!selectionMode) selectedQuestionIndexes.clear();
+            renderCurrentOutline();
+            updateSelectionControls();
+        });
+    }
+
+    if (exportSelectedButton) {
+        exportSelectedButton.addEventListener('click', () => {
+            const questionIndexes = Array.from(selectedQuestionIndexes).sort((a, b) => a - b);
+            if (questionIndexes.length === 0) {
+                setExportStatus('请先勾选要导出的对话', 'error');
+                return;
+            }
+
+            exportSelectedButton.disabled = true;
+            exportSelectedButton.textContent = '导出中...';
+            setExportStatus('正在导出选中的问题组');
+
+            chrome.runtime.sendMessage({ action: 'exportSelectedChat', questionIndexes }, (response) => {
+                exportSelectedButton.textContent = '导出选中内容 Pro';
+                updateSelectionControls();
+
+                if (chrome.runtime.lastError) {
+                    setExportStatus(`导出失败：${chrome.runtime.lastError.message}`, 'error');
+                    return;
+                }
+
+                if (!response || !response.success) {
+                    setExportStatus(`导出失败：${response?.error || '未知错误'}`, 'error');
+                    return;
+                }
+
+                setExportStatus(`已导出 ${response.count || 0} 组选中对话`, 'success');
+            });
+        });
+    }
+
+    updateSelectionControls();
+}
+
+function initializeLicenseControls() {
+    const activateButton = document.getElementById('activate-license');
+    if (activateButton) {
+        activateButton.addEventListener('click', () => {
+            const code = window.prompt('请输入 Pro 授权码');
+            if (!code) return;
+
+            activateButton.disabled = true;
+            chrome.runtime.sendMessage({ action: 'activateLicense', code }, (response) => {
+                activateButton.disabled = false;
+                if (chrome.runtime.lastError) {
+                    setExportStatus(`激活失败：${chrome.runtime.lastError.message}`, 'error');
+                    refreshLicenseStatus();
+                    return;
+                }
+
+                if (!response || !response.success) {
+                    setExportStatus(`激活失败：${response?.error || '未知错误'}`, 'error');
+                    refreshLicenseStatus();
+                    return;
+                }
+
+                setExportStatus('Pro 已激活', 'success');
+                renderLicenseStatus(response.status);
+                updateSelectionControls();
+            });
+        });
+    }
+
+    refreshLicenseStatus();
+}
+
+function refreshLicenseStatus() {
+    chrome.runtime.sendMessage({ action: 'getLicenseStatus' }, (response) => {
+        if (chrome.runtime.lastError || !response || !response.success) {
+            renderLicenseStatus({ active: false, plan: 'free' });
+            return;
+        }
+        renderLicenseStatus(response.status);
+    });
+}
+
+function renderLicenseStatus(status = {}) {
+    const licenseStatus = document.getElementById('license-status');
+    const activateButton = document.getElementById('activate-license');
+    if (!licenseStatus) return;
+
+    if (status.active) {
+        licenseStatus.textContent = `Pro 已激活${status.orderId ? ` · ${status.orderId}` : ''}`;
+        licenseStatus.dataset.active = 'true';
+        if (activateButton) activateButton.textContent = '更换';
+    } else {
+        licenseStatus.textContent = status.error ? `Pro 未激活 · ${status.error}` : 'Pro 未激活';
+        licenseStatus.dataset.active = 'false';
+        if (activateButton) activateButton.textContent = '激活';
+    }
+}
+
+function updateSelectionControls() {
+    const toggleSelectionButton = document.getElementById('toggle-selection-mode');
+    const exportSelectedButton = document.getElementById('export-selected-chat');
+    const selectionSummary = document.getElementById('selection-summary');
+    const selectedCount = selectedQuestionIndexes.size;
+
+    if (toggleSelectionButton) {
+        toggleSelectionButton.textContent = selectionMode ? '退出选择模式' : '选择问题组';
+    }
+
+    if (exportSelectedButton) {
+        exportSelectedButton.disabled = !selectionMode || selectedCount === 0;
+    }
+
+    if (selectionSummary) {
+        selectionSummary.textContent = selectionMode
+            ? `已选择 ${selectedCount} 组对话`
+            : '未进入选择模式';
+    }
+}
+
+function renderCurrentOutline() {
+    if (currentOutlineData.length > 0) {
+        displayOutline(currentOutlineData);
+    }
+}
+
 // 显示大纲
 function displayOutline(outlineData, diagnostics) {
     const outlineContainer = document.getElementById('outline');
+    currentOutlineData = Array.isArray(outlineData) ? outlineData : [];
     
     // 检查是否有大纲数据
     if (!outlineData || outlineData.length === 0) {
+        selectedQuestionIndexes.clear();
+        updateSelectionControls();
         showErrorMessage(outlineContainer, '当前页面未找到可用的大纲内容，请打开你的对话', diagnostics);
         return;
     }
@@ -195,7 +347,9 @@ function displayOutline(outlineData, diagnostics) {
 
     const hasQuestion = outlineData.some(item => item.type === 'question');
     if (!hasQuestion) {
+        selectedQuestionIndexes.clear();
         renderFlatOutline(outlineData, outlineContainer);
+        updateSelectionControls();
         return;
     }
     
@@ -221,6 +375,8 @@ function displayOutline(outlineData, diagnostics) {
     if (currentQuestion) {
         renderQuestionGroup(currentQuestion, questionAnswers, outlineContainer);
     }
+
+    updateSelectionControls();
 }
 
 function renderFlatOutline(items, container) {
@@ -266,6 +422,24 @@ function renderQuestionGroup(question, answers, container) {
     const toggle = document.createElement('span');
     toggle.className = 'toggle-icon expanded';  // 默认展开
     questionDiv.appendChild(toggle);
+
+    const questionIndex = getQuestionIndex(question);
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.className = `selection-checkbox${selectionMode ? '' : ' hidden'}`;
+    checkbox.checked = questionIndex !== null && selectedQuestionIndexes.has(questionIndex);
+    checkbox.setAttribute('aria-label', '选择此问题组用于局部导出');
+    checkbox.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (questionIndex === null) return;
+        if (checkbox.checked) {
+            selectedQuestionIndexes.add(questionIndex);
+        } else {
+            selectedQuestionIndexes.delete(questionIndex);
+        }
+        updateSelectionControls();
+    });
+    questionDiv.appendChild(checkbox);
 
     // 添加问题文本
     const text = document.createElement('span');
