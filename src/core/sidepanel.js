@@ -26,6 +26,8 @@ const CONTENT_SCRIPT_FILES = [
     'src/core/content.js'
 ];
 
+const PURCHASE_URL = 'mailto:940180276@qq.com?subject=AI%20Chat%20Knowledge%20Suite%20Pro&body=%E4%BD%A0%E5%A5%BD%EF%BC%8C%E6%88%91%E6%83%B3%E8%B4%AD%E4%B9%B0%20AI%20Chat%20Knowledge%20Suite%20Pro%20%E6%8E%88%E6%9D%83%E7%A0%81%E3%80%82';
+
 function isSupportedUrl(url = '') {
     return SUPPORTED_URL_SNIPPETS.some(snippet => url.includes(snippet));
 }
@@ -201,6 +203,7 @@ function getQuestionIndex(question) {
 function initializeSelectionControls() {
     const toggleSelectionButton = document.getElementById('toggle-selection-mode');
     const exportSelectedButton = document.getElementById('export-selected-chat');
+    const purchaseButton = document.getElementById('purchase-pro');
 
     if (toggleSelectionButton) {
         toggleSelectionButton.addEventListener('click', () => {
@@ -239,6 +242,12 @@ function initializeSelectionControls() {
 
                 setExportStatus(`已导出 ${response.count || 0} 组选中对话`, 'success');
             });
+        });
+    }
+
+    if (purchaseButton) {
+        purchaseButton.addEventListener('click', () => {
+            window.open(PURCHASE_URL, '_blank', 'noopener');
         });
     }
 

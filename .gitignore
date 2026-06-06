@@ -44,3 +44,5 @@ yarn-error.log*
 license-private-key*.json
 license-private-key*.jwk
 license-private-key*.pem
+license-orders*.jsonl
+license-orders*.csv

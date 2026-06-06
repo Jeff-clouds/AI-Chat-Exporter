@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AI Chat Knowledge Suite",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "AI 对话大纲导航与 Markdown 导出工具",
   "permissions": [
     "sidePanel",
