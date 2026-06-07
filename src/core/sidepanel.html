@@ -58,7 +58,7 @@
             font-family: 'Söhne', 'Segoe UI', 'Apple Color Emoji', 'Noto Sans', Helvetica, Arial, sans-serif;
             margin: 0;
             padding: 16px;
-            padding-bottom: 60px;
+            padding-bottom: 84px;
             background-color: var(--bg-primary);
             color: var(--text-primary);
             transition: background-color 0.3s ease, color 0.3s ease;
@@ -74,15 +74,25 @@
             border: 1px solid var(--border-color);
         }
 
-        #suite-actions {
+        #pro-action-row {
             display: grid;
-            grid-template-columns: 1fr;
-            gap: 8px;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 12px;
+            align-items: center;
             margin-bottom: 16px;
         }
 
-        #suite-actions button {
-            width: 100%;
+        #pro-mode-label {
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 500;
+            line-height: 1.35;
+            min-width: 0;
+        }
+
+        .pro-action-button,
+        #bottom-export-btn,
+        #toggle-all-btn {
             border: 1px solid var(--border-color);
             border-radius: 8px;
             cursor: pointer;
@@ -93,11 +103,18 @@
             transition: filter 0.15s ease, opacity 0.15s ease;
         }
 
-        #suite-actions button:hover {
+        .pro-action-button {
+            min-width: 86px;
+            white-space: nowrap;
+        }
+
+        .pro-action-button:hover,
+        #bottom-export-btn:hover {
             filter: brightness(1.08);
         }
 
-        #suite-actions button:disabled {
+        .pro-action-button:disabled,
+        #bottom-export-btn:disabled {
             cursor: not-allowed;
             opacity: 0.65;
         }
@@ -117,27 +134,24 @@
             color: var(--text-primary);
         }
 
-        .pro-row {
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 8px;
-            align-items: center;
+        .pro-action-button.activate {
+            background: #ef4444;
+            color: #ffffff;
         }
 
-        #license-status {
-            color: var(--text-tertiary);
-            font-size: 12px;
-            line-height: 1.35;
+        .pro-action-button.partial {
+            background: var(--accent-blue);
+            color: #ffffff;
         }
 
-        #activate-license {
-            padding-left: 10px;
-            padding-right: 10px;
-            white-space: nowrap;
+        .pro-action-button.exit {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
         }
 
         #export-status {
             min-height: 16px;
+            margin: -8px 0 12px;
             color: var(--text-tertiary);
             font-size: 12px;
             line-height: 1.35;
@@ -163,35 +177,29 @@
             display: none;
         }
 
-        .selection-summary {
-            color: var(--text-tertiary);
-            font-size: 12px;
-            line-height: 1.35;
-        }
-
-        /* 一键操作按钮样式 */
-        #toggle-all-container {
+        #bottom-actions {
             position: fixed;
             bottom: 16px;
-            left: 50%;
-            transform: translateX(-50%);
+            left: 16px;
+            right: 16px;
             z-index: 1000;
-            text-align: center;
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr);
+            gap: 12px;
+            align-items: center;
+            pointer-events: none;
         }
 
         #toggle-all-btn {
             background: var(--bg-secondary);
             color: var(--text-primary);
-            border: 1px solid var(--border-color);
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
             font-size: 12px;
             font-weight: 500;
-            transition: all 0.2s ease;
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 6px;
+            pointer-events: auto;
         }
 
         #toggle-all-btn:hover {
@@ -210,6 +218,12 @@
 
         #toggle-all-btn.collapsed .icon {
             transform: rotate(-90deg);
+        }
+
+        #bottom-export-btn {
+            width: 100%;
+            min-width: 0;
+            pointer-events: auto;
         }
 
         .outline-item {
@@ -476,24 +490,18 @@
 </head>
 <body>
     <div id="site-info"></div>
-    <div id="suite-actions">
-        <button id="export-full-chat" class="primary-action">导出完整对话</button>
-        <button id="toggle-selection-mode" class="secondary-action">选择问题组</button>
-        <button id="export-selected-chat" class="pro-action" disabled>导出选中内容 Pro</button>
-        <button id="purchase-pro" class="secondary-action">购买 Pro</button>
-        <div class="selection-summary" id="selection-summary">未进入选择模式</div>
-        <div class="pro-row">
-            <div id="license-status">Pro 未激活</div>
-            <button id="activate-license" class="secondary-action">激活</button>
-        </div>
-        <div id="export-status" aria-live="polite"></div>
+    <div id="pro-action-row">
+        <div id="pro-mode-label">Pro用户可选择部分导出</div>
+        <button id="pro-mode-action" class="pro-action-button activate">激活Pro</button>
     </div>
+    <div id="export-status" aria-live="polite"></div>
     <div id="outline"></div>
-    <div id="toggle-all-container">
+    <div id="bottom-actions">
         <button id="toggle-all-btn">
             <span class="icon">▼</span>
             <span class="text">收起所有</span>
         </button>
+        <button id="bottom-export-btn" class="primary-action">导出完整对话</button>
     </div>
     <script src="sidepanel.js"></script>
 </body>

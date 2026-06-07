@@ -5,6 +5,8 @@ let currentTabId = null;
 let allCollapsed = false;
 let selectionMode = false;
 let currentOutlineData = [];
+let licenseStatusState = { active: false, plan: 'free' };
+let exportInProgress = false;
 const selectedQuestionIndexes = new Set();
 
 const SUPPORTED_URL_SNIPPETS = [
@@ -25,8 +27,6 @@ const CONTENT_SCRIPT_FILES = [
     'src/core/pipeline.js',
     'src/core/content.js'
 ];
-
-const PURCHASE_URL = 'mailto:940180276@qq.com?subject=AI%20Chat%20Knowledge%20Suite%20Pro&body=%E4%BD%A0%E5%A5%BD%EF%BC%8C%E6%88%91%E6%83%B3%E8%B4%AD%E4%B9%B0%20AI%20Chat%20Knowledge%20Suite%20Pro%20%E6%8E%88%E6%9D%83%E7%A0%81%E3%80%82';
 
 function isSupportedUrl(url = '') {
     return SUPPORTED_URL_SNIPPETS.some(snippet => url.includes(snippet));
@@ -67,9 +67,8 @@ window.addEventListener('load', () => {
     requestCurrentTabOutline();
     // 初始化一键操作按钮
     initializeToggleAllButton();
-    initializeExportButton();
-    initializeSelectionControls();
-    initializeLicenseControls();
+    initializePanelActionControls();
+    refreshLicenseStatus();
 });
 
 // 监听标签切换
@@ -153,41 +152,6 @@ function updateReadingProgress(currentItem) {
     progressBar.style.width = `${progress}%`;
 }
 
-function initializeExportButton() {
-    const exportButton = document.getElementById('export-full-chat');
-    const exportStatus = document.getElementById('export-status');
-    if (!exportButton) return;
-
-    const setStatus = (message, tone = 'neutral') => {
-        if (!exportStatus) return;
-        exportStatus.textContent = message;
-        exportStatus.dataset.tone = tone;
-    };
-
-    exportButton.addEventListener('click', () => {
-        exportButton.disabled = true;
-        exportButton.textContent = '导出中...';
-        setStatus('正在提取当前对话并生成 Markdown');
-
-        chrome.runtime.sendMessage({ action: 'exportFullChat' }, (response) => {
-            exportButton.disabled = false;
-            exportButton.textContent = '导出完整对话';
-
-            if (chrome.runtime.lastError) {
-                setStatus(`导出失败：${chrome.runtime.lastError.message}`, 'error');
-                return;
-            }
-
-            if (!response || !response.success) {
-                setStatus(`导出失败：${response?.error || '未知错误'}`, 'error');
-                return;
-            }
-
-            setStatus(`已导出 ${response.platform || '当前平台'} 的 ${response.count || 0} 组对话`, 'success');
-        });
-    });
-}
-
 function setExportStatus(message, tone = 'neutral') {
     const exportStatus = document.getElementById('export-status');
     if (!exportStatus) return;
@@ -200,90 +164,35 @@ function getQuestionIndex(question) {
     return Number.isInteger(index) ? index : null;
 }
 
-function initializeSelectionControls() {
-    const toggleSelectionButton = document.getElementById('toggle-selection-mode');
-    const exportSelectedButton = document.getElementById('export-selected-chat');
-    const purchaseButton = document.getElementById('purchase-pro');
+function initializePanelActionControls() {
+    const proActionButton = document.getElementById('pro-mode-action');
+    const bottomExportButton = document.getElementById('bottom-export-btn');
 
-    if (toggleSelectionButton) {
-        toggleSelectionButton.addEventListener('click', () => {
-            selectionMode = !selectionMode;
-            if (!selectionMode) selectedQuestionIndexes.clear();
-            renderCurrentOutline();
-            updateSelectionControls();
-        });
-    }
-
-    if (exportSelectedButton) {
-        exportSelectedButton.addEventListener('click', () => {
-            const questionIndexes = Array.from(selectedQuestionIndexes).sort((a, b) => a - b);
-            if (questionIndexes.length === 0) {
-                setExportStatus('请先勾选要导出的对话', 'error');
+    if (proActionButton) {
+        proActionButton.addEventListener('click', () => {
+            if (!licenseStatusState.active) {
+                activateProLicense(proActionButton);
                 return;
             }
 
-            exportSelectedButton.disabled = true;
-            exportSelectedButton.textContent = '导出中...';
-            setExportStatus('正在导出选中的问题组');
-
-            chrome.runtime.sendMessage({ action: 'exportSelectedChat', questionIndexes }, (response) => {
-                exportSelectedButton.textContent = '导出选中内容 Pro';
-                updateSelectionControls();
-
-                if (chrome.runtime.lastError) {
-                    setExportStatus(`导出失败：${chrome.runtime.lastError.message}`, 'error');
-                    return;
-                }
-
-                if (!response || !response.success) {
-                    setExportStatus(`导出失败：${response?.error || '未知错误'}`, 'error');
-                    return;
-                }
-
-                setExportStatus(`已导出 ${response.count || 0} 组选中对话`, 'success');
-            });
+            selectionMode = !selectionMode;
+            if (!selectionMode) selectedQuestionIndexes.clear();
+            renderCurrentOutline();
+            updatePanelState();
         });
     }
 
-    if (purchaseButton) {
-        purchaseButton.addEventListener('click', () => {
-            window.open(PURCHASE_URL, '_blank', 'noopener');
+    if (bottomExportButton) {
+        bottomExportButton.addEventListener('click', () => {
+            if (selectionMode) {
+                exportSelectedChat();
+            } else {
+                exportFullChat();
+            }
         });
     }
 
-    updateSelectionControls();
-}
-
-function initializeLicenseControls() {
-    const activateButton = document.getElementById('activate-license');
-    if (activateButton) {
-        activateButton.addEventListener('click', () => {
-            const code = window.prompt('请输入 Pro 授权码');
-            if (!code) return;
-
-            activateButton.disabled = true;
-            chrome.runtime.sendMessage({ action: 'activateLicense', code }, (response) => {
-                activateButton.disabled = false;
-                if (chrome.runtime.lastError) {
-                    setExportStatus(`激活失败：${chrome.runtime.lastError.message}`, 'error');
-                    refreshLicenseStatus();
-                    return;
-                }
-
-                if (!response || !response.success) {
-                    setExportStatus(`激活失败：${response?.error || '未知错误'}`, 'error');
-                    refreshLicenseStatus();
-                    return;
-                }
-
-                setExportStatus('Pro 已激活', 'success');
-                renderLicenseStatus(response.status);
-                updateSelectionControls();
-            });
-        });
-    }
-
-    refreshLicenseStatus();
+    updatePanelState();
 }
 
 function refreshLicenseStatus() {
@@ -297,40 +206,138 @@ function refreshLicenseStatus() {
 }
 
 function renderLicenseStatus(status = {}) {
-    const licenseStatus = document.getElementById('license-status');
-    const activateButton = document.getElementById('activate-license');
-    if (!licenseStatus) return;
+    licenseStatusState = status.active
+        ? { ...status, active: true }
+        : { ...status, active: false, plan: 'free' };
 
-    if (status.active) {
-        licenseStatus.textContent = `Pro 已激活${status.orderId ? ` · ${status.orderId}` : ''}`;
-        licenseStatus.dataset.active = 'true';
-        if (activateButton) activateButton.textContent = '更换';
-    } else {
-        licenseStatus.textContent = status.error ? `Pro 未激活 · ${status.error}` : 'Pro 未激活';
-        licenseStatus.dataset.active = 'false';
-        if (activateButton) activateButton.textContent = '激活';
+    if (!licenseStatusState.active && selectionMode) {
+        selectionMode = false;
+        selectedQuestionIndexes.clear();
+    }
+
+    updatePanelState();
+}
+
+function activateProLicense(triggerButton) {
+    const code = window.prompt('请输入 Pro 授权码');
+    if (!code) return;
+
+    triggerButton.disabled = true;
+    triggerButton.textContent = '激活中...';
+    chrome.runtime.sendMessage({ action: 'activateLicense', code }, (response) => {
+        triggerButton.disabled = false;
+
+        if (chrome.runtime.lastError) {
+            setExportStatus(`激活失败：${chrome.runtime.lastError.message}`, 'error');
+            refreshLicenseStatus();
+            return;
+        }
+
+        if (!response || !response.success) {
+            setExportStatus(`激活失败：${response?.error || '未知错误'}`, 'error');
+            refreshLicenseStatus();
+            return;
+        }
+
+        setExportStatus('Pro 已激活', 'success');
+        renderLicenseStatus(response.status);
+    });
+}
+
+function updatePanelState() {
+    const proLabel = document.getElementById('pro-mode-label');
+    const proActionButton = document.getElementById('pro-mode-action');
+    const bottomExportButton = document.getElementById('bottom-export-btn');
+    const selectedCount = selectedQuestionIndexes.size;
+    const isPro = Boolean(licenseStatusState.active);
+
+    if (proLabel) {
+        proLabel.textContent = isPro ? 'Pro用户' : 'Pro用户可选择部分导出';
+    }
+
+    if (proActionButton) {
+        proActionButton.disabled = exportInProgress;
+        proActionButton.classList.remove('activate', 'partial', 'exit');
+        if (!isPro) {
+            proActionButton.textContent = '激活Pro';
+            proActionButton.classList.add('activate');
+        } else if (selectionMode) {
+            proActionButton.textContent = '退出选择模式';
+            proActionButton.classList.add('exit');
+        } else {
+            proActionButton.textContent = '部分导出';
+            proActionButton.classList.add('partial');
+        }
+    }
+
+    if (bottomExportButton) {
+        if (exportInProgress) {
+            bottomExportButton.disabled = true;
+            bottomExportButton.textContent = '导出中...';
+            return;
+        }
+
+        bottomExportButton.textContent = selectionMode ? '导出已选对话' : '导出完整对话';
+        bottomExportButton.disabled = selectionMode && selectedCount === 0;
     }
 }
 
-function updateSelectionControls() {
-    const toggleSelectionButton = document.getElementById('toggle-selection-mode');
-    const exportSelectedButton = document.getElementById('export-selected-chat');
-    const selectionSummary = document.getElementById('selection-summary');
-    const selectedCount = selectedQuestionIndexes.size;
+function exportFullChat() {
+    const bottomExportButton = document.getElementById('bottom-export-btn');
+    if (!bottomExportButton || exportInProgress) return;
 
-    if (toggleSelectionButton) {
-        toggleSelectionButton.textContent = selectionMode ? '退出选择模式' : '选择问题组';
+    exportInProgress = true;
+    updatePanelState();
+    setExportStatus('正在提取当前对话并生成 Markdown');
+
+    chrome.runtime.sendMessage({ action: 'exportFullChat' }, (response) => {
+        exportInProgress = false;
+        updatePanelState();
+
+        if (chrome.runtime.lastError) {
+            setExportStatus(`导出失败：${chrome.runtime.lastError.message}`, 'error');
+            return;
+        }
+
+        if (!response || !response.success) {
+            setExportStatus(`导出失败：${response?.error || '未知错误'}`, 'error');
+            return;
+        }
+
+        setExportStatus(`已导出 ${response.platform || '当前平台'} 的 ${response.count || 0} 组对话`, 'success');
+    });
+}
+
+function exportSelectedChat() {
+    if (exportInProgress) return;
+
+    const questionIndexes = Array.from(selectedQuestionIndexes).sort((a, b) => a - b);
+    if (questionIndexes.length === 0) {
+        setExportStatus('请先勾选要导出的对话', 'error');
+        updatePanelState();
+        return;
     }
 
-    if (exportSelectedButton) {
-        exportSelectedButton.disabled = !selectionMode || selectedCount === 0;
-    }
+    exportInProgress = true;
+    updatePanelState();
+    setExportStatus('正在导出选中的问题组');
 
-    if (selectionSummary) {
-        selectionSummary.textContent = selectionMode
-            ? `已选择 ${selectedCount} 组对话`
-            : '未进入选择模式';
-    }
+    chrome.runtime.sendMessage({ action: 'exportSelectedChat', questionIndexes }, (response) => {
+        exportInProgress = false;
+        updatePanelState();
+
+        if (chrome.runtime.lastError) {
+            setExportStatus(`导出失败：${chrome.runtime.lastError.message}`, 'error');
+            return;
+        }
+
+        if (!response || !response.success) {
+            setExportStatus(`导出失败：${response?.error || '未知错误'}`, 'error');
+            return;
+        }
+
+        setExportStatus(`已导出 ${response.count || 0} 组选中对话`, 'success');
+    });
 }
 
 function renderCurrentOutline() {
@@ -347,7 +354,7 @@ function displayOutline(outlineData, diagnostics) {
     // 检查是否有大纲数据
     if (!outlineData || outlineData.length === 0) {
         selectedQuestionIndexes.clear();
-        updateSelectionControls();
+        updatePanelState();
         showErrorMessage(outlineContainer, '当前页面未找到可用的大纲内容，请打开你的对话', diagnostics);
         return;
     }
@@ -358,7 +365,7 @@ function displayOutline(outlineData, diagnostics) {
     if (!hasQuestion) {
         selectedQuestionIndexes.clear();
         renderFlatOutline(outlineData, outlineContainer);
-        updateSelectionControls();
+        updatePanelState();
         return;
     }
     
@@ -385,7 +392,7 @@ function displayOutline(outlineData, diagnostics) {
         renderQuestionGroup(currentQuestion, questionAnswers, outlineContainer);
     }
 
-    updateSelectionControls();
+    updatePanelState();
 }
 
 function renderFlatOutline(items, container) {
@@ -446,7 +453,7 @@ function renderQuestionGroup(question, answers, container) {
         } else {
             selectedQuestionIndexes.delete(questionIndex);
         }
-        updateSelectionControls();
+        updatePanelState();
     });
     questionDiv.appendChild(checkbox);
 
