@@ -76,7 +76,7 @@
 
         #pro-action-row {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) auto;
+            grid-template-columns: minmax(0, 1fr) auto auto;
             gap: 12px;
             align-items: center;
             margin-bottom: 16px;
@@ -136,6 +136,11 @@
 
         .pro-action-button.activate {
             background: #ef4444;
+            color: #ffffff;
+        }
+
+        .pro-action-button.purchase {
+            background: var(--accent-green);
             color: #ffffff;
         }
 
@@ -492,6 +497,7 @@
     <div id="site-info"></div>
     <div id="pro-action-row">
         <div id="pro-mode-label">Pro用户可选择部分导出</div>
+        <button id="pro-purchase-action" class="pro-action-button purchase">购买Pro</button>
         <button id="pro-mode-action" class="pro-action-button activate">激活Pro</button>
     </div>
     <div id="export-status" aria-live="polite"></div>

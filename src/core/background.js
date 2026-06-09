@@ -156,7 +156,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         handleExportFullChat()
             .then(result => sendResponse({ success: true, ...result }))
             .catch(error => {
-                console.error('AI Chat Knowledge Suite export failed:', error);
+                console.error('AI Chat Export Pro export failed:', error);
                 chrome.notifications.create({
                     type: 'basic',
                     iconUrl: 'public/assets/icon48.png',
@@ -172,7 +172,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         handleExportSelectedChat(request.questionIndexes || [])
             .then(result => sendResponse({ success: true, ...result }))
             .catch(error => {
-                console.error('AI Chat Knowledge Suite selected export failed:', error);
+                console.error('AI Chat Export Pro selected export failed:', error);
                 sendResponse({ success: false, error: error.message });
             });
         return true;

@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2026-06-09
+
+### Changed
+
+- Rename the GitHub repository to `AI-Chat-Export-Pro`.
+- Update README clone instructions for the new repository URL.
+- Publish the v2.0.1 package as `ai-chat-export-pro-v2.0.1.zip`.
+
+## [2.0.0] - 2026-06-08
+
+### Changed
+
+- Rename the public extension brand to AI Chat Export Pro.
+- Position v2.0.0 as the AI Chat Outline successor that combines outline navigation, full Markdown export, and Pro selected conversation export.
+- Update packaging output to `ai-chat-export-pro-v2.0.0.zip`.
+
 ## [1.6.1] - 2026-06-04
 
 ### Fixed

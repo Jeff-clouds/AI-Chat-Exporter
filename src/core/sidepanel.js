@@ -8,6 +8,7 @@ let currentOutlineData = [];
 let licenseStatusState = { active: false, plan: 'free' };
 let exportInProgress = false;
 const selectedQuestionIndexes = new Set();
+const PURCHASE_URL = 'https://wj.qq.com/s2/26957751/9rvt/';
 
 const SUPPORTED_URL_SNIPPETS = [
     'deepseek.com',
@@ -165,8 +166,15 @@ function getQuestionIndex(question) {
 }
 
 function initializePanelActionControls() {
+    const purchaseButton = document.getElementById('pro-purchase-action');
     const proActionButton = document.getElementById('pro-mode-action');
     const bottomExportButton = document.getElementById('bottom-export-btn');
+
+    if (purchaseButton) {
+        purchaseButton.addEventListener('click', () => {
+            chrome.tabs.create({ url: PURCHASE_URL });
+        });
+    }
 
     if (proActionButton) {
         proActionButton.addEventListener('click', () => {
@@ -246,6 +254,7 @@ function activateProLicense(triggerButton) {
 
 function updatePanelState() {
     const proLabel = document.getElementById('pro-mode-label');
+    const purchaseButton = document.getElementById('pro-purchase-action');
     const proActionButton = document.getElementById('pro-mode-action');
     const bottomExportButton = document.getElementById('bottom-export-btn');
     const selectedCount = selectedQuestionIndexes.size;
@@ -253,6 +262,11 @@ function updatePanelState() {
 
     if (proLabel) {
         proLabel.textContent = isPro ? 'Pro用户' : 'Pro用户可选择部分导出';
+    }
+
+    if (purchaseButton) {
+        purchaseButton.hidden = isPro;
+        purchaseButton.disabled = exportInProgress;
     }
 
     if (proActionButton) {

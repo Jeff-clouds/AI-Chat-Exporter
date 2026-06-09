@@ -11,6 +11,7 @@ scripts废弃/
 .trae/
 .qoder/
 .lingma/
+private-docs/
 
 # IDE
 .vscode/

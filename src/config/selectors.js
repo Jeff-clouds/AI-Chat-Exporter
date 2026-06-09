@@ -213,10 +213,10 @@ class SelectorManager {
                     GENERIC: this.platforms.GENERIC
                 };
                 this.isLoaded = true;
-                console.log('AI Chat Knowledge Suite: Selector configuration loaded from JSON');
+                console.log('AI Chat Export Pro: Selector configuration loaded from JSON');
             }
         } catch (err) {
-            console.warn('AI Chat Knowledge Suite: Failed to load selectors.json, using hardcoded fallback', err);
+            console.warn('AI Chat Export Pro: Failed to load selectors.json, using hardcoded fallback', err);
         }
     }
 

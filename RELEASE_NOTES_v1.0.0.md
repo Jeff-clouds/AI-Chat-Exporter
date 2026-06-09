@@ -1,4 +1,4 @@
-# v1.0.0: AI Chat Knowledge Suite
+# v1.0.0: AI Chat Export Pro predecessor
 
 ## 主要变化
 

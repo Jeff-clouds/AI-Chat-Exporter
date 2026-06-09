@@ -1,4 +1,4 @@
-# AI Chat Knowledge Suite 隐私政策 / Privacy Policy
+# AI Chat Export Pro 隐私政策 / Privacy Policy
 
 ## 中文版本
 
@@ -107,4 +107,4 @@ If you have any questions about this privacy policy, please contact us at [94018
 
 ---
 
-最后更新日期 / Last Updated: 2026-06-05
+最后更新日期 / Last Updated: 2026-06-08

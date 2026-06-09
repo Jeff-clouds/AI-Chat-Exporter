@@ -1,6 +1,6 @@
-# AI Chat Knowledge Suite 架构文档 (v1.0.0)
+# AI Chat Export Pro 架构文档 (v2.0.1)
 
-本文档详细说明了 AI Chat Knowledge Suite 扩展程序的架构设计。当前版本以原 Outline 的侧边栏大纲为主入口，并合并 Exporter 的完整 Markdown 导出管线。
+本文档详细说明了 AI Chat Export Pro 扩展程序的架构设计。v2.0.1 是原 AI Chat Outline 的迭代合并版，以侧边栏大纲为主入口，并合并完整 Markdown 导出与 Pro 局部导出能力。
 
 ## 1. 核心设计理念
 
@@ -90,5 +90,5 @@ const newPlatformConfig = {
 提供底层支持，其中 `getCurrentSite` 仅用于一些辅助判断，核心识别逻辑已移交 `Pipeline` 类处理，实现了逻辑解耦。
 
 ## 5. 验证与调试
-*   **Console 日志**: Pipeline 初始化时会打印 `AI Chat Knowledge Suite: Identified platform [Name]`，用于确认配置是否生效。
+*   **Console 日志**: Pipeline 初始化时会打印 `AI Chat Export Pro: Identified platform [Name]`，用于确认配置是否生效。
 *   **清理机制**: `content.js` 在重新注入前会调用 `window.chatNavigatorCleanup()`，防止 `MutationObserver` 重复绑定导致性能问题。

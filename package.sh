@@ -6,9 +6,9 @@
 set -e
 
 VERSION=$(grep '"version"' manifest.json | sed 's/.*"version": "\(.*\)".*/\1/')
-FILENAME="ai-chat-knowledge-suite-v${VERSION}.zip"
+FILENAME="ai-chat-export-pro-v${VERSION}.zip"
 
-echo "📦 打包 AI Chat Knowledge Suite 扩展..."
+echo "📦 打包 AI Chat Export Pro 扩展..."
 echo "版本: ${VERSION}"
 echo "输出文件: ${FILENAME}"
 echo ""
@@ -23,6 +23,7 @@ zip -r "${FILENAME}" \
   public/ \
   -x "*.git*" \
   -x "*.DS_Store" \
+  -x "private-docs/*" \
   -x "*.md" \
   -x "*.txt" \
   -x "优化总结.md" \

@@ -6,7 +6,7 @@
         try {
             window.chatNavigatorCleanup();
         } catch (err) {
-            console.warn('AI Chat Knowledge Suite: Ignored stale cleanup error', err);
+            console.warn('AI Chat Export Pro: Ignored stale cleanup error', err);
         }
     }
 

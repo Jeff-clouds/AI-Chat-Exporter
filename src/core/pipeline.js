@@ -4,12 +4,12 @@ window.Pipeline = class Pipeline {
     constructor() {
         this.config = this._getPlatformConfig(window.location.href);
         if (this.config) {
-            console.log(`AI Chat Knowledge Suite: Identified platform ${this.config.name}`);
+            console.log(`AI Chat Export Pro: Identified platform ${this.config.name}`);
         } else {
             // 回退到通用配置
             this.config = window.SELECTORS.GENERIC;
             this.platformId = 'GENERIC';
-            console.log('AI Chat Knowledge Suite: No matching platform found, using Generic mode');
+            console.log('AI Chat Export Pro: No matching platform found, using Generic mode');
         }
     }
 
@@ -83,7 +83,7 @@ window.Pipeline = class Pipeline {
             
             return { outline, diagnostics };
         } catch (err) {
-            console.error('AI Chat Knowledge Suite: Extraction error', err);
+            console.error('AI Chat Export Pro: Extraction error', err);
             diagnostics.error = err.message;
             return { outline: [], diagnostics };
         }
