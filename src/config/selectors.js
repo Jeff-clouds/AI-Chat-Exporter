@@ -112,9 +112,9 @@ const doubaoConfig = {
     conversation: null,
     title: 'div.group\\/title',
     question: 'div[class*="send-msg-bubble"], div[class*="bg-g-send-msg-bubble-bg"]',
-    answer: 'div[class*="conversation-page-message-host"]',
+    answer: 'div[class*="md-box-root"]',
     thinking: null,
-    markdownBlock: 'div[class*="conversation-page-message-host"]', // 回答内容容器
+    markdownBlock: 'div[class*="md-box-root"]', // 回答内容容器（2026-06-07 更新，旧 conversation-page-message-host 已失效）
     search: '', // 豆包暂无搜索结果独立区块
     cleanupSelectors: [
       'div[class*="send-msg-bubble"]', // 去掉嵌在回答宿主中的提问气泡
@@ -141,7 +141,7 @@ const geminiConfig = {
   urlPatterns: ['gemini.google.com'],
   selectors: {
     conversation: '.conversation-container',
-    title: '.conversation-title-container',
+    title: null,
     question: '.user-query-container',
     answer: '.response-container',
     thinking: null,
@@ -149,7 +149,7 @@ const geminiConfig = {
   },
 
   features: {
-    // Gemini 最简单，只需要基本的内容提取
+    titleFromDocumentTitle: true
   }
 };
 
@@ -243,6 +243,10 @@ export function extractUnifiedData(url) {
   if (selectors.title) {
     const titleEl = document.querySelector(selectors.title);
     title = titleEl?.textContent?.trim() || title;
+  }
+
+  if (features.titleFromDocumentTitle && document.title?.trim()) {
+    title = document.title.trim().replace(/\s+-\s+Google Gemini$/, '');
   }
 
   // 1. 优先尝试使用嵌套模式 (Conversation Item)

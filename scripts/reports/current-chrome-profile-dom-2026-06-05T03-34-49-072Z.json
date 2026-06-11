@@ -1,0 +1,2874 @@
+{
+  "timestamp": "2026-06-05T03:34:48.505Z",
+  "scope": "DOM selector audit via current Chrome profile and Apple Events; extension runtime was not tested",
+  "platforms": [
+    {
+      "key": "deepseek",
+      "name": "DeepSeek",
+      "targetUrl": "https://chat.deepseek.com/a/chat/s/c731cccb-0f0d-4993-9332-3e86299d81db",
+      "elapsedMs": 8533,
+      "overall": "AUDITED",
+      "page": {
+        "title": "幸运礼物动效",
+        "url": "https://shimo.im/sheets/28vBw8LJkkKXCCIy/D91uE",
+        "bodyTextLength": 89,
+        "bodySample": "表格将自动保存 免费试用企业版，开启顶级安全管控 更多权益 协作 分享 独立视图关注选区 编辑插入格式公式数据查看表单工具帮助 常规字体 ) 幸运礼物动效 开发排期表 100%",
+        "needsLogin": false,
+        "securityChallenge": false,
+        "headingCount": 1
+      },
+      "exporter": {
+        "title": {
+          "selector": ".f8d1e4c0",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": ".f8d1e4c0",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "question": {
+          "selector": "._9663006",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": "._9663006",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "answer": {
+          "selector": "._4f9bf79._43c05b5",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": "._4f9bf79._43c05b5",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "thinking": {
+          "selector": ".ds-think-content, ._74c0879",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": ".ds-think-content",
+              "elements": 0
+            },
+            {
+              "selector": "._74c0879",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "search": {
+          "selector": ".a6d716f5.db5991dd",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": ".a6d716f5.db5991dd",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "markdownBlock": {
+          "selector": ".ds-markdown",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": ".ds-markdown",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "codeBlock": {
+          "selector": ".md-code-block",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": ".md-code-block",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "codeLanguage": {
+          "selector": ".md-code-block-infostring",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": ".md-code-block-infostring",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        }
+      },
+      "outline": {
+        "title": {
+          "selector": ".f8d1e4c0",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": ".f8d1e4c0",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "question": {
+          "selector": "._9663006",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": "._9663006",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "answer": {
+          "selector": "._4f9bf79._43c05b5",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": "._4f9bf79._43c05b5",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "thinking": {
+          "selector": ".ds-think-content, ._74c0879",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": ".ds-think-content",
+              "elements": 0
+            },
+            {
+              "selector": "._74c0879",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "HEADINGS": {
+          "selector": "h1, h2, h3, h4, h5, h6",
+          "valid": true,
+          "elements": 1,
+          "partCounts": [
+            {
+              "selector": "h1",
+              "elements": 0
+            },
+            {
+              "selector": "h2",
+              "elements": 0
+            },
+            {
+              "selector": "h3",
+              "elements": 0
+            },
+            {
+              "selector": "h4",
+              "elements": 1
+            },
+            {
+              "selector": "h5",
+              "elements": 0
+            },
+            {
+              "selector": "h6",
+              "elements": 0
+            }
+          ],
+          "status": "PASS"
+        }
+      },
+      "samples": {
+        "[data-testid]": [],
+        "[data-turn]": [],
+        "[data-message-author-role]": [],
+        "[role]": [
+          {
+            "tag": "div",
+            "path": "div.sm-sheet-view.sm-sheet-fx-enable.sm-sheet-no-select > div.sm-sheet-popovers-container > div > div.validation_dropdown > div.ReactVirtualized__Grid.ReactVirtualized__List.validation_dropdown_list",
+            "className": "ReactVirtualized__Grid ReactVirtualized__List validation_dropdown_list",
+            "dataTestId": null,
+            "role": "grid",
+            "ariaLabel": "grid",
+            "text": ""
+          },
+          {
+            "tag": "div",
+            "path": "div.sm-sheet-footer-left > div.sm-sheet-tab-container > div.sm-sheet-tab-list-container > div.sm-sheet-tab-list.scrollable-tab-list > div#sheet-tab-D91uE.sm-sheet-tab-item.active-tab",
+            "className": "sm-sheet-tab-item active-tab",
+            "dataTestId": null,
+            "role": "button",
+            "ariaLabel": null,
+            "text": "开发排期表"
+          }
+        ],
+        "article": [],
+        "message-content": [],
+        "user-query": [],
+        "model-response": [],
+        ".markdown": [],
+        ".markdown-main-panel": [],
+        ".ds-markdown": [],
+        ".hyc-common-markdown": [],
+        "[class*=\"message\" i]": [],
+        "[class*=\"chat\" i]": [],
+        "[class*=\"bubble\" i]": [],
+        "[class*=\"assistant\" i]": [],
+        "[class*=\"user\" i]": [
+          {
+            "tag": "div",
+            "path": "div.Page-sc-1sJFkd.efsfrn > div.file-page-header > div.StyledHeader-sc-1VnJGV.cSyWpz.page-header-container > div.StyledRightHeader-sc-1VnJGV-2.gkXHwA.page-header-right > div.StyledUserMenuWrapper-sc-1VnJGV-3.cxDEkf",
+            "className": "StyledUserMenuWrapper-sc-1VnJGV-3 cxDEkf",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "更多权益"
+          }
+        ],
+        "[class*=\"markdown\" i]": [],
+        "[class*=\"conversation\" i]": [],
+        "[class*=\"think\" i]": []
+      }
+    },
+    {
+      "key": "yuanbao",
+      "name": "YuanBao",
+      "targetUrl": "https://yuanbao.tencent.com/chat/naQivTmsDa/105fec2b-3cf5-4382-92d7-e09e60da4b7b",
+      "elapsedMs": 7767,
+      "overall": "AUDITED",
+      "page": {
+        "title": "朋友开业送花篮是否署名",
+        "url": "https://yuanbao.tencent.com/chat/naQivTmsDa/105fec2b-3cf5-4382-92d7-e09e60da4b7b",
+        "bodyTextLength": 3360,
+        "bodySample": "搜索 元宝 口语陪练 全部应用 全部收藏 分组 微信元宝 UI 个人思考 更多分组 (5) 聊天 公众号与微信读书划线同步方法 六一儿童节涂鸦风格元素制作 美区礼品卡支付渠道差异对比 交通违法上报查询时间 公司开业是否随礼红包 朋友开业送花篮是否署名 中国科技行业黑色名片设计 18号搬入签临时协议 龙虾智能体热潮解析 OpenClaw免费向量模型支持 插件禁用但配置残留警告 国内免费静态网站托管服务 Pureref调整窗口透明度方法 阿里云腾讯云服务器类型及用途 Au9995报价高于9999原因 3D雪夜烟花写实生图 帮我生成图片:祈福红包封面 帮我生成图片:国风珠宝马 帮我生成图片:古风小马",
+        "needsLogin": false,
+        "securityChallenge": false,
+        "headingCount": 3
+      },
+      "exporter": {
+        "title": {
+          "selector": ".agent-dialogue__content--common__header",
+          "valid": true,
+          "elements": 1,
+          "partCounts": [
+            {
+              "selector": ".agent-dialogue__content--common__header",
+              "elements": 1
+            }
+          ],
+          "status": "PASS"
+        },
+        "question": {
+          "selector": ".agent-chat__bubble--human",
+          "valid": true,
+          "elements": 3,
+          "partCounts": [
+            {
+              "selector": ".agent-chat__bubble--human",
+              "elements": 3
+            }
+          ],
+          "status": "PASS"
+        },
+        "answer": {
+          "selector": ".agent-chat__bubble--ai",
+          "valid": true,
+          "elements": 3,
+          "partCounts": [
+            {
+              "selector": ".agent-chat__bubble--ai",
+              "elements": 3
+            }
+          ],
+          "status": "PASS"
+        },
+        "thinking": {
+          "selector": ".hyc-component-deepsearch-cot__think, .hyc-component-reasoner__think",
+          "valid": true,
+          "elements": 3,
+          "partCounts": [
+            {
+              "selector": ".hyc-component-deepsearch-cot__think",
+              "elements": 3
+            },
+            {
+              "selector": ".hyc-component-reasoner__think",
+              "elements": 0
+            }
+          ],
+          "status": "PASS"
+        },
+        "markdownBlock": {
+          "selector": ".hyc-common-markdown",
+          "valid": true,
+          "elements": 7,
+          "partCounts": [
+            {
+              "selector": ".hyc-common-markdown",
+              "elements": 7
+            }
+          ],
+          "status": "PASS"
+        },
+        "codeBlock": {
+          "selector": ".hyc-common-markdown__code pre.hyc-common-markdown__code-lan",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": ".hyc-common-markdown__code pre.hyc-common-markdown__code-lan",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "codeLanguage": {
+          "selector": ".hyc-common-markdown__code__hd__l",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": ".hyc-common-markdown__code__hd__l",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        }
+      },
+      "outline": {
+        "title": {
+          "selector": ".agent-dialogue__content--common__header",
+          "valid": true,
+          "elements": 1,
+          "partCounts": [
+            {
+              "selector": ".agent-dialogue__content--common__header",
+              "elements": 1
+            }
+          ],
+          "status": "PASS"
+        },
+        "question": {
+          "selector": ".agent-chat__bubble--human",
+          "valid": true,
+          "elements": 3,
+          "partCounts": [
+            {
+              "selector": ".agent-chat__bubble--human",
+              "elements": 3
+            }
+          ],
+          "status": "PASS"
+        },
+        "answer": {
+          "selector": ".agent-chat__bubble--ai",
+          "valid": true,
+          "elements": 3,
+          "partCounts": [
+            {
+              "selector": ".agent-chat__bubble--ai",
+              "elements": 3
+            }
+          ],
+          "status": "PASS"
+        },
+        "thinking": {
+          "selector": ".hyc-component-deepsearch-cot__think, .hyc-component-reasoner__think",
+          "valid": true,
+          "elements": 3,
+          "partCounts": [
+            {
+              "selector": ".hyc-component-deepsearch-cot__think",
+              "elements": 3
+            },
+            {
+              "selector": ".hyc-component-reasoner__think",
+              "elements": 0
+            }
+          ],
+          "status": "PASS"
+        },
+        "HEADINGS": {
+          "selector": "h1, h2, h3, h4, h5, h6",
+          "valid": true,
+          "elements": 3,
+          "partCounts": [
+            {
+              "selector": "h1",
+              "elements": 0
+            },
+            {
+              "selector": "h2",
+              "elements": 0
+            },
+            {
+              "selector": "h3",
+              "elements": 3
+            },
+            {
+              "selector": "h4",
+              "elements": 0
+            },
+            {
+              "selector": "h5",
+              "elements": 0
+            },
+            {
+              "selector": "h6",
+              "elements": 0
+            }
+          ],
+          "status": "PASS"
+        }
+      },
+      "samples": {
+        "[data-testid]": [
+          {
+            "tag": "div",
+            "path": "div > div.style__text-area__actions___S50n4 > div.style__text-area__toolbar___yAF6v > div#toolbar-btn-wrapper > div",
+            "className": "",
+            "dataTestId": "upload-file-selector",
+            "role": null,
+            "ariaLabel": null,
+            "text": ""
+          }
+        ],
+        "[data-turn]": [],
+        "[data-message-author-role]": [],
+        "[role]": [
+          {
+            "tag": "span",
+            "path": "div.agent-dialogue > div.agent-dialogue__content-wrapper > div.agent-dialogue__content > div.SplitPane.agent-dialogue__content-split-pane.vertical > span.Resizer.vertical",
+            "className": "Resizer vertical ",
+            "dataTestId": null,
+            "role": "presentation",
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "p",
+            "path": "html.yb-layout__content-skeleton--sayhi-empty > body#hunyuan-bot > next-route-announcer > p#__next-route-announcer__",
+            "className": "",
+            "dataTestId": null,
+            "role": "alert",
+            "ariaLabel": null,
+            "text": ""
+          }
+        ],
+        "article": [],
+        "message-content": [],
+        "user-query": [],
+        "model-response": [],
+        ".markdown": [],
+        ".markdown-main-panel": [],
+        ".ds-markdown": [],
+        ".hyc-common-markdown": [
+          {
+            "tag": "div",
+            "path": "div.hyc-component-deepsearch-cot__think.hyc-component-deepsearch-cot__think--inline > div.hyc-component-deepsearch-cot__think__content > div.hyc-component-deepsearch-cot__think__content__item.hyc-component-deepsearch-cot__think__content__item-text.hyc-component-deepsearch-cot__think__content__item--last > div.hyc-content-md.hyc-content-md-done > div.hyc-common-markdown.hyc-common-markdown-style.hyc-common-markdown-style-cot",
+            "className": "hyc-common-markdown hyc-common-markdown-style hyc-common-markdown-style-cot",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "好的，用户问朋友开业送花篮要不要署名。这是一个关于社交礼仪的简单问题，但涉及人情世故，需要明确回答。 用户的核心需求很直接，就是想知道送花篮时署名的必要性。这属于简单问题类型，不需要复杂分析。 从社交礼仪来看，署名是基本要求。不署名的话，朋友可能不知道是谁送的，心意就白费了。特别是开业场合，花篮既是祝贺也是宣传，署名能让来宾看到朋友的人脉。 用户可能还隐含了"
+          },
+          {
+            "tag": "div",
+            "path": "div > div.agent-chat__speech-text--box.agent-chat__speech-text--box-left > div.hyc-component-deepsearch-cot > div.hyc-content-md.hyc-content-md-done > div.hyc-common-markdown.hyc-common-markdown-style",
+            "className": "hyc-common-markdown hyc-common-markdown-style",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "要署名。 这是基本礼仪，能让朋友清楚知道是你送的心意，也方便他日后答谢。通常用红绸带写上贺词和落款，比如“开业大吉——友[你的名字]敬贺”。如果以公司名义送，则加上公司名称。"
+          },
+          {
+            "tag": "div",
+            "path": "div.hyc-component-deepsearch-cot__think.hyc-component-deepsearch-cot__think--inline > div.hyc-component-deepsearch-cot__think__content > div.hyc-component-deepsearch-cot__think__content__item.hyc-component-deepsearch-cot__think__content__item-text.hyc-component-deepsearch-cot__think__content__item--last > div.hyc-content-md.hyc-content-md-done > div.hyc-common-markdown.hyc-common-markdown-style.hyc-common-markdown-style-cot",
+            "className": "hyc-common-markdown hyc-common-markdown-style hyc-common-markdown-style-cot",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "好的，用户现在问花篮能不能提前送。之前已经讨论过开业送花篮要署名的问题，现在用户可能是在安排送礼的时间，想知道提前送是否合适。 首先，需要理解用户的核心需求。用户的朋友即将开业，用户可能想提前安排，避免当天太忙或者忘记。也可能担心提前送会不会不符合礼仪，影响祝福的效果。 接下来，确定问题的类型。这属于礼仪和实际操作结合的问题，需要给出明确建议，同时解释原因，"
+          },
+          {
+            "tag": "div",
+            "path": "div > div.agent-chat__speech-text--box.agent-chat__speech-text--box-left > div.hyc-component-deepsearch-cot > div.hyc-content-md.hyc-content-md-done > div.hyc-common-markdown.hyc-common-markdown-style",
+            "className": "hyc-common-markdown hyc-common-markdown-style",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "可以提前送，但时间点很重要。 最佳选择是提前一天送达，这样朋友有充足时间布置，确保开业当天一早就能展示出来，喜庆效果最好。 具体建议： 1. 提前预订：至少提前2-3天向花店预订，确认款式、贺词和准确的送达时间。 2. 明确送达时间：要求花店在开业前一天下午或开业当天清晨送达。避免提前太多（如提前两三天），否则鲜花可能不够新鲜。 3. 务必沟通：提前告诉朋友"
+          },
+          {
+            "tag": "div",
+            "path": "div.hyc-component-deepsearch-cot__think.hyc-component-deepsearch-cot__think--inline > div.hyc-component-deepsearch-cot__think__content > div.hyc-component-deepsearch-cot__think__content__item.hyc-component-deepsearch-cot__think__content__item-text > div.hyc-content-md.hyc-content-md-done > div.hyc-common-markdown.hyc-common-markdown-style.hyc-common-markdown-style-cot",
+            "className": "hyc-common-markdown hyc-common-markdown-style hyc-common-markdown-style-cot",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "用户问花篮是否可以提前送，我之前回答可以，并建议提前一天送达。现在用户提到“小红书网友说不能提前送”，这需要核实一下网上的说法。用户可能看到了不同的观点，想确认哪种做法更合适。我需要搜索相关信息来了解不同观点，并给出合理的建议。 考虑到这是一个关于礼仪习俗的问题，而且用户提到了具体平台（小红书）上的观点，我应该搜索“开业花篮 提前送 礼仪”或“开业花篮 提前"
+          },
+          {
+            "tag": "div",
+            "path": "div.hyc-component-deepsearch-cot__think.hyc-component-deepsearch-cot__think--inline > div.hyc-component-deepsearch-cot__think__content > div.hyc-component-deepsearch-cot__think__content__item.hyc-component-deepsearch-cot__think__content__item-text.hyc-component-deepsearch-cot__think__content__item--last > div.hyc-content-md.hyc-content-md-done > div.hyc-common-markdown.hyc-common-markdown-style.hyc-common-markdown-style-cot",
+            "className": "hyc-common-markdown hyc-common-markdown-style hyc-common-markdown-style-cot",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "用户提到“小红书网友说不能提前送”，这与之前我回答的“可以提前送”有冲突。我需要查证一下小红书上的观点，以及更广泛的礼仪规范。从搜索结果看，大部分专业花艺网站和礼仪指南都认为可以提前送，但强调时间点很重要。比如“开慕送花篮完整指南”提到“提前送达：小型店面可提前一天送达，但需注意花材保鲜”。花城鲜花网也说“开业送花其实一般需要提前一天送达” 。但也有观点认为"
+          }
+        ],
+        "[class*=\"message\" i]": [],
+        "[class*=\"chat\" i]": [
+          {
+            "tag": "span",
+            "path": "div#app > div.yb-layout.agent-layout.layout-pc.yb-layout--pc-container > div.yb-nav-fixed.yb-nav-fixed--pc-ctx > div.yb-common-nav__trigger > span.yb-icon.iconfont-yb.icon-yb-ic_newchat_20",
+            "className": "yb-icon iconfont-yb icon-yb-ic_newchat_20",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "span",
+            "path": "div.yb-nav.yb-common-nav.yb-nav--pc-ctx.yb-nav--push > div.yb-nav__content-wrapper > div.yb-nav__header.yb-common-nav__hd > div.yb-common-nav__trigger > span.yb-icon.iconfont-yb.icon-yb-ic_newchat_20",
+            "className": "yb-icon iconfont-yb icon-yb-ic_newchat_20",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "div",
+            "path": "div#__next > div#app > div.yb-layout.agent-layout.layout-pc.yb-layout--pc-container > div.yb-layout__content-skeleton > div.yb-layout__chat-skeleton",
+            "className": "yb-layout__chat-skeleton",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "Hi~ 我是元宝你身边的智能助手，可以为你答疑解惑、尽情创作，快来点击以下任一功能体验吧～你可以这样问"
+          },
+          {
+            "tag": "div",
+            "path": "div#app > div.yb-layout.agent-layout.layout-pc.yb-layout--pc-container > div.yb-layout__content-skeleton > div.yb-layout__chat-skeleton > div.yb-layout__chat-skeleton__header",
+            "className": "yb-layout__chat-skeleton__header",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "div",
+            "path": "div.SplitPane.agent-dialogue__content-split-pane.vertical > div.Pane.vertical.Pane1 > div.agent-dialogue__content--common.agent-dialogue__content--common-not-speaking > div#chat-content.agent-dialogue__content--common__content > div.agent-chat__list.agent-chat__list__deepseek",
+            "className": "agent-chat__list agent-chat__list__deepseek",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "朋友开业送花篮要不要署名 已深度思考(用时4秒) 好的，用户问朋友开业送花篮要不要署名。这是一个关于社交礼仪的简单问题，但涉及人情世故，需要明确回答。 用户的核心需求很直接，就是想知道送花篮时署名的必要性。这属于简单问题类型，不需要复杂分析。 从社交礼仪来看，署名是基本要求。不署名的话，朋友可能不知道是谁送的，心意就白费了。特别是开业场合，花篮既是祝贺也是宣"
+          },
+          {
+            "tag": "div",
+            "path": "div.Pane.vertical.Pane1 > div.agent-dialogue__content--common.agent-dialogue__content--common-not-speaking > div#chat-content.agent-dialogue__content--common__content > div.agent-chat__list.agent-chat__list__deepseek > div.agent-chat__list__indicator",
+            "className": "agent-chat__list__indicator",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "点击全选以下消息"
+          }
+        ],
+        "[class*=\"bubble\" i]": [
+          {
+            "tag": "div",
+            "path": "div.agent-chat__list__content-wrapper > div.agent-chat__list__content > div.agent-chat__list__item.agent-chat__list__item--human.agent-chat__list__item--first.agent-chat__list__item--toolbar-show > div.agent-chat__list__item__content > div#cn-q-0.agent-chat__bubble.agent-chat__bubble--human.agent-chat__conv--human",
+            "className": "agent-chat__bubble agent-chat__bubble--human agent-chat__conv--human",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "朋友开业送花篮要不要署名"
+          },
+          {
+            "tag": "div",
+            "path": "div.agent-chat__list__content > div.agent-chat__list__item.agent-chat__list__item--human.agent-chat__list__item--first.agent-chat__list__item--toolbar-show > div.agent-chat__list__item__content > div#cn-q-0.agent-chat__bubble.agent-chat__bubble--human.agent-chat__conv--human > div.agent-chat__bubble__prefix",
+            "className": "agent-chat__bubble__prefix",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "div",
+            "path": "div.agent-chat__list__content > div.agent-chat__list__item.agent-chat__list__item--human.agent-chat__list__item--first.agent-chat__list__item--toolbar-show > div.agent-chat__list__item__content > div#cn-q-0.agent-chat__bubble.agent-chat__bubble--human.agent-chat__conv--human > div.agent-chat__bubble__content-wrapper",
+            "className": "agent-chat__bubble__content-wrapper",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "朋友开业送花篮要不要署名"
+          },
+          {
+            "tag": "div",
+            "path": "div.agent-chat__list__item.agent-chat__list__item--human.agent-chat__list__item--first.agent-chat__list__item--toolbar-show > div.agent-chat__list__item__content > div#cn-q-0.agent-chat__bubble.agent-chat__bubble--human.agent-chat__conv--human > div.agent-chat__bubble__content-wrapper > div.agent-chat__bubble__content",
+            "className": "agent-chat__bubble__content",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "朋友开业送花篮要不要署名"
+          },
+          {
+            "tag": "div",
+            "path": "div.agent-chat__list__item.agent-chat__list__item--human.agent-chat__list__item--first.agent-chat__list__item--toolbar-show > div.agent-chat__list__item__content > div#cn-q-0.agent-chat__bubble.agent-chat__bubble--human.agent-chat__conv--human > div.agent-chat__bubble__content-wrapper > div.agent-chat__bubble__content-after",
+            "className": "agent-chat__bubble__content-after",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "div",
+            "path": "div.agent-chat__list__content > div.agent-chat__list__item.agent-chat__list__item--human.agent-chat__list__item--first.agent-chat__list__item--toolbar-show > div.agent-chat__list__item__content > div#cn-q-0.agent-chat__bubble.agent-chat__bubble--human.agent-chat__conv--human > div.agent-chat__bubble__suffix",
+            "className": "agent-chat__bubble__suffix",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": ""
+          }
+        ],
+        "[class*=\"assistant\" i]": [],
+        "[class*=\"user\" i]": [
+          {
+            "tag": "div",
+            "path": "div.yb-layout.agent-layout.layout-pc.yb-layout--pc-container > div.yb-nav.yb-common-nav.yb-nav--pc-ctx.yb-nav--push > div.yb-nav__content-wrapper > div.yb-nav__footer > div.yb-nav__user",
+            "className": "yb-nav__user",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "阿凡提"
+          },
+          {
+            "tag": "div",
+            "path": "div.yb-nav.yb-common-nav.yb-nav--pc-ctx.yb-nav--push > div.yb-nav__content-wrapper > div.yb-nav__footer > div.yb-nav__user > div.yb-nav__user-skeleton.yb-nav__user-skeleton--hide",
+            "className": "yb-nav__user-skeleton yb-nav__user-skeleton--hide",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": ""
+          }
+        ],
+        "[class*=\"markdown\" i]": [
+          {
+            "tag": "div",
+            "path": "div.hyc-component-deepsearch-cot__think.hyc-component-deepsearch-cot__think--inline > div.hyc-component-deepsearch-cot__think__content > div.hyc-component-deepsearch-cot__think__content__item.hyc-component-deepsearch-cot__think__content__item-text.hyc-component-deepsearch-cot__think__content__item--last > div.hyc-content-md.hyc-content-md-done > div.hyc-common-markdown.hyc-common-markdown-style.hyc-common-markdown-style-cot",
+            "className": "hyc-common-markdown hyc-common-markdown-style hyc-common-markdown-style-cot",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "好的，用户问朋友开业送花篮要不要署名。这是一个关于社交礼仪的简单问题，但涉及人情世故，需要明确回答。 用户的核心需求很直接，就是想知道送花篮时署名的必要性。这属于简单问题类型，不需要复杂分析。 从社交礼仪来看，署名是基本要求。不署名的话，朋友可能不知道是谁送的，心意就白费了。特别是开业场合，花篮既是祝贺也是宣传，署名能让来宾看到朋友的人脉。 用户可能还隐含了"
+          },
+          {
+            "tag": "div",
+            "path": "div > div.agent-chat__speech-text--box.agent-chat__speech-text--box-left > div.hyc-component-deepsearch-cot > div.hyc-content-md.hyc-content-md-done > div.hyc-common-markdown.hyc-common-markdown-style",
+            "className": "hyc-common-markdown hyc-common-markdown-style",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "要署名。 这是基本礼仪，能让朋友清楚知道是你送的心意，也方便他日后答谢。通常用红绸带写上贺词和落款，比如“开业大吉——友[你的名字]敬贺”。如果以公司名义送，则加上公司名称。"
+          },
+          {
+            "tag": "div",
+            "path": "div.hyc-component-deepsearch-cot__think.hyc-component-deepsearch-cot__think--inline > div.hyc-component-deepsearch-cot__think__content > div.hyc-component-deepsearch-cot__think__content__item.hyc-component-deepsearch-cot__think__content__item-text.hyc-component-deepsearch-cot__think__content__item--last > div.hyc-content-md.hyc-content-md-done > div.hyc-common-markdown.hyc-common-markdown-style.hyc-common-markdown-style-cot",
+            "className": "hyc-common-markdown hyc-common-markdown-style hyc-common-markdown-style-cot",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "好的，用户现在问花篮能不能提前送。之前已经讨论过开业送花篮要署名的问题，现在用户可能是在安排送礼的时间，想知道提前送是否合适。 首先，需要理解用户的核心需求。用户的朋友即将开业，用户可能想提前安排，避免当天太忙或者忘记。也可能担心提前送会不会不符合礼仪，影响祝福的效果。 接下来，确定问题的类型。这属于礼仪和实际操作结合的问题，需要给出明确建议，同时解释原因，"
+          },
+          {
+            "tag": "div",
+            "path": "div > div.agent-chat__speech-text--box.agent-chat__speech-text--box-left > div.hyc-component-deepsearch-cot > div.hyc-content-md.hyc-content-md-done > div.hyc-common-markdown.hyc-common-markdown-style",
+            "className": "hyc-common-markdown hyc-common-markdown-style",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "可以提前送，但时间点很重要。 最佳选择是提前一天送达，这样朋友有充足时间布置，确保开业当天一早就能展示出来，喜庆效果最好。 具体建议： 1. 提前预订：至少提前2-3天向花店预订，确认款式、贺词和准确的送达时间。 2. 明确送达时间：要求花店在开业前一天下午或开业当天清晨送达。避免提前太多（如提前两三天），否则鲜花可能不够新鲜。 3. 务必沟通：提前告诉朋友"
+          },
+          {
+            "tag": "div",
+            "path": "div.hyc-component-deepsearch-cot__think.hyc-component-deepsearch-cot__think--inline > div.hyc-component-deepsearch-cot__think__content > div.hyc-component-deepsearch-cot__think__content__item.hyc-component-deepsearch-cot__think__content__item-text > div.hyc-content-md.hyc-content-md-done > div.hyc-common-markdown.hyc-common-markdown-style.hyc-common-markdown-style-cot",
+            "className": "hyc-common-markdown hyc-common-markdown-style hyc-common-markdown-style-cot",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "用户问花篮是否可以提前送，我之前回答可以，并建议提前一天送达。现在用户提到“小红书网友说不能提前送”，这需要核实一下网上的说法。用户可能看到了不同的观点，想确认哪种做法更合适。我需要搜索相关信息来了解不同观点，并给出合理的建议。 考虑到这是一个关于礼仪习俗的问题，而且用户提到了具体平台（小红书）上的观点，我应该搜索“开业花篮 提前送 礼仪”或“开业花篮 提前"
+          },
+          {
+            "tag": "div",
+            "path": "div.hyc-component-deepsearch-cot__think.hyc-component-deepsearch-cot__think--inline > div.hyc-component-deepsearch-cot__think__content > div.hyc-component-deepsearch-cot__think__content__item.hyc-component-deepsearch-cot__think__content__item-text.hyc-component-deepsearch-cot__think__content__item--last > div.hyc-content-md.hyc-content-md-done > div.hyc-common-markdown.hyc-common-markdown-style.hyc-common-markdown-style-cot",
+            "className": "hyc-common-markdown hyc-common-markdown-style hyc-common-markdown-style-cot",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "用户提到“小红书网友说不能提前送”，这与之前我回答的“可以提前送”有冲突。我需要查证一下小红书上的观点，以及更广泛的礼仪规范。从搜索结果看，大部分专业花艺网站和礼仪指南都认为可以提前送，但强调时间点很重要。比如“开慕送花篮完整指南”提到“提前送达：小型店面可提前一天送达，但需注意花材保鲜”。花城鲜花网也说“开业送花其实一般需要提前一天送达” 。但也有观点认为"
+          }
+        ],
+        "[class*=\"conversation\" i]": [],
+        "[class*=\"think\" i]": [
+          {
+            "tag": "div",
+            "path": "div.agent-chat__conv--ai__speech_show > div > div.agent-chat__speech-text--box.agent-chat__speech-text--box-left > div.hyc-component-deepsearch-cot > div.hyc-component-deepsearch-cot__think.hyc-component-deepsearch-cot__think--inline",
+            "className": "hyc-component-deepsearch-cot__think hyc-component-deepsearch-cot__think--inline",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "已深度思考(用时4秒) 好的，用户问朋友开业送花篮要不要署名。这是一个关于社交礼仪的简单问题，但涉及人情世故，需要明确回答。 用户的核心需求很直接，就是想知道送花篮时署名的必要性。这属于简单问题类型，不需要复杂分析。 从社交礼仪来看，署名是基本要求。不署名的话，朋友可能不知道是谁送的，心意就白费了。特别是开业场合，花篮既是祝贺也是宣传，署名能让来宾看到朋友的"
+          },
+          {
+            "tag": "div",
+            "path": "div > div.agent-chat__speech-text--box.agent-chat__speech-text--box-left > div.hyc-component-deepsearch-cot > div.hyc-component-deepsearch-cot__think.hyc-component-deepsearch-cot__think--inline > div.hyc-component-deepsearch-cot__think__header-container",
+            "className": "hyc-component-deepsearch-cot__think__header-container",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "已深度思考(用时4秒)"
+          },
+          {
+            "tag": "div",
+            "path": "div.agent-chat__speech-text--box.agent-chat__speech-text--box-left > div.hyc-component-deepsearch-cot > div.hyc-component-deepsearch-cot__think.hyc-component-deepsearch-cot__think--inline > div.hyc-component-deepsearch-cot__think__header-container > div.hyc-component-deepsearch-cot__think__header",
+            "className": "hyc-component-deepsearch-cot__think__header",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "已深度思考(用时4秒)"
+          },
+          {
+            "tag": "div",
+            "path": "div.hyc-component-deepsearch-cot > div.hyc-component-deepsearch-cot__think.hyc-component-deepsearch-cot__think--inline > div.hyc-component-deepsearch-cot__think__header-container > div.hyc-component-deepsearch-cot__think__header > div#cn-a-0-q-0-h-0.hyc-component-deepsearch-cot__think__header__title",
+            "className": "hyc-component-deepsearch-cot__think__header__title",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "已深度思考(用时4秒)"
+          },
+          {
+            "tag": "div",
+            "path": "div.hyc-component-deepsearch-cot > div.hyc-component-deepsearch-cot__think.hyc-component-deepsearch-cot__think--inline > div.hyc-component-deepsearch-cot__think__header-container > div.hyc-component-deepsearch-cot__think__header > div.hyc-component-deepsearch-cot__think__header__toggle",
+            "className": "hyc-component-deepsearch-cot__think__header__toggle",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "div",
+            "path": "div > div.agent-chat__speech-text--box.agent-chat__speech-text--box-left > div.hyc-component-deepsearch-cot > div.hyc-component-deepsearch-cot__think.hyc-component-deepsearch-cot__think--inline > div.hyc-component-deepsearch-cot__think__content",
+            "className": "hyc-component-deepsearch-cot__think__content",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "好的，用户问朋友开业送花篮要不要署名。这是一个关于社交礼仪的简单问题，但涉及人情世故，需要明确回答。 用户的核心需求很直接，就是想知道送花篮时署名的必要性。这属于简单问题类型，不需要复杂分析。 从社交礼仪来看，署名是基本要求。不署名的话，朋友可能不知道是谁送的，心意就白费了。特别是开业场合，花篮既是祝贺也是宣传，署名能让来宾看到朋友的人脉。 用户可能还隐含了"
+          }
+        ]
+      }
+    },
+    {
+      "key": "chatgpt",
+      "name": "ChatGPT",
+      "targetUrl": "https://chatgpt.com/c/69393a71-a410-8329-b70a-c1bab3d8b2fd",
+      "elapsedMs": 7891,
+      "overall": "AUDITED",
+      "page": {
+        "title": "BoBo · 对对科技",
+        "url": "https://we520.yuque.com/ixzzks",
+        "bodyTextLength": 432,
+        "bodySample": "6 ⌥ code code 对对科技 ⌘ J 开始 AI 写作 收藏 公共区 知识库 新人指南 团队 Xspace蝌蚪 全员团队 BoBo 空间公开页 更多 BoBo 知识库 动态 任务 成员 知识库 知识库 产品需求文档 验收调整点 昨天 19:28 充值等级现金奖励 昨天 19:22 Yogo数数埋点 昨天 18:08 Sogo版本-产品需求文档 线上问题修复 05-27 10:20 Sogo数数埋点 05-19 16:52 SOGO 概率配置 04-30 16:11 印度新项目产品需求 woyalite-数数埋点 06-03 10:43 仅供参考：经济结构设计底层支撑思路 2025-05",
+        "needsLogin": false,
+        "securityChallenge": false,
+        "headingCount": 13
+      },
+      "exporter": {
+        "turn": {
+          "selector": "[data-turn]",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": "[data-turn]",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "question": {
+          "selector": "[data-turn=\"user\"]",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": "[data-turn=\"user\"]",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "answer": {
+          "selector": "[data-turn=\"assistant\"]",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": "[data-turn=\"assistant\"]",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "markdownBlock": {
+          "selector": ".markdown.prose, .markdown",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": ".markdown.prose",
+              "elements": 0
+            },
+            {
+              "selector": ".markdown",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        }
+      },
+      "outline": {
+        "question": {
+          "selector": "[data-turn=\"user\"]",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": "[data-turn=\"user\"]",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "answer": {
+          "selector": "[data-turn=\"assistant\"]",
+          "valid": true,
+          "elements": 0,
+          "partCounts": [
+            {
+              "selector": "[data-turn=\"assistant\"]",
+              "elements": 0
+            }
+          ],
+          "status": "MISS"
+        },
+        "HEADINGS": {
+          "selector": "h1, h2, h3, h4, h5, h6",
+          "valid": true,
+          "elements": 13,
+          "partCounts": [
+            {
+              "selector": "h1",
+              "elements": 0
+            },
+            {
+              "selector": "h2",
+              "elements": 1
+            },
+            {
+              "selector": "h3",
+              "elements": 1
+            },
+            {
+              "selector": "h4",
+              "elements": 1
+            },
+            {
+              "selector": "h5",
+              "elements": 3
+            },
+            {
+              "selector": "h6",
+              "elements": 7
+            }
+          ],
+          "status": "PASS"
+        }
+      },
+      "samples": {
+        "[data-testid]": [
+          {
+            "tag": "img",
+            "path": "div.index-module_userInfo_oD4bj.sidebar-user-info > div.index-module_orgLogo_9pIS0 > span.index-module_userNotCollapseLogWrapper_JJvmR > a.Logo-module_wrapper_H6F0X.org-logo > img.Logo-module_logo_IGPx-.org-logo-img.img",
+            "className": "Logo-module_logo_IGPx- org-logo-img img",
+            "dataTestId": "img-avatar",
+            "role": null,
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "img",
+            "path": "div.index-module_userAction_ynbbr > div.index-module_userAvatar_Vzc5k > div.index-module_userInfoAvatar_jvvPi.user-info-avatar.yuque-persion-avatar.larkui-popover-trigger > div.index-module_headerUser_ng6Ta > img.img",
+            "className": "img",
+            "dataTestId": "img-avatar",
+            "role": null,
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "ul",
+            "path": "div#dragBarContainer.index-module_dragBarContainer_RvgsR.dashboard-sidebar.DashboardSideBar-module_sidebar_s57CQ > div.index-module_dragBarWrapper_8wuvQ > div.DashboardSideBar-module_sidebarMenuWrapper_dkWFJ > div.index-module_sidebarMenuWrapper_qifOS > ul.ant-menu.ant-menu-root.ant-menu-inline.ant-menu-light",
+            "className": "ant-menu ant-menu-root ant-menu-inline ant-menu-light index-module_menuWrapper_vK22M index-module_personalSubMenuWrapper_BdAZ7",
+            "dataTestId": "sidebar-sidebar-menu",
+            "role": "menu",
+            "ariaLabel": null,
+            "text": "开始 AI 写作 收藏"
+          },
+          {
+            "tag": "li",
+            "path": "div.index-module_dragBarWrapper_8wuvQ > div.DashboardSideBar-module_sidebarMenuWrapper_dkWFJ > div.index-module_sidebarMenuWrapper_qifOS > ul.ant-menu.ant-menu-root.ant-menu-inline.ant-menu-light > li.ant-menu-item",
+            "className": "ant-menu-item",
+            "dataTestId": "sidebar-sidebar-menu-first-item",
+            "role": "menuitem",
+            "ariaLabel": null,
+            "text": "开始"
+          },
+          {
+            "tag": "ul",
+            "path": "div.DashboardSideBar-module_sidebarMenuWrapper_dkWFJ > div.index-module_sidebarMenuWrapper_qifOS > div.index-module_scrollbarWrapper_f5H1R.dashboard-sidebar-scrollbar > div.index-module_menuWrapper_vK22M > ul.ant-menu.ant-menu-root.ant-menu-inline.ant-menu-light",
+            "className": "ant-menu ant-menu-root ant-menu-inline ant-menu-light index-module_wikiMenuWrapper_XS0ZJ",
+            "dataTestId": "sidebar:sidebar:menu:org",
+            "role": "menu",
+            "ariaLabel": null,
+            "text": "公共区"
+          },
+          {
+            "tag": "li",
+            "path": "div.index-module_sidebarMenuWrapper_qifOS > div.index-module_scrollbarWrapper_f5H1R.dashboard-sidebar-scrollbar > div.index-module_menuWrapper_vK22M > ul.ant-menu.ant-menu-root.ant-menu-inline.ant-menu-light > li.ant-menu-item",
+            "className": "ant-menu-item",
+            "dataTestId": "dashboard:sidebar:btn:org_wiki",
+            "role": "menuitem",
+            "ariaLabel": null,
+            "text": "公共区"
+          }
+        ],
+        "[data-turn]": [],
+        "[data-message-author-role]": [],
+        "[role]": [
+          {
+            "tag": "ul",
+            "path": "div#dragBarContainer.index-module_dragBarContainer_RvgsR.dashboard-sidebar.DashboardSideBar-module_sidebar_s57CQ > div.index-module_dragBarWrapper_8wuvQ > div.DashboardSideBar-module_sidebarMenuWrapper_dkWFJ > div.index-module_sidebarMenuWrapper_qifOS > ul.ant-menu.ant-menu-root.ant-menu-inline.ant-menu-light",
+            "className": "ant-menu ant-menu-root ant-menu-inline ant-menu-light index-module_menuWrapper_vK22M index-module_personalSubMenuWrapper_BdAZ7",
+            "dataTestId": "sidebar-sidebar-menu",
+            "role": "menu",
+            "ariaLabel": null,
+            "text": "开始 AI 写作 收藏"
+          },
+          {
+            "tag": "li",
+            "path": "div.index-module_dragBarWrapper_8wuvQ > div.DashboardSideBar-module_sidebarMenuWrapper_dkWFJ > div.index-module_sidebarMenuWrapper_qifOS > ul.ant-menu.ant-menu-root.ant-menu-inline.ant-menu-light > li.ant-menu-item",
+            "className": "ant-menu-item",
+            "dataTestId": "sidebar-sidebar-menu-first-item",
+            "role": "menuitem",
+            "ariaLabel": null,
+            "text": "开始"
+          },
+          {
+            "tag": "li",
+            "path": "div.index-module_dragBarWrapper_8wuvQ > div.DashboardSideBar-module_sidebarMenuWrapper_dkWFJ > div.index-module_sidebarMenuWrapper_qifOS > ul.ant-menu.ant-menu-root.ant-menu-inline.ant-menu-light > li.ant-menu-item",
+            "className": "ant-menu-item",
+            "dataTestId": null,
+            "role": "menuitem",
+            "ariaLabel": null,
+            "text": "AI 写作"
+          },
+          {
+            "tag": "li",
+            "path": "div.index-module_dragBarWrapper_8wuvQ > div.DashboardSideBar-module_sidebarMenuWrapper_dkWFJ > div.index-module_sidebarMenuWrapper_qifOS > ul.ant-menu.ant-menu-root.ant-menu-inline.ant-menu-light > li.ant-menu-item",
+            "className": "ant-menu-item",
+            "dataTestId": null,
+            "role": "menuitem",
+            "ariaLabel": null,
+            "text": "收藏"
+          },
+          {
+            "tag": "ul",
+            "path": "div.DashboardSideBar-module_sidebarMenuWrapper_dkWFJ > div.index-module_sidebarMenuWrapper_qifOS > div.index-module_scrollbarWrapper_f5H1R.dashboard-sidebar-scrollbar > div.index-module_menuWrapper_vK22M > ul.ant-menu.ant-menu-root.ant-menu-inline.ant-menu-light",
+            "className": "ant-menu ant-menu-root ant-menu-inline ant-menu-light index-module_wikiMenuWrapper_XS0ZJ",
+            "dataTestId": "sidebar:sidebar:menu:org",
+            "role": "menu",
+            "ariaLabel": null,
+            "text": "公共区"
+          },
+          {
+            "tag": "li",
+            "path": "div.index-module_sidebarMenuWrapper_qifOS > div.index-module_scrollbarWrapper_f5H1R.dashboard-sidebar-scrollbar > div.index-module_menuWrapper_vK22M > ul.ant-menu.ant-menu-root.ant-menu-inline.ant-menu-light > li.ant-menu-item",
+            "className": "ant-menu-item",
+            "dataTestId": "dashboard:sidebar:btn:org_wiki",
+            "role": "menuitem",
+            "ariaLabel": null,
+            "text": "公共区"
+          }
+        ],
+        "article": [],
+        "message-content": [],
+        "user-query": [],
+        "model-response": [],
+        ".markdown": [],
+        ".markdown-main-panel": [],
+        ".ds-markdown": [],
+        ".hyc-common-markdown": [],
+        "[class*=\"message\" i]": [],
+        "[class*=\"chat\" i]": [],
+        "[class*=\"bubble\" i]": [],
+        "[class*=\"assistant\" i]": [],
+        "[class*=\"user\" i]": [
+          {
+            "tag": "div",
+            "path": "div.index-module_dragBarWrapper_8wuvQ > div.DashboardSideBar-module_sidebarMenuWrapper_dkWFJ > div.index-module_sidebarMenuWrapper_qifOS > div > div.index-module_userInfo_oD4bj.sidebar-user-info",
+            "className": "index-module_userInfo_oD4bj sidebar-user-info",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "对对科技"
+          },
+          {
+            "tag": "span",
+            "path": "div.index-module_sidebarMenuWrapper_qifOS > div > div.index-module_userInfo_oD4bj.sidebar-user-info > div.index-module_orgLogo_9pIS0 > span.index-module_userNotCollapseLogWrapper_JJvmR",
+            "className": "index-module_userNotCollapseLogWrapper_JJvmR",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "对对科技"
+          },
+          {
+            "tag": "div",
+            "path": "div.DashboardSideBar-module_sidebarMenuWrapper_dkWFJ > div.index-module_sidebarMenuWrapper_qifOS > div > div.index-module_userInfo_oD4bj.sidebar-user-info > div.index-module_userAction_ynbbr",
+            "className": "index-module_userAction_ynbbr",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "div",
+            "path": "div.index-module_sidebarMenuWrapper_qifOS > div > div.index-module_userInfo_oD4bj.sidebar-user-info > div.index-module_userAction_ynbbr > div.index-module_userAvatar_Vzc5k",
+            "className": "index-module_userAvatar_Vzc5k",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "div",
+            "path": "div > div.index-module_userInfo_oD4bj.sidebar-user-info > div.index-module_userAction_ynbbr > div.index-module_userAvatar_Vzc5k > div.index-module_userInfoAvatar_jvvPi.user-info-avatar.yuque-persion-avatar.larkui-popover-trigger",
+            "className": "index-module_userInfoAvatar_jvvPi user-info-avatar yuque-persion-avatar larkui-popover-trigger",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "div",
+            "path": "div.index-module_userInfo_oD4bj.sidebar-user-info > div.index-module_userAction_ynbbr > div.index-module_userAvatar_Vzc5k > div.index-module_userInfoAvatar_jvvPi.user-info-avatar.yuque-persion-avatar.larkui-popover-trigger > div.index-module_headerUser_ng6Ta",
+            "className": "index-module_headerUser_ng6Ta",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": ""
+          }
+        ],
+        "[class*=\"markdown\" i]": [],
+        "[class*=\"conversation\" i]": [],
+        "[class*=\"think\" i]": []
+      }
+    },
+    {
+      "key": "doubao",
+      "name": "Doubao",
+      "targetUrl": "https://www.doubao.com/chat/38425731801360898",
+      "elapsedMs": 8268,
+      "overall": "AUDITED",
+      "page": {
+        "title": "电脑配置评测 - 豆包",
+        "url": "https://www.doubao.com/chat/38425731801360898",
+        "bodyTextLength": 3401,
+        "bodySample": "豆包 新对话 ⌘ K AI 创作 云盘 更多 历史对话 手机版对话 劳务报酬个税计算方法 善存标“否”原因 B站跨年晚会方言歌曲精选 国产模型API调用费用（2026年4月） 水瓶座 UI 气泡框设计 鸡蛋花科普 电脑配置评测 碳钢材质介绍 京粉个税扣税规则 量子计算解释 2.0T日产天籁1500公里燃油费用预估 深圳正午太阳角度变化 AE抖动表达式设置 云平台部署OpenClaw对比及优惠 OpenClaw使用ChatGPT API体验差原因及优化 中国蓝领手工技能岗位介绍 Claude调用选项解释 OpenClaw的ChatGPT API中转服务推荐 即梦网页版会员与开发者API是否互通 ",
+        "needsLogin": false,
+        "securityChallenge": false,
+        "headingCount": 16
+      },
+      "exporter": {
+        "title": {
+          "selector": "div.group\\/title",
+          "valid": true,
+          "elements": 1,
+          "partCounts": [
+            {
+              "selector": "div.group\\/title",
+              "elements": 1
+            }
+          ],
+          "status": "PASS"
+        },
+        "question": {
+          "selector": "div[class*=\"send-msg-bubble\"], div[class*=\"bg-g-send-msg-bubble-bg\"]",
+          "valid": true,
+          "elements": 4,
+          "partCounts": [
+            {
+              "selector": "div[class*=\"send-msg-bubble\"]",
+              "elements": 2
+            },
+            {
+              "selector": "div[class*=\"bg-g-send-msg-bubble-bg\"]",
+              "elements": 2
+            }
+          ],
+          "status": "PASS"
+        },
+        "answer": {
+          "selector": "div[class*=\"conversation-page-message-host\"]",
+          "valid": true,
+          "elements": 1,
+          "partCounts": [
+            {
+              "selector": "div[class*=\"conversation-page-message-host\"]",
+              "elements": 1
+            }
+          ],
+          "status": "PASS"
+        },
+        "markdownBlock": {
+          "selector": "div[class*=\"conversation-page-message-host\"]",
+          "valid": true,
+          "elements": 1,
+          "partCounts": [
+            {
+              "selector": "div[class*=\"conversation-page-message-host\"]",
+              "elements": 1
+            }
+          ],
+          "status": "PASS"
+        }
+      },
+      "outline": {
+        "title": {
+          "selector": "div.group\\/title",
+          "valid": true,
+          "elements": 1,
+          "partCounts": [
+            {
+              "selector": "div.group\\/title",
+              "elements": 1
+            }
+          ],
+          "status": "PASS"
+        },
+        "question": {
+          "selector": "div[class*=\"send-msg-bubble\"], div[class*=\"bg-g-send-msg-bubble-bg\"]",
+          "valid": true,
+          "elements": 4,
+          "partCounts": [
+            {
+              "selector": "div[class*=\"send-msg-bubble\"]",
+              "elements": 2
+            },
+            {
+              "selector": "div[class*=\"bg-g-send-msg-bubble-bg\"]",
+              "elements": 2
+            }
+          ],
+          "status": "PASS"
+        },
+        "answer": {
+          "selector": "div[class*=\"conversation-page-message-host\"]",
+          "valid": true,
+          "elements": 1,
+          "partCounts": [
+            {
+              "selector": "div[class*=\"conversation-page-message-host\"]",
+              "elements": 1
+            }
+          ],
+          "status": "PASS"
+        },
+        "HEADINGS": {
+          "selector": "h1, h2, h3, h4, h5, h6",
+          "valid": true,
+          "elements": 16,
+          "partCounts": [
+            {
+              "selector": "h1",
+              "elements": 0
+            },
+            {
+              "selector": "h2",
+              "elements": 7
+            },
+            {
+              "selector": "h3",
+              "elements": 9
+            },
+            {
+              "selector": "h4",
+              "elements": 0
+            },
+            {
+              "selector": "h5",
+              "elements": 0
+            },
+            {
+              "selector": "h6",
+              "elements": 0
+            }
+          ],
+          "status": "PASS"
+        }
+      },
+      "samples": {
+        "[data-testid]": [],
+        "[data-turn]": [],
+        "[data-message-author-role]": [],
+        "[role]": [
+          {
+            "tag": "span",
+            "path": "div.group/sidebar_nav_item.cursor-pointer.flex.items-center > div.flex.w-full.items-center.justify-between > div.truncate.ml-[8px].flex-1.min-w-0 > div.flex.flex-1.items-center.justify-end > span.semi-icon.semi-icon-default.p-3.text-14",
+            "className": "semi-icon semi-icon-default p-3 text-14 text-s-color-text-quaternary",
+            "dataTestId": null,
+            "role": "img",
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "span",
+            "path": "div.min-w-0 > div.flex.h-full.w-full.min-w-0 > div.box-border.flex.justify-center.text-s-color-text-primary > div.w-fit.max-w-full.flex.items-center > span.semi-icon.semi-icon-default.block.!text-14",
+            "className": "semi-icon semi-icon-default block !text-14 p-2 ml-2 flex-shrink-0 text-s-color-text-quaternary u-hover-show-child-ru78DG",
+            "dataTestId": null,
+            "role": "img",
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "span",
+            "path": "div.container-qOgFQp > div.relative > button.semi-button.semi-button-primary.samantha-button-BghSMg.tertiary-o1h39p > span.semi-button-content > span.semi-icon.semi-icon-default.icon-white-D6k2MM.mac-icon",
+            "className": "semi-icon semi-icon-default icon-white-D6k2MM mac-icon text-20",
+            "dataTestId": null,
+            "role": "img",
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "span",
+            "path": "div.flex.flex-col.flex-grow.max-w-full > div.select-none > div.suggest-message-list-wrapper-QLdGFg > div.suggest-list-item.suggest-message-oSXMsU > span.semi-icon.semi-icon-default.icon-LP9ZXy",
+            "className": "semi-icon semi-icon-default icon-LP9ZXy",
+            "dataTestId": null,
+            "role": "img",
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "span",
+            "path": "div.flex.flex-col.flex-grow.max-w-full > div.select-none > div.suggest-message-list-wrapper-QLdGFg > div.suggest-list-item.suggest-message-oSXMsU > span.semi-icon.semi-icon-default.icon-LP9ZXy",
+            "className": "semi-icon semi-icon-default icon-LP9ZXy",
+            "dataTestId": null,
+            "role": "img",
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "span",
+            "path": "div.flex.flex-col.flex-grow.max-w-full > div.select-none > div.suggest-message-list-wrapper-QLdGFg > div.suggest-list-item.suggest-message-oSXMsU > span.semi-icon.semi-icon-default.icon-LP9ZXy",
+            "className": "semi-icon semi-icon-default icon-LP9ZXy",
+            "dataTestId": null,
+            "role": "img",
+            "ariaLabel": null,
+            "text": ""
+          }
+        ],
+        "article": [],
+        "message-content": [],
+        "user-query": [],
+        "model-response": [],
+        ".markdown": [],
+        ".markdown-main-panel": [],
+        ".ds-markdown": [],
+        ".hyc-common-markdown": [],
+        "[class*=\"message\" i]": [
+          {
+            "tag": "div",
+            "path": "main.flex-1.min-w-0.flex.items-stretch > div.flex.min-w-0.flex-grow.flex-col > div.flex.h-full.w-full.flex-col > div.flex.h-full.min-h-0.w-full > div.conversation-page-message-host.w-full.flex-shrink.flex-grow",
+            "className": "conversation-page-message-host w-full flex-shrink flex-grow basis-0 min-h-100 flex items-center flex-col flow-disable-select-bar flow-ext-disable-select-bar",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": "doc_editor",
+            "text": "看下这个配置怎么样，客观评测 我来给你做个客观、不吹不黑的全面评测，把这套配置的优缺点、适用场景和注意事项都讲清楚。 一、核心性能表现（游戏 + 生产力） ✅ 优点：性能均衡，定位明确 CPU：i5-14400F 10 核 16 线程，睿频 4.6GHz，是目前中端游戏主机的黄金搭档，完全带得动 RTX5060，不会有瓶颈。 日常办公、多开软件、直播推流、轻"
+          },
+          {
+            "tag": "div",
+            "path": "div.flex.min-w-0.flex-grow.flex-col > div.flex.h-full.w-full.flex-col > div.flex.h-full.min-h-0.w-full > div.conversation-page-message-host.w-full.flex-shrink.flex-grow > div.message-list-zLoNs1.opacity-0.transition-opacity.duration-100",
+            "className": "message-list-zLoNs1 opacity-0 transition-opacity duration-100 opacity-100",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "看下这个配置怎么样，客观评测 我来给你做个客观、不吹不黑的全面评测，把这套配置的优缺点、适用场景和注意事项都讲清楚。 一、核心性能表现（游戏 + 生产力） ✅ 优点：性能均衡，定位明确 CPU：i5-14400F 10 核 16 线程，睿频 4.6GHz，是目前中端游戏主机的黄金搭档，完全带得动 RTX5060，不会有瓶颈。 日常办公、多开软件、直播推流、轻"
+          },
+          {
+            "tag": "div",
+            "path": "div.v_list_row > div > div > div.pl-8.pr-0.w-full.max-dbx-xs:supports-[-webkit-overflow-scrolling:touch]:pr-12 > div.my-0.w-full.mx-auto.max-w-(--content-max-width)",
+            "className": "my-0 w-full mx-auto max-w-(--content-max-width) has-[.side-by-side-messages]:mx-0 has-[.side-by-side-messages]:max-w-full",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "div",
+            "path": "div.list_items > div.v_list_row > div > div.pl-8.pr-0.w-full.max-dbx-xs:supports-[-webkit-overflow-scrolling:touch]:pr-12 > div.my-0.w-full.mx-auto.max-w-(--content-max-width)",
+            "className": "my-0 w-full mx-auto max-w-(--content-max-width) has-[.side-by-side-messages]:mx-0 has-[.side-by-side-messages]:max-w-full",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "看下这个配置怎么样，客观评测"
+          },
+          {
+            "tag": "div",
+            "path": "div.flex.flex-col.flex-grow.max-w-full > div.flex-row.flex.w-full.justify-end > div.flex.max-w-full.flex-col.gap-8 > div.flex.justify-end > div#cn-q-0.whitespace-pre-wrap.wrap-anywhere.rounded-s-radius-s.s-font-base",
+            "className": "whitespace-pre-wrap wrap-anywhere rounded-s-radius-s s-font-base sm:text-15 max-w-450 px-16 py-9 w-fit min-w-0 bg-g-send-msg-bubble-bg text-g-send-msg-bubble-text !text-[length:var(--message-send-text-content-font-size,16px)]",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "看下这个配置怎么样，客观评测"
+          },
+          {
+            "tag": "div",
+            "path": "div.list_items > div.v_list_row > div > div.pl-8.pr-0.w-full.max-dbx-xs:supports-[-webkit-overflow-scrolling:touch]:pr-12 > div.my-0.w-full.mx-auto.max-w-(--content-max-width)",
+            "className": "my-0 w-full mx-auto max-w-(--content-max-width) has-[.side-by-side-messages]:mx-0 has-[.side-by-side-messages]:max-w-full",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "我来给你做个客观、不吹不黑的全面评测，把这套配置的优缺点、适用场景和注意事项都讲清楚。 一、核心性能表现（游戏 + 生产力） ✅ 优点：性能均衡，定位明确 CPU：i5-14400F 10 核 16 线程，睿频 4.6GHz，是目前中端游戏主机的黄金搭档，完全带得动 RTX5060，不会有瓶颈。 日常办公、多开软件、直播推流、轻度剪辑都够用，游戏中也不会拖显"
+          }
+        ],
+        "[class*=\"chat\" i]": [
+          {
+            "tag": "a",
+            "path": "div.relative.-mr-9.flow-scrollbar.min-h-0 > div.flex.flex-col.flex-nowrap.gap-2 > div.flex.flex-col.gap-2 > div > a#conversation_33289229921282.cursor-pointer.flex.items-center.rounded-dbx-lg",
+            "className": "cursor-pointer flex items-center rounded-dbx-lg h-36 hover:bg-dbx-fill-trans-10-hover chat-item-r3aVVV chat-item-new-icon-rqGUVU no-select",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "手机版对话"
+          },
+          {
+            "tag": "div",
+            "path": "div.flex.flex-col.gap-2 > div > a#conversation_33289229921282.cursor-pointer.flex.items-center.rounded-dbx-lg > div.extra-aW1KZB.flex.items-center.justify-end > div.chat-item-menu-wrapper-DPvhf1",
+            "className": "chat-item-menu-wrapper-DPvhf1",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "div",
+            "path": "div.flex.flex-col.flex-nowrap.gap-2 > div.flex.flex-col.gap-2 > div > a#conversation_33289229921282.cursor-pointer.flex.items-center.rounded-dbx-lg > div.chat-item-overflow-tooltip-trigger-gX7rqj",
+            "className": "chat-item-overflow-tooltip-trigger-gX7rqj",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "a",
+            "path": "div.relative.-mr-9.flow-scrollbar.min-h-0 > div.flex.flex-col.flex-nowrap.gap-2 > div.flex.flex-col.gap-2 > div > a#conversation_38428118602979842.cursor-pointer.flex.items-center.rounded-dbx-lg",
+            "className": "cursor-pointer flex items-center rounded-dbx-lg h-36 hover:bg-dbx-fill-trans-10-hover chat-item-r3aVVV chat-item-new-icon-rqGUVU no-select",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "劳务报酬个税计算方法"
+          },
+          {
+            "tag": "div",
+            "path": "div.flex.flex-col.gap-2 > div > a#conversation_38428118602979842.cursor-pointer.flex.items-center.rounded-dbx-lg > div.extra-aW1KZB.flex.items-center.justify-end > div.chat-item-menu-wrapper-DPvhf1",
+            "className": "chat-item-menu-wrapper-DPvhf1",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "div",
+            "path": "div.flex.flex-col.flex-nowrap.gap-2 > div.flex.flex-col.gap-2 > div > a#conversation_38428118602979842.cursor-pointer.flex.items-center.rounded-dbx-lg > div.chat-item-overflow-tooltip-trigger-gX7rqj",
+            "className": "chat-item-overflow-tooltip-trigger-gX7rqj",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": ""
+          }
+        ],
+        "[class*=\"bubble\" i]": [
+          {
+            "tag": "div",
+            "path": "div.flex.flex-col.flex-grow.max-w-full > div.flex-row.flex.w-full.justify-end > div.flex.max-w-full.flex-col.gap-8 > div.flex.justify-end > div#cn-q-0.whitespace-pre-wrap.wrap-anywhere.rounded-s-radius-s.s-font-base",
+            "className": "whitespace-pre-wrap wrap-anywhere rounded-s-radius-s s-font-base sm:text-15 max-w-450 px-16 py-9 w-fit min-w-0 bg-g-send-msg-bubble-bg text-g-send-msg-bubble-text !text-[length:var(--message-send-text-content-font-size,16px)]",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "看下这个配置怎么样，客观评测"
+          },
+          {
+            "tag": "div",
+            "path": "div.flex.flex-col.flex-grow.max-w-full > div.flex-row.flex.w-full.justify-end > div.flex.max-w-full.flex-col.gap-8 > div.flex.justify-end > div#cn-q-1.whitespace-pre-wrap.wrap-anywhere.rounded-s-radius-s.s-font-base",
+            "className": "whitespace-pre-wrap wrap-anywhere rounded-s-radius-s s-font-base sm:text-15 max-w-450 px-16 py-9 w-fit min-w-0 bg-g-send-msg-bubble-bg text-g-send-msg-bubble-text !text-[length:var(--message-send-text-content-font-size,16px)]",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "cpu后缀什么意思，科普 铭瑄wifi主板是自带wifi模块吗"
+          }
+        ],
+        "[class*=\"assistant\" i]": [],
+        "[class*=\"user\" i]": [],
+        "[class*=\"markdown\" i]": [],
+        "[class*=\"conversation\" i]": [
+          {
+            "tag": "div",
+            "path": "nav.left-side-U7A0kz.w-sidebar-width.left-side__expand-OIQFEm.left-side-sm-fixed-XHrOd1 > div#flow_chat_sidebar.relative.p-12.sm:fixed.overflow-hidden > div.relative.-mr-9.flow-scrollbar.min-h-0 > div.flex.flex-col.flex-nowrap.gap-2 > div.sticky.top-0.px-10.py-8",
+            "className": "sticky top-0 px-10 py-8 z-30 bg-dbx-bg-base-web flex items-center justify-between invisible has-[+[data-empty-conversation=false]]:visible",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "历史对话"
+          },
+          {
+            "tag": "div",
+            "path": "main.flex-1.min-w-0.flex.items-stretch > div.flex.min-w-0.flex-grow.flex-col > div.flex.h-full.w-full.flex-col > div.flex.h-full.min-h-0.w-full > div.conversation-page-message-host.w-full.flex-shrink.flex-grow",
+            "className": "conversation-page-message-host w-full flex-shrink flex-grow basis-0 min-h-100 flex items-center flex-col flow-disable-select-bar flow-ext-disable-select-bar",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": "doc_editor",
+            "text": "看下这个配置怎么样，客观评测 我来给你做个客观、不吹不黑的全面评测，把这套配置的优缺点、适用场景和注意事项都讲清楚。 一、核心性能表现（游戏 + 生产力） ✅ 优点：性能均衡，定位明确 CPU：i5-14400F 10 核 16 线程，睿频 4.6GHz，是目前中端游戏主机的黄金搭档，完全带得动 RTX5060，不会有瓶颈。 日常办公、多开软件、直播推流、轻"
+          }
+        ],
+        "[class*=\"think\" i]": []
+      }
+    },
+    {
+      "key": "gemini",
+      "name": "Gemini",
+      "targetUrl": "https://gemini.google.com/app/404aea77190bc75f",
+      "elapsedMs": 11651,
+      "overall": "AUDITED",
+      "page": {
+        "title": "OpenClaw API 中转服务推荐 - Google Gemini",
+        "url": "https://gemini.google.com/app/404aea77190bc75f",
+        "bodyTextLength": 5478,
+        "bodySample": "Gemini New chat Search chats Images New Library Notebooks New notebook Recents ISTP-T 型人格 SWOT 分析 参考图2场景，图1的人物构图，我希望做一个中东风格的国家pk海报。人物是中东特征，但是服装是欧式皇帝服装。背景是建筑和奖杯，前面中央是有一个平台站着皇帝和自己的侍卫。灵动，豪华。场景也是中东城市建筑风格 把这四个图标去掉背景，只要前面的主体和艺术字 Untitled 图像元素分层拆解与抠图 把图中的元素分层拆解成不同的零件，单独排列，方便分层抠图。（要拆出完整的圆框，单独的翅膀和装饰） 按这个风格做一",
+        "needsLogin": false,
+        "securityChallenge": false,
+        "headingCount": 16
+      },
+      "exporter": {
+        "conversation": {
+          "selector": ".conversation-container",
+          "valid": true,
+          "elements": 2,
+          "partCounts": [
+            {
+              "selector": ".conversation-container",
+              "elements": 2
+            }
+          ],
+          "status": "PASS"
+        },
+        "question": {
+          "selector": ".user-query-container",
+          "valid": true,
+          "elements": 6,
+          "partCounts": [
+            {
+              "selector": ".user-query-container",
+              "elements": 6
+            }
+          ],
+          "status": "PASS"
+        },
+        "answer": {
+          "selector": ".response-container",
+          "valid": true,
+          "elements": 2,
+          "partCounts": [
+            {
+              "selector": ".response-container",
+              "elements": 2
+            }
+          ],
+          "status": "PASS"
+        },
+        "markdownBlock": {
+          "selector": ".markdown",
+          "valid": true,
+          "elements": 2,
+          "partCounts": [
+            {
+              "selector": ".markdown",
+              "elements": 2
+            }
+          ],
+          "status": "PASS"
+        }
+      },
+      "outline": {
+        "conversation": {
+          "selector": ".conversation-container",
+          "valid": true,
+          "elements": 2,
+          "partCounts": [
+            {
+              "selector": ".conversation-container",
+              "elements": 2
+            }
+          ],
+          "status": "PASS"
+        },
+        "question": {
+          "selector": ".user-query-container",
+          "valid": true,
+          "elements": 6,
+          "partCounts": [
+            {
+              "selector": ".user-query-container",
+              "elements": 6
+            }
+          ],
+          "status": "PASS"
+        },
+        "answer": {
+          "selector": ".response-container",
+          "valid": true,
+          "elements": 2,
+          "partCounts": [
+            {
+              "selector": ".response-container",
+              "elements": 2
+            }
+          ],
+          "status": "PASS"
+        },
+        "HEADINGS": {
+          "selector": "h1, h2, h3, h4, h5, h6",
+          "valid": true,
+          "elements": 16,
+          "partCounts": [
+            {
+              "selector": "h1",
+              "elements": 1
+            },
+            {
+              "selector": "h2",
+              "elements": 5
+            },
+            {
+              "selector": "h3",
+              "elements": 7
+            },
+            {
+              "selector": "h4",
+              "elements": 3
+            },
+            {
+              "selector": "h5",
+              "elements": 0
+            },
+            {
+              "selector": "h6",
+              "elements": 0
+            }
+          ],
+          "status": "PASS"
+        }
+      },
+      "samples": {
+        "[data-testid]": [],
+        "[data-turn]": [],
+        "[data-message-author-role]": [],
+        "[role]": [
+          {
+            "tag": "a",
+            "path": "div.gb_7d.gb_Bb.gb_Xd > div.gb_Id > div.gb_z.gb_Ad.gb_Vf.gb_6 > div.gb_D.gb_Ab.gb_Vf.gb_6 > a.gb_C.gb_5a.gb_6",
+            "className": "gb_C gb_5a gb_6",
+            "dataTestId": null,
+            "role": "button",
+            "ariaLabel": "Google Account: Bigface_ Cat  \n(leeyulu1994@gmail.com)",
+            "text": ""
+          },
+          {
+            "tag": "mat-icon",
+            "path": "side-nav-sparkle-button.ng-tns-c506821140-1.lr26.ng-star-inserted > button.mdc-icon-button.mat-mdc-icon-button.mat-mdc-button-base.mat-mdc-tooltip-trigger > div.xap-count-badge-container > gem-icon > mat-icon.mat-icon.notranslate.lm-icon-l.mat-icon-rtl-mirror",
+            "className": "mat-icon notranslate lm-icon-l mat-icon-rtl-mirror lumi-symbols mat-ligature-font mat-icon-no-color ng-star-inserted",
+            "dataTestId": null,
+            "role": "img",
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "mat-icon",
+            "path": "div.response-tts-container.hidden.ng-star-inserted > div.tts-button-container > button.mdc-icon-button.mat-mdc-icon-button.mat-mdc-button-base.mat-mdc-tooltip-trigger > gem-icon.ng-star-inserted > mat-icon.mat-icon.notranslate.lm-icon-l.lumi-symbols",
+            "className": "mat-icon notranslate lm-icon-l lumi-symbols mat-ligature-font mat-icon-no-color ng-star-inserted",
+            "dataTestId": null,
+            "role": "img",
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "mat-icon",
+            "path": "conversation-actions-icon.ng-star-inserted > gem-icon-button.gem-button.gem-button-badge-size-small.gem-button-size-small.gem-button-type-text-primary > button.mdc-icon-button.mat-mdc-icon-button.mat-mdc-button-base.mat-badge > gem-icon > mat-icon.mat-icon.notranslate.lm-icon-l.lumi-symbols",
+            "className": "mat-icon notranslate lm-icon-l lumi-symbols mat-ligature-font mat-icon-no-color ng-star-inserted",
+            "dataTestId": null,
+            "role": "img",
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "bard-sidenav",
+            "path": "chat-app#app-root.enable-lr26-markdown-styling.lr26.ng-tns-c526968291-0.side-nav-open > main.chat-app > side-navigation-v2.content.lr26 > bard-sidenav-container > bard-sidenav.ng-tns-c3087320477-4.ng-trigger.ng-trigger-widthTransition.disable-onload-animations",
+            "className": "ng-tns-c3087320477-4 ng-trigger ng-trigger-widthTransition disable-onload-animations ng-star-inserted",
+            "dataTestId": null,
+            "role": "navigation",
+            "ariaLabel": "Side Navigation",
+            "text": "New chat Search chats Images New Library Notebooks New notebook Recents ISTP-T 型人格 SWOT 分析 参考图2场景，图1的人物构图，我希望做一个中东风格的国家pk海报。人物是中东特征，但是服装是欧式皇帝服装。背景是建筑和奖杯，前面中央是有一个平台站着皇帝和自己的侍卫。灵动，豪华。"
+          },
+          {
+            "tag": "mat-icon",
+            "path": "side-navigation-content.ia-redesign.rail.lr26.sidenav-mavatar-migration-enabled > div.sidenav-with-history-container.disable-onload-animations.side-nav-mystuff-update.ng-star-inserted > button.mdc-icon-button.mat-mdc-icon-button.mat-mdc-button-base.mat-mdc-tooltip-trigger > gem-icon.gem-menu-item-icon.ng-star-inserted > mat-icon.mat-icon.notranslate.lm-icon-l.mat-icon-rtl-mirror",
+            "className": "mat-icon notranslate lm-icon-l mat-icon-rtl-mirror lumi-symbols mat-ligature-font mat-icon-no-color ng-star-inserted",
+            "dataTestId": null,
+            "role": "img",
+            "ariaLabel": null,
+            "text": ""
+          }
+        ],
+        "article": [],
+        "message-content": [
+          {
+            "tag": "message-content",
+            "path": "div.response-container-content.ng-tns-c1294352092-11.has-thoughts > div.response-content.ng-tns-c1294352092-11 > structured-content-container.model-response-text.has-thoughts.processing-state-visible.ng-star-inserted > div.container > message-content#message-content-id-r_039eb33e27836a98.ng-star-inserted",
+            "className": "ng-star-inserted",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "针对 OpenClaw（也被称为 Clawdbot，一个能够控制电脑、集成各类工具的个人 AI 智能体）的 API 中转服务，选择时需要重点考虑：稳定性（Agent 运行的核心）、延迟（实时反馈感）以及对 Claude 3.5/GPT-4o 等主流模型的支持。 在 2026 年的当下，OpenClaw 用户通常追求的是“全模型覆盖”和“支付便捷”。以下是几款"
+          },
+          {
+            "tag": "message-content",
+            "path": "div.response-container-content.ng-tns-c1294352092-13.has-thoughts > div.response-content.ng-tns-c1294352092-13 > structured-content-container.model-response-text.has-thoughts.processing-state-visible.ng-star-inserted > div.container > message-content#message-content-id-r_c7a28abfbcb0a62e.ng-star-inserted",
+            "className": "ng-star-inserted",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "这个思路是非常专业且务实的，属于典型的 Local RAG（本地检索增强生成） 架构。在个人 AI Agent 或 OpenClaw 类的工具中，这种方案能极大提升 Agent 的“长期记忆”能力，同时保护隐私。 以下是对这个方案的深度拆解与建议： 1. 核心逻辑评价：正确且高效 这种“搜索 MEMORY.md + memory/*.md”的思路非常符合 “"
+          }
+        ],
+        "user-query": [
+          {
+            "tag": "user-query",
+            "path": "chat-window-content.ng-tns-c2083352832-2.ui-improvements-phase-1.ng-star-inserted > div#chat-history.chat-history-scroll-container.lm > infinite-scroller.chat-history.enable-lr26-markdown-styling.lm > div#039eb33e27836a98.conversation-container.message-actions-hover-boundary.ng-star-inserted > user-query.ng-star-inserted",
+            "className": "ng-star-inserted",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "You said chatgpt适用于openclaw的api中转服务推荐"
+          },
+          {
+            "tag": "user-query",
+            "path": "chat-window-content.ng-tns-c2083352832-2.ui-improvements-phase-1.ng-star-inserted > div#chat-history.chat-history-scroll-container.lm > infinite-scroller.chat-history.enable-lr26-markdown-styling.lm > div#c7a28abfbcb0a62e.conversation-container.message-actions-hover-boundary.ng-star-inserted > user-query.ng-star-inserted",
+            "className": "ng-star-inserted",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "You said memory_search 工具 │ │ (搜索 MEMORY.md + memory/*.md) │ │ │ │ Provider: local (本地 embeddinggemma-300m) │ │ 优点：免费、离线可用 │ │ 缺点：需要 node-llama-cpp（可能配置复杂） 他的思路对吗"
+          }
+        ],
+        "model-response": [
+          {
+            "tag": "model-response",
+            "path": "chat-window-content.ng-tns-c2083352832-2.ui-improvements-phase-1.ng-star-inserted > div#chat-history.chat-history-scroll-container.lm > infinite-scroller.chat-history.enable-lr26-markdown-styling.lm > div#039eb33e27836a98.conversation-container.message-actions-hover-boundary.ng-star-inserted > model-response.enable-lr26-response-chrome-updates.ng-star-inserted",
+            "className": "enable-lr26-response-chrome-updates ng-star-inserted",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "Gemini said 针对 OpenClaw（也被称为 Clawdbot，一个能够控制电脑、集成各类工具的个人 AI 智能体）的 API 中转服务，选择时需要重点考虑：稳定性（Agent 运行的核心）、延迟（实时反馈感）以及对 Claude 3.5/GPT-4o 等主流模型的支持。 在 2026 年的当下，OpenClaw 用户通常追求的是“全模型覆盖”和"
+          },
+          {
+            "tag": "model-response",
+            "path": "chat-window-content.ng-tns-c2083352832-2.ui-improvements-phase-1.ng-star-inserted > div#chat-history.chat-history-scroll-container.lm > infinite-scroller.chat-history.enable-lr26-markdown-styling.lm > div#c7a28abfbcb0a62e.conversation-container.message-actions-hover-boundary.ng-star-inserted > model-response.enable-lr26-response-chrome-updates.ng-star-inserted",
+            "className": "enable-lr26-response-chrome-updates ng-star-inserted",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "Gemini said 这个思路是非常专业且务实的，属于典型的 Local RAG（本地检索增强生成） 架构。在个人 AI Agent 或 OpenClaw 类的工具中，这种方案能极大提升 Agent 的“长期记忆”能力，同时保护隐私。 以下是对这个方案的深度拆解与建议： 1. 核心逻辑评价：正确且高效 这种“搜索 MEMORY.md + memory/*."
+          }
+        ],
+        ".markdown": [
+          {
+            "tag": "div",
+            "path": "div.response-content.ng-tns-c1294352092-11 > structured-content-container.model-response-text.has-thoughts.processing-state-visible.ng-star-inserted > div.container > message-content#message-content-id-r_039eb33e27836a98.ng-star-inserted > div#model-response-message-contentr_039eb33e27836a98.markdown.markdown-main-panel.tutor-markdown-rendering.stronger",
+            "className": "markdown markdown-main-panel tutor-markdown-rendering stronger enable-updated-hr-color",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "针对 OpenClaw（也被称为 Clawdbot，一个能够控制电脑、集成各类工具的个人 AI 智能体）的 API 中转服务，选择时需要重点考虑：稳定性（Agent 运行的核心）、延迟（实时反馈感）以及对 Claude 3.5/GPT-4o 等主流模型的支持。 在 2026 年的当下，OpenClaw 用户通常追求的是“全模型覆盖”和“支付便捷”。以下是几款"
+          },
+          {
+            "tag": "div",
+            "path": "div.response-content.ng-tns-c1294352092-13 > structured-content-container.model-response-text.has-thoughts.processing-state-visible.ng-star-inserted > div.container > message-content#message-content-id-r_c7a28abfbcb0a62e.ng-star-inserted > div#model-response-message-contentr_c7a28abfbcb0a62e.markdown.markdown-main-panel.tutor-markdown-rendering.stronger",
+            "className": "markdown markdown-main-panel tutor-markdown-rendering stronger enable-updated-hr-color",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "这个思路是非常专业且务实的，属于典型的 Local RAG（本地检索增强生成） 架构。在个人 AI Agent 或 OpenClaw 类的工具中，这种方案能极大提升 Agent 的“长期记忆”能力，同时保护隐私。 以下是对这个方案的深度拆解与建议： 1. 核心逻辑评价：正确且高效 这种“搜索 MEMORY.md + memory/*.md”的思路非常符合 “"
+          }
+        ],
+        ".markdown-main-panel": [
+          {
+            "tag": "div",
+            "path": "div.response-content.ng-tns-c1294352092-11 > structured-content-container.model-response-text.has-thoughts.processing-state-visible.ng-star-inserted > div.container > message-content#message-content-id-r_039eb33e27836a98.ng-star-inserted > div#model-response-message-contentr_039eb33e27836a98.markdown.markdown-main-panel.tutor-markdown-rendering.stronger",
+            "className": "markdown markdown-main-panel tutor-markdown-rendering stronger enable-updated-hr-color",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "针对 OpenClaw（也被称为 Clawdbot，一个能够控制电脑、集成各类工具的个人 AI 智能体）的 API 中转服务，选择时需要重点考虑：稳定性（Agent 运行的核心）、延迟（实时反馈感）以及对 Claude 3.5/GPT-4o 等主流模型的支持。 在 2026 年的当下，OpenClaw 用户通常追求的是“全模型覆盖”和“支付便捷”。以下是几款"
+          },
+          {
+            "tag": "div",
+            "path": "div.response-content.ng-tns-c1294352092-13 > structured-content-container.model-response-text.has-thoughts.processing-state-visible.ng-star-inserted > div.container > message-content#message-content-id-r_c7a28abfbcb0a62e.ng-star-inserted > div#model-response-message-contentr_c7a28abfbcb0a62e.markdown.markdown-main-panel.tutor-markdown-rendering.stronger",
+            "className": "markdown markdown-main-panel tutor-markdown-rendering stronger enable-updated-hr-color",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "这个思路是非常专业且务实的，属于典型的 Local RAG（本地检索增强生成） 架构。在个人 AI Agent 或 OpenClaw 类的工具中，这种方案能极大提升 Agent 的“长期记忆”能力，同时保护隐私。 以下是对这个方案的深度拆解与建议： 1. 核心逻辑评价：正确且高效 这种“搜索 MEMORY.md + memory/*.md”的思路非常符合 “"
+          }
+        ],
+        ".ds-markdown": [],
+        ".hyc-common-markdown": [],
+        "[class*=\"message\" i]": [
+          {
+            "tag": "div",
+            "path": "div.xap-uploader-dropzone.chat-container.ng-tns-c2083352832-2.ng-trigger > chat-window-content.ng-tns-c2083352832-2.ui-improvements-phase-1.ng-star-inserted > div#chat-history.chat-history-scroll-container.lm > infinite-scroller.chat-history.enable-lr26-markdown-styling.lm > div#039eb33e27836a98.conversation-container.message-actions-hover-boundary.ng-star-inserted",
+            "className": "conversation-container message-actions-hover-boundary ng-star-inserted",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "You said chatgpt适用于openclaw的api中转服务推荐 Gemini said 针对 OpenClaw（也被称为 Clawdbot，一个能够控制电脑、集成各类工具的个人 AI 智能体）的 API 中转服务，选择时需要重点考虑：稳定性（Agent 运行的核心）、延迟（实时反馈感）以及对 Claude 3.5/GPT-4o 等主流模型的支持。"
+          },
+          {
+            "tag": "div",
+            "path": "div.table-block-component > response-element > table-block.enable-luminous-table-block.ng-star-inserted > div.table-block.has-export-button.new-table-style.is-at-scroll-start > div.table-footer.hide-from-message-actions",
+            "className": "table-footer hide-from-message-actions",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "div",
+            "path": "div.xap-uploader-dropzone.chat-container.ng-tns-c2083352832-2.ng-trigger > chat-window-content.ng-tns-c2083352832-2.ui-improvements-phase-1.ng-star-inserted > div#chat-history.chat-history-scroll-container.lm > infinite-scroller.chat-history.enable-lr26-markdown-styling.lm > div#c7a28abfbcb0a62e.conversation-container.message-actions-hover-boundary.ng-star-inserted",
+            "className": "conversation-container message-actions-hover-boundary ng-star-inserted",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "You said memory_search 工具 │ │ (搜索 MEMORY.md + memory/*.md) │ │ │ │ Provider: local (本地 embeddinggemma-300m) │ │ 优点：免费、离线可用 │ │ 缺点：需要 node-llama-cpp（可能配置复杂） 他的思路对吗 Gemini said 这个思路是"
+          },
+          {
+            "tag": "div",
+            "path": "html > body.enable-lm-loading-animation.lr26.theme-host.dark-theme > div.cdk-describedby-message-container.cdk-visually-hidden",
+            "className": "cdk-describedby-message-container cdk-visually-hidden",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "Use microphoneCopy promptGood responseBad responseCopy responseMoreExpand textEdit promptRedoMore options"
+          }
+        ],
+        "[class*=\"chat\" i]": [
+          {
+            "tag": "main",
+            "path": "html > body.enable-lm-loading-animation.lr26.theme-host.dark-theme > chat-app#app-root.enable-lr26-markdown-styling.lr26.ng-tns-c526968291-0.side-nav-open > main.chat-app",
+            "className": "chat-app",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "Gemini New chat Search chats Images New Library Notebooks New notebook Recents ISTP-T 型人格 SWOT 分析 参考图2场景，图1的人物构图，我希望做一个中东风格的国家pk海报。人物是中东特征，但是服装是欧式皇帝服装。背景是建筑和奖杯，前面中央是有一个平台站着皇帝和自己的侍卫"
+          },
+          {
+            "tag": "div",
+            "path": "infinite-scroller.lr26-theme.ng-star-inserted > expandable-section.expanded.ng-star-inserted > div#sidenav-section-content-chats.expandable-section-content > div.expandable-section-content-inner > div.chat-history.ng-star-inserted",
+            "className": "chat-history ng-star-inserted",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "ISTP-T 型人格 SWOT 分析 参考图2场景，图1的人物构图，我希望做一个中东风格的国家pk海报。人物是中东特征，但是服装是欧式皇帝服装。背景是建筑和奖杯，前面中央是有一个平台站着皇帝和自己的侍卫。灵动，豪华。场景也是中东城市建筑风格 把这四个图标去掉背景，只要前面的主体和艺术字 Untitled 图像元素分层拆解与抠图 把图中的元素分层拆解成不同的零"
+          },
+          {
+            "tag": "div",
+            "path": "expandable-section.expanded.ng-star-inserted > div#sidenav-section-content-chats.expandable-section-content > div.expandable-section-content-inner > div.chat-history.ng-star-inserted > div.chat-history-list.ng-star-inserted",
+            "className": "chat-history-list ng-star-inserted",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "ISTP-T 型人格 SWOT 分析 参考图2场景，图1的人物构图，我希望做一个中东风格的国家pk海报。人物是中东特征，但是服装是欧式皇帝服装。背景是建筑和奖杯，前面中央是有一个平台站着皇帝和自己的侍卫。灵动，豪华。场景也是中东城市建筑风格 把这四个图标去掉背景，只要前面的主体和艺术字 Untitled 图像元素分层拆解与抠图 把图中的元素分层拆解成不同的零"
+          },
+          {
+            "tag": "div",
+            "path": "div.content-wrapper > div.main-content.ng-trigger.ng-trigger-routeChangeAnimation > div.content-container > chat-window.ng-tns-c2083352832-2.lm-canvas-styling.ng-star-inserted > div.xap-uploader-dropzone.chat-container.ng-tns-c2083352832-2.ng-trigger",
+            "className": "xap-uploader-dropzone chat-container ng-tns-c2083352832-2 ng-trigger ng-trigger-chatHistoryImmersiveTransitions",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "Conversation with Gemini You said chatgpt适用于openclaw的api中转服务推荐 Gemini said 针对 OpenClaw（也被称为 Clawdbot，一个能够控制电脑、集成各类工具的个人 AI 智能体）的 API 中转服务，选择时需要重点考虑：稳定性（Agent 运行的核心）、延迟（实时反馈感）以及对 Cl"
+          },
+          {
+            "tag": "div",
+            "path": "div.content-container > chat-window.ng-tns-c2083352832-2.lm-canvas-styling.ng-star-inserted > div.xap-uploader-dropzone.chat-container.ng-tns-c2083352832-2.ng-trigger > chat-window-content.ng-tns-c2083352832-2.ui-improvements-phase-1.ng-star-inserted > div#chat-history.chat-history-scroll-container.lm",
+            "className": "chat-history-scroll-container lm",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "You said chatgpt适用于openclaw的api中转服务推荐 Gemini said 针对 OpenClaw（也被称为 Clawdbot，一个能够控制电脑、集成各类工具的个人 AI 智能体）的 API 中转服务，选择时需要重点考虑：稳定性（Agent 运行的核心）、延迟（实时反馈感）以及对 Claude 3.5/GPT-4o 等主流模型的支持。"
+          },
+          {
+            "tag": "infinite-scroller",
+            "path": "chat-window.ng-tns-c2083352832-2.lm-canvas-styling.ng-star-inserted > div.xap-uploader-dropzone.chat-container.ng-tns-c2083352832-2.ng-trigger > chat-window-content.ng-tns-c2083352832-2.ui-improvements-phase-1.ng-star-inserted > div#chat-history.chat-history-scroll-container.lm > infinite-scroller.chat-history.enable-lr26-markdown-styling.lm",
+            "className": "chat-history enable-lr26-markdown-styling lm",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "You said chatgpt适用于openclaw的api中转服务推荐 Gemini said 针对 OpenClaw（也被称为 Clawdbot，一个能够控制电脑、集成各类工具的个人 AI 智能体）的 API 中转服务，选择时需要重点考虑：稳定性（Agent 运行的核心）、延迟（实时反馈感）以及对 Claude 3.5/GPT-4o 等主流模型的支持。"
+          }
+        ],
+        "[class*=\"bubble\" i]": [
+          {
+            "tag": "user-query-content",
+            "path": "infinite-scroller.chat-history.enable-lr26-markdown-styling.lm > div#039eb33e27836a98.conversation-container.message-actions-hover-boundary.ng-star-inserted > user-query.ng-star-inserted > span.user-query-container > user-query-content.user-query-container.enable-luminous-prompt-bubble.enable-luminous-edit-box-updates",
+            "className": "user-query-container enable-luminous-prompt-bubble enable-luminous-edit-box-updates",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "You said chatgpt适用于openclaw的api中转服务推荐"
+          },
+          {
+            "tag": "span",
+            "path": "span.user-query-container > user-query-content.user-query-container.enable-luminous-prompt-bubble.enable-luminous-edit-box-updates > div.user-query-container > div#user-query-content-0.query-content.ng-star-inserted.verticle-align-for-single-line-text > span.user-query-bubble-with-background.ng-star-inserted",
+            "className": "user-query-bubble-with-background ng-star-inserted",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "You said chatgpt适用于openclaw的api中转服务推荐"
+          },
+          {
+            "tag": "user-query-content",
+            "path": "infinite-scroller.chat-history.enable-lr26-markdown-styling.lm > div#c7a28abfbcb0a62e.conversation-container.message-actions-hover-boundary.ng-star-inserted > user-query.ng-star-inserted > span.user-query-container > user-query-content.user-query-container.enable-luminous-prompt-bubble.enable-luminous-edit-box-updates",
+            "className": "user-query-container enable-luminous-prompt-bubble enable-luminous-edit-box-updates",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "You said memory_search 工具 │ │ (搜索 MEMORY.md + memory/*.md) │ │ │ │ Provider: local (本地 embeddinggemma-300m) │ │ 优点：免费、离线可用 │ │ 缺点：需要 node-llama-cpp（可能配置复杂） 他的思路对吗"
+          },
+          {
+            "tag": "span",
+            "path": "span.user-query-container > user-query-content.user-query-container.enable-luminous-prompt-bubble.enable-luminous-edit-box-updates > div.user-query-container > div#user-query-content-1.query-content.ng-star-inserted > span.user-query-bubble-with-background.ng-star-inserted",
+            "className": "user-query-bubble-with-background ng-star-inserted",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "You said memory_search 工具 │ │ (搜索 MEMORY.md + memory/*.md) │ │ │ │ Provider: local (本地 embeddinggemma-300m) │ │ 优点：免费、离线可用 │ │ 缺点：需要 node-llama-cpp（可能配置复杂） 他的思路对吗"
+          },
+          {
+            "tag": "rich-textarea",
+            "path": "div.ng-tns-c2958584167-5.single-line-format.ng-star-inserted > div.text-input-field-main-area.ng-tns-c2958584167-5 > div.text-input-field_textarea-inner.ng-tns-c2958584167-5 > div.ng-tns-c2958584167-5 > rich-textarea.text-input-field_textarea.ql-container.ql-bubble.ng-tns-c2958584167-5",
+            "className": "text-input-field_textarea ql-container ql-bubble ng-tns-c2958584167-5 simplified-input ng-untouched ng-pristine ng-valid ng-star-inserted",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": ""
+          }
+        ],
+        "[class*=\"assistant\" i]": [],
+        "[class*=\"user\" i]": [
+          {
+            "tag": "div",
+            "path": "mat-action-list.mat-mdc-action-list.mat-mdc-list-base.mdc-list.desktop-controls > sidenav-mavatar-footer.ng-star-inserted > div.mavatar-footer-row > a.mavatar-footer-left.ng-star-inserted > div.mavatar-user-info.ng-star-inserted",
+            "className": "mavatar-user-info ng-star-inserted",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "Bigface_ Cat"
+          },
+          {
+            "tag": "span",
+            "path": "sidenav-mavatar-footer.ng-star-inserted > div.mavatar-footer-row > a.mavatar-footer-left.ng-star-inserted > div.mavatar-user-info.ng-star-inserted > span.mavatar-user-name.gds-body-m",
+            "className": "mavatar-user-name gds-body-m",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "Bigface_ Cat"
+          },
+          {
+            "tag": "span",
+            "path": "div#chat-history.chat-history-scroll-container.lm > infinite-scroller.chat-history.enable-lr26-markdown-styling.lm > div#039eb33e27836a98.conversation-container.message-actions-hover-boundary.ng-star-inserted > user-query.ng-star-inserted > span.user-query-container",
+            "className": "user-query-container",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "You said chatgpt适用于openclaw的api中转服务推荐"
+          },
+          {
+            "tag": "user-query-content",
+            "path": "infinite-scroller.chat-history.enable-lr26-markdown-styling.lm > div#039eb33e27836a98.conversation-container.message-actions-hover-boundary.ng-star-inserted > user-query.ng-star-inserted > span.user-query-container > user-query-content.user-query-container.enable-luminous-prompt-bubble.enable-luminous-edit-box-updates",
+            "className": "user-query-container enable-luminous-prompt-bubble enable-luminous-edit-box-updates",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "You said chatgpt适用于openclaw的api中转服务推荐"
+          },
+          {
+            "tag": "div",
+            "path": "div#039eb33e27836a98.conversation-container.message-actions-hover-boundary.ng-star-inserted > user-query.ng-star-inserted > span.user-query-container > user-query-content.user-query-container.enable-luminous-prompt-bubble.enable-luminous-edit-box-updates > div.user-query-container",
+            "className": "user-query-container",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "You said chatgpt适用于openclaw的api中转服务推荐"
+          },
+          {
+            "tag": "span",
+            "path": "span.user-query-container > user-query-content.user-query-container.enable-luminous-prompt-bubble.enable-luminous-edit-box-updates > div.user-query-container > div#user-query-content-0.query-content.ng-star-inserted.verticle-align-for-single-line-text > span.user-query-bubble-with-background.ng-star-inserted",
+            "className": "user-query-bubble-with-background ng-star-inserted",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "You said chatgpt适用于openclaw的api中转服务推荐"
+          }
+        ],
+        "[class*=\"markdown\" i]": [
+          {
+            "tag": "chat-app",
+            "path": "html > body.enable-lm-loading-animation.lr26.theme-host.dark-theme > chat-app#app-root.enable-lr26-markdown-styling.lr26.ng-tns-c526968291-0.side-nav-open",
+            "className": "enable-lr26-markdown-styling lr26 ng-tns-c526968291-0 side-nav-open",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "Gemini New chat Search chats Images New Library Notebooks New notebook Recents ISTP-T 型人格 SWOT 分析 参考图2场景，图1的人物构图，我希望做一个中东风格的国家pk海报。人物是中东特征，但是服装是欧式皇帝服装。背景是建筑和奖杯，前面中央是有一个平台站着皇帝和自己的侍卫"
+          },
+          {
+            "tag": "infinite-scroller",
+            "path": "chat-window.ng-tns-c2083352832-2.lm-canvas-styling.ng-star-inserted > div.xap-uploader-dropzone.chat-container.ng-tns-c2083352832-2.ng-trigger > chat-window-content.ng-tns-c2083352832-2.ui-improvements-phase-1.ng-star-inserted > div#chat-history.chat-history-scroll-container.lm > infinite-scroller.chat-history.enable-lr26-markdown-styling.lm",
+            "className": "chat-history enable-lr26-markdown-styling lm",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "You said chatgpt适用于openclaw的api中转服务推荐 Gemini said 针对 OpenClaw（也被称为 Clawdbot，一个能够控制电脑、集成各类工具的个人 AI 智能体）的 API 中转服务，选择时需要重点考虑：稳定性（Agent 运行的核心）、延迟（实时反馈感）以及对 Claude 3.5/GPT-4o 等主流模型的支持。"
+          },
+          {
+            "tag": "div",
+            "path": "div.response-content.ng-tns-c1294352092-11 > structured-content-container.model-response-text.has-thoughts.processing-state-visible.ng-star-inserted > div.container > message-content#message-content-id-r_039eb33e27836a98.ng-star-inserted > div#model-response-message-contentr_039eb33e27836a98.markdown.markdown-main-panel.tutor-markdown-rendering.stronger",
+            "className": "markdown markdown-main-panel tutor-markdown-rendering stronger enable-updated-hr-color",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "针对 OpenClaw（也被称为 Clawdbot，一个能够控制电脑、集成各类工具的个人 AI 智能体）的 API 中转服务，选择时需要重点考虑：稳定性（Agent 运行的核心）、延迟（实时反馈感）以及对 Claude 3.5/GPT-4o 等主流模型的支持。 在 2026 年的当下，OpenClaw 用户通常追求的是“全模型覆盖”和“支付便捷”。以下是几款"
+          },
+          {
+            "tag": "div",
+            "path": "div.response-content.ng-tns-c1294352092-13 > structured-content-container.model-response-text.has-thoughts.processing-state-visible.ng-star-inserted > div.container > message-content#message-content-id-r_c7a28abfbcb0a62e.ng-star-inserted > div#model-response-message-contentr_c7a28abfbcb0a62e.markdown.markdown-main-panel.tutor-markdown-rendering.stronger",
+            "className": "markdown markdown-main-panel tutor-markdown-rendering stronger enable-updated-hr-color",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "这个思路是非常专业且务实的，属于典型的 Local RAG（本地检索增强生成） 架构。在个人 AI Agent 或 OpenClaw 类的工具中，这种方案能极大提升 Agent 的“长期记忆”能力，同时保护隐私。 以下是对这个方案的深度拆解与建议： 1. 核心逻辑评价：正确且高效 这种“搜索 MEMORY.md + memory/*.md”的思路非常符合 “"
+          }
+        ],
+        "[class*=\"conversation\" i]": [
+          {
+            "tag": "button",
+            "path": "conversations-list.sidenav-style-updates.ng-tns-c2020774312-15.ia-redesign.side-nav-style-updates > mat-nav-list.mat-mdc-nav-list.mat-mdc-list-base.mdc-list.gds-sidenav-list > gem-nav-list-item.ng-tns-c2020774312-15.has-hovered-trailing-content.ng-star-inserted > div.hovered-trailing-content.ng-star-inserted > button.mdc-icon-button.mat-mdc-icon-button.mat-mdc-button-base.mat-mdc-menu-trigger",
+            "className": "mdc-icon-button mat-mdc-icon-button mat-mdc-button-base mat-mdc-menu-trigger gem-conversation-actions-menu-button mat-unthemed",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": "More options for ISTP-T 型人格 SWOT 分析",
+            "text": ""
+          },
+          {
+            "tag": "button",
+            "path": "conversations-list.sidenav-style-updates.ng-tns-c2020774312-15.ia-redesign.side-nav-style-updates > mat-nav-list.mat-mdc-nav-list.mat-mdc-list-base.mdc-list.gds-sidenav-list > gem-nav-list-item.ng-tns-c2020774312-15.has-hovered-trailing-content.ng-star-inserted > div.hovered-trailing-content.ng-star-inserted > button.mdc-icon-button.mat-mdc-icon-button.mat-mdc-button-base.mat-mdc-menu-trigger",
+            "className": "mdc-icon-button mat-mdc-icon-button mat-mdc-button-base mat-mdc-menu-trigger gem-conversation-actions-menu-button mat-unthemed",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": "More options for 参考图2场景，图1的人物构图，我希望做一个中东风格的国家pk海报。人物是中东特征，但是服装是欧式皇帝服装。背景是建筑和奖杯，前面中央是有一个平台站着皇帝和自己的侍卫。灵动，豪华。场景也是中东城市建筑风格",
+            "text": ""
+          },
+          {
+            "tag": "button",
+            "path": "conversations-list.sidenav-style-updates.ng-tns-c2020774312-15.ia-redesign.side-nav-style-updates > mat-nav-list.mat-mdc-nav-list.mat-mdc-list-base.mdc-list.gds-sidenav-list > gem-nav-list-item.ng-tns-c2020774312-15.has-hovered-trailing-content.ng-star-inserted > div.hovered-trailing-content.ng-star-inserted > button.mdc-icon-button.mat-mdc-icon-button.mat-mdc-button-base.mat-mdc-menu-trigger",
+            "className": "mdc-icon-button mat-mdc-icon-button mat-mdc-button-base mat-mdc-menu-trigger gem-conversation-actions-menu-button mat-unthemed",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": "More options for 把这四个图标去掉背景，只要前面的主体和艺术字",
+            "text": ""
+          },
+          {
+            "tag": "button",
+            "path": "conversations-list.sidenav-style-updates.ng-tns-c2020774312-15.ia-redesign.side-nav-style-updates > mat-nav-list.mat-mdc-nav-list.mat-mdc-list-base.mdc-list.gds-sidenav-list > gem-nav-list-item.ng-tns-c2020774312-15.has-hovered-trailing-content.ng-star-inserted > div.hovered-trailing-content.ng-star-inserted > button.mdc-icon-button.mat-mdc-icon-button.mat-mdc-button-base.mat-mdc-menu-trigger",
+            "className": "mdc-icon-button mat-mdc-icon-button mat-mdc-button-base mat-mdc-menu-trigger gem-conversation-actions-menu-button mat-unthemed",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": "More options for Untitled",
+            "text": ""
+          },
+          {
+            "tag": "button",
+            "path": "conversations-list.sidenav-style-updates.ng-tns-c2020774312-15.ia-redesign.side-nav-style-updates > mat-nav-list.mat-mdc-nav-list.mat-mdc-list-base.mdc-list.gds-sidenav-list > gem-nav-list-item.ng-tns-c2020774312-15.has-hovered-trailing-content.ng-star-inserted > div.hovered-trailing-content.ng-star-inserted > button.mdc-icon-button.mat-mdc-icon-button.mat-mdc-button-base.mat-mdc-menu-trigger",
+            "className": "mdc-icon-button mat-mdc-icon-button mat-mdc-button-base mat-mdc-menu-trigger gem-conversation-actions-menu-button mat-unthemed",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": "More options for 图像元素分层拆解与抠图",
+            "text": ""
+          },
+          {
+            "tag": "button",
+            "path": "conversations-list.sidenav-style-updates.ng-tns-c2020774312-15.ia-redesign.side-nav-style-updates > mat-nav-list.mat-mdc-nav-list.mat-mdc-list-base.mdc-list.gds-sidenav-list > gem-nav-list-item.ng-tns-c2020774312-15.has-hovered-trailing-content.ng-star-inserted > div.hovered-trailing-content.ng-star-inserted > button.mdc-icon-button.mat-mdc-icon-button.mat-mdc-button-base.mat-mdc-menu-trigger",
+            "className": "mdc-icon-button mat-mdc-icon-button mat-mdc-button-base mat-mdc-menu-trigger gem-conversation-actions-menu-button mat-unthemed",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": "More options for 把图中的元素分层拆解成不同的零件，单独排列，方便分层抠图。（要拆出完整的圆框，单独的翅膀和装饰）",
+            "text": ""
+          }
+        ],
+        "[class*=\"think\" i]": []
+      }
+    },
+    {
+      "key": "kimi",
+      "name": "Kimi",
+      "targetUrl": "https://www.kimi.com/chat/19d04d17-fca2-8505-8000-09c908509e39?chat_enter_method=history",
+      "elapsedMs": 10288,
+      "overall": "AUDITED",
+      "page": {
+        "title": "美元债券为何下跌，与金价有什么关联性 - Kimi",
+        "url": "https://www.kimi.com/chat/19d04d17-fca2-8505-8000-09c908509e39?chat_enter_method=history",
+        "bodyTextLength": 1563,
+        "bodySample": "新建会话 ⌘ K PPT 文档 深度研究 网站 表格 Agent 集群 Kimi Code Kimi Claw 历史会话 麻鱼是什么意思 电话回复建议 失信办卡冻结 四月初纳指标普反弹 美元债券为何下跌，与金价有什么关联性 查看全部 获取应用程序 焱·森 升级 展开导航 美元债券为何下跌，与金价有什么关联性 美元债券为何下跌，与金价有什么关联性 编辑 复制 分享 我来帮您分析美元债券下跌的原因及其与金价的关联性。 搜索网页 美元债券下跌原因 2025 2026 美债收益率上涨 债券价格下跌 黄金价格与美债收益率关系 86 个结果 根据最新市场信息，我来为您分析美元债券下跌的原因及其与金价的关联",
+        "needsLogin": false,
+        "securityChallenge": false,
+        "headingCount": 11
+      },
+      "exporter": {
+        "question": {
+          "selector": ".user-content",
+          "valid": true,
+          "elements": 1,
+          "partCounts": [
+            {
+              "selector": ".user-content",
+              "elements": 1
+            }
+          ],
+          "status": "PASS"
+        },
+        "answer": {
+          "selector": ".chat-content-item.chat-content-item-assistant .markdown-container, .markdown-body .markdown-container, [class*=\"assistant\"] .markdown-container",
+          "valid": true,
+          "elements": 4,
+          "partCounts": [
+            {
+              "selector": ".chat-content-item.chat-content-item-assistant .markdown-container",
+              "elements": 2
+            },
+            {
+              "selector": ".markdown-body .markdown-container",
+              "elements": 0
+            },
+            {
+              "selector": "[class*=\"assistant\"] .markdown-container",
+              "elements": 2
+            }
+          ],
+          "status": "PASS"
+        }
+      },
+      "outline": {
+        "question": {
+          "selector": ".user-content",
+          "valid": true,
+          "elements": 1,
+          "partCounts": [
+            {
+              "selector": ".user-content",
+              "elements": 1
+            }
+          ],
+          "status": "PASS"
+        },
+        "answer": {
+          "selector": ".chat-content-item.chat-content-item-assistant .markdown-container, .markdown-body .markdown-container, [class*=\"assistant\"] .markdown-container",
+          "valid": true,
+          "elements": 4,
+          "partCounts": [
+            {
+              "selector": ".chat-content-item.chat-content-item-assistant .markdown-container",
+              "elements": 2
+            },
+            {
+              "selector": ".markdown-body .markdown-container",
+              "elements": 0
+            },
+            {
+              "selector": "[class*=\"assistant\"] .markdown-container",
+              "elements": 2
+            }
+          ],
+          "status": "PASS"
+        },
+        "HEADINGS": {
+          "selector": "h1, h2, h3, h4, h5, h6",
+          "valid": true,
+          "elements": 11,
+          "partCounts": [
+            {
+              "selector": "h1",
+              "elements": 0
+            },
+            {
+              "selector": "h2",
+              "elements": 4
+            },
+            {
+              "selector": "h3",
+              "elements": 7
+            },
+            {
+              "selector": "h4",
+              "elements": 0
+            },
+            {
+              "selector": "h5",
+              "elements": 0
+            },
+            {
+              "selector": "h6",
+              "elements": 0
+            }
+          ],
+          "status": "PASS"
+        }
+      },
+      "samples": {
+        "[data-testid]": [],
+        "[data-turn]": [],
+        "[data-message-author-role]": [],
+        "[role]": [
+          {
+            "tag": "svg",
+            "path": "div.sidebar-shell.sidebar-shell--interactive > aside.sidebar > div.sidebar-header > div.expand-btn > svg",
+            "className": "",
+            "dataTestId": null,
+            "role": "img",
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "svg",
+            "path": "aside.sidebar > div.sidebar-new-chat > a.new-chat-btn > div.action-label > svg",
+            "className": "",
+            "dataTestId": null,
+            "role": "img",
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "svg",
+            "path": "ul > li > a.agent-item > div.agent-info > svg",
+            "className": "",
+            "dataTestId": null,
+            "role": "img",
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "svg",
+            "path": "ul > li > a.agent-item > div.agent-info > svg",
+            "className": "",
+            "dataTestId": null,
+            "role": "img",
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "svg",
+            "path": "ul > li > a.agent-item > div.agent-info > svg",
+            "className": "",
+            "dataTestId": null,
+            "role": "img",
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "svg",
+            "path": "ul > li > a.agent-item > div.agent-info > svg",
+            "className": "",
+            "dataTestId": null,
+            "role": "img",
+            "ariaLabel": null,
+            "text": ""
+          }
+        ],
+        "article": [],
+        "message-content": [],
+        "user-query": [],
+        "model-response": [],
+        ".markdown": [
+          {
+            "tag": "div",
+            "path": "div.segment-container > div.segment-content > div.segment-content-box > div.markdown-container > div.markdown",
+            "className": "markdown",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "我来帮您分析美元债券下跌的原因及其与金价的关联性。"
+          },
+          {
+            "tag": "div",
+            "path": "div.segment-container > div.segment-content > div.segment-content-box > div.markdown-container > div.markdown",
+            "className": "markdown",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "根据最新市场信息，我来为您分析美元债券下跌的原因及其与金价的关联性： 一、美元债券下跌的核心原因 1. 政策不确定性推高风险溢价 特朗普政府反复无常的关税政策导致市场对美国资产信心动摇，投资者要求更高的收益率（期限溢价）来补偿风险。2025年以来，即便美债利率仍有优势，美元却持续下跌，原因在于巨大的政策不确定性推升了风险溢价，全球资本开始\"用脚投票\"，降低美"
+          }
+        ],
+        ".markdown-main-panel": [],
+        ".ds-markdown": [],
+        ".hyc-common-markdown": [],
+        "[class*=\"message\" i]": [
+          {
+            "tag": "div",
+            "path": "html.dark > body > div.message-list-container.top",
+            "className": "message-list-container top",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "div",
+            "path": "html.dark > body > div.message-list-container.top > div.message-list",
+            "className": "message-list",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": ""
+          }
+        ],
+        "[class*=\"chat\" i]": [
+          {
+            "tag": "div",
+            "path": "div.app.has-sidebar.sidebar-interactive.fold > div.sidebar-slot.sidebar-slot--interactive.is-collapsed.not-mobile > div.sidebar-shell.sidebar-shell--interactive > aside.sidebar > div.sidebar-new-chat",
+            "className": "sidebar-new-chat",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "新建会话 ⌘ K"
+          },
+          {
+            "tag": "a",
+            "path": "div.sidebar-slot.sidebar-slot--interactive.is-collapsed.not-mobile > div.sidebar-shell.sidebar-shell--interactive > aside.sidebar > div.sidebar-new-chat > a.new-chat-btn",
+            "className": "new-chat-btn",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "新建会话 ⌘ K"
+          },
+          {
+            "tag": "a",
+            "path": "div.sidebar-nav > div.history-part > ul > li > a.chat-info-item",
+            "className": "chat-info-item",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "麻鱼是什么意思"
+          },
+          {
+            "tag": "div",
+            "path": "div.history-part > ul > li > a.chat-info-item > div.chat-info",
+            "className": "chat-info",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "麻鱼是什么意思"
+          },
+          {
+            "tag": "span",
+            "path": "ul > li > a.chat-info-item > div.chat-info > span.chat-name",
+            "className": "chat-name",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "麻鱼是什么意思"
+          },
+          {
+            "tag": "a",
+            "path": "div.sidebar-nav > div.history-part > ul > li > a.chat-info-item",
+            "className": "chat-info-item",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "电话回复建议"
+          }
+        ],
+        "[class*=\"bubble\" i]": [],
+        "[class*=\"assistant\" i]": [
+          {
+            "tag": "div",
+            "path": "div.chat-detail-content > div.chat-detail-main > div.chat-content-container > div.chat-content-list > div.chat-content-item.chat-content-item-assistant",
+            "className": "chat-content-item chat-content-item-assistant",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "我来帮您分析美元债券下跌的原因及其与金价的关联性。 搜索网页 美元债券下跌原因 2025 2026 美债收益率上涨 债券价格下跌 黄金价格与美债收益率关系 86 个结果 根据最新市场信息，我来为您分析美元债券下跌的原因及其与金价的关联性： 一、美元债券下跌的核心原因 1. 政策不确定性推高风险溢价 特朗普政府反复无常的关税政策导致市场对美国资产信心动摇，投资"
+          },
+          {
+            "tag": "div",
+            "path": "div.chat-detail-main > div.chat-content-container > div.chat-content-list > div.chat-content-item.chat-content-item-assistant > div.segment.segment-assistant",
+            "className": "segment segment-assistant",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "我来帮您分析美元债券下跌的原因及其与金价的关联性。 搜索网页 美元债券下跌原因 2025 2026 美债收益率上涨 债券价格下跌 黄金价格与美债收益率关系 86 个结果 根据最新市场信息，我来为您分析美元债券下跌的原因及其与金价的关联性： 一、美元债券下跌的核心原因 1. 政策不确定性推高风险溢价 特朗普政府反复无常的关税政策导致市场对美国资产信心动摇，投资"
+          },
+          {
+            "tag": "div",
+            "path": "div.chat-content-item.chat-content-item-assistant > div.segment.segment-assistant > div.segment-container > div.segment-content > div.segment-assistant-actions",
+            "className": "segment-assistant-actions",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "2/2 引用"
+          },
+          {
+            "tag": "div",
+            "path": "div.segment.segment-assistant > div.segment-container > div.segment-content > div.segment-assistant-actions > div.segment-assistant-actions-content",
+            "className": "segment-assistant-actions-content",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "2/2 引用"
+          },
+          {
+            "tag": "div",
+            "path": "div.segment-container > div.segment-content > div.segment-assistant-actions > div.segment-assistant-actions-content > div.assistant-page",
+            "className": "assistant-page",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "2/2"
+          },
+          {
+            "tag": "div",
+            "path": "div.segment-content > div.segment-assistant-actions > div.segment-assistant-actions-content > div.assistant-page > div.icon-button.assistant-page-item",
+            "className": "icon-button assistant-page-item",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": ""
+          }
+        ],
+        "[class*=\"user\" i]": [
+          {
+            "tag": "svg",
+            "path": "div.sidebar-shell.sidebar-shell--interactive > aside.sidebar > div.sidebar-footer > div.download-app-btn > svg",
+            "className": "",
+            "dataTestId": null,
+            "role": "img",
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "ul",
+            "path": "div.sidebar-shell.sidebar-shell--interactive > aside.sidebar > div.sidebar-footer > div.sidebar-footer-content > ul.user-nav",
+            "className": "user-nav",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "获取应用程序 会员计划 关于我们 探索月之暗面 开放平台 社会招聘 校园招聘 用户协议 隐私协议 Language 帮助 设置"
+          },
+          {
+            "tag": "svg",
+            "path": "div.sidebar-footer-content > ul.user-nav > li.sub-item > div.sub-item-content > svg",
+            "className": "",
+            "dataTestId": null,
+            "role": "img",
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "svg",
+            "path": "div.sidebar-footer-content > ul.user-nav > li > div.sub-item-content > svg",
+            "className": "",
+            "dataTestId": null,
+            "role": "img",
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "svg",
+            "path": "div.sidebar-footer-content > ul.user-nav > li.sub-item > div.sub-item-content > svg",
+            "className": "",
+            "dataTestId": null,
+            "role": "img",
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "svg",
+            "path": "div.sidebar-footer-content > ul.user-nav > li.sub-item.language-switch > div.sub-item-content > svg",
+            "className": "",
+            "dataTestId": null,
+            "role": "img",
+            "ariaLabel": null,
+            "text": ""
+          }
+        ],
+        "[class*=\"markdown\" i]": [
+          {
+            "tag": "div",
+            "path": "div.segment.segment-assistant > div.segment-container > div.segment-content > div.segment-content-box > div.markdown-container",
+            "className": "markdown-container",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "我来帮您分析美元债券下跌的原因及其与金价的关联性。"
+          },
+          {
+            "tag": "div",
+            "path": "div.segment-container > div.segment-content > div.segment-content-box > div.markdown-container > div.markdown",
+            "className": "markdown",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "我来帮您分析美元债券下跌的原因及其与金价的关联性。"
+          },
+          {
+            "tag": "div",
+            "path": "div.segment.segment-assistant > div.segment-container > div.segment-content > div.segment-content-box > div.markdown-container",
+            "className": "markdown-container",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "根据最新市场信息，我来为您分析美元债券下跌的原因及其与金价的关联性： 一、美元债券下跌的核心原因 1. 政策不确定性推高风险溢价 特朗普政府反复无常的关税政策导致市场对美国资产信心动摇，投资者要求更高的收益率（期限溢价）来补偿风险。2025年以来，即便美债利率仍有优势，美元却持续下跌，原因在于巨大的政策不确定性推升了风险溢价，全球资本开始\"用脚投票\"，降低美"
+          },
+          {
+            "tag": "div",
+            "path": "div.segment-container > div.segment-content > div.segment-content-box > div.markdown-container > div.markdown",
+            "className": "markdown",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "根据最新市场信息，我来为您分析美元债券下跌的原因及其与金价的关联性： 一、美元债券下跌的核心原因 1. 政策不确定性推高风险溢价 特朗普政府反复无常的关税政策导致市场对美国资产信心动摇，投资者要求更高的收益率（期限溢价）来补偿风险。2025年以来，即便美债利率仍有优势，美元却持续下跌，原因在于巨大的政策不确定性推升了风险溢价，全球资本开始\"用脚投票\"，降低美"
+          },
+          {
+            "tag": "div",
+            "path": "div.segment-content > div.segment-content-box > div.markdown-container > div.markdown > div.table.markdown-table",
+            "className": "table markdown-table",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "表格 复制 驱动因素 具体表现 美债信用风险 债务货币化担忧、美债拍卖遇冷、外国投资者减持 美元体系动摇 美元指数与美债收益率走势背离，显示美元资产被抛售 央行购金潮 新兴市场央行持续增持黄金储备，对冲美元贬值风险 避险需求重构 地缘冲突、关税政策下，黄金成为终极避险资产而非美债"
+          }
+        ],
+        "[class*=\"conversation\" i]": [],
+        "[class*=\"think\" i]": []
+      }
+    },
+    {
+      "key": "grok",
+      "name": "Grok",
+      "targetUrl": "https://grok.com/c/7bb32de1-a9f4-4ba0-99b9-f4760eca1335?rid=b681c7a6-8574-494a-a2ff-978622800359",
+      "elapsedMs": 14419,
+      "overall": "AUDITED",
+      "page": {
+        "title": "龙爪槐守望者：交互设计与影响力的互联网履历 - Grok",
+        "url": "https://grok.com/c/7bb32de1-a9f4-4ba0-99b9-f4760eca1335?rid=b681c7a6-8574-494a-a2ff-978622800359",
+        "bodyTextLength": 1470,
+        "bodySample": "Toggle Sidebar Search ⌘K New Chat ⌘J Imagine Projects New Project History New conversation 龙爪槐守望者：交互设计与影响力的互联网履历 Volume Control Importance Greetings from Ani on the Grid 한국 18+ 만화: 연애 장면 2025年7月16日特别事件 Grok五级未换衣原因 New conversation 李强与特斯拉上海工厂 Glamorous Queen Throne Imagery 2025年黄金价格上涨原因分析 See all Jef",
+        "needsLogin": false,
+        "securityChallenge": false,
+        "headingCount": 10
+      },
+      "exporter": {
+        "question": {
+          "selector": "[data-testid=\"user-message\"]",
+          "valid": true,
+          "elements": 1,
+          "partCounts": [
+            {
+              "selector": "[data-testid=\"user-message\"]",
+              "elements": 1
+            }
+          ],
+          "status": "PASS"
+        },
+        "answer": {
+          "selector": "[data-testid=\"assistant-message\"]",
+          "valid": true,
+          "elements": 1,
+          "partCounts": [
+            {
+              "selector": "[data-testid=\"assistant-message\"]",
+              "elements": 1
+            }
+          ],
+          "status": "PASS"
+        },
+        "markdownBlock": {
+          "selector": ".response-content-markdown",
+          "valid": true,
+          "elements": 2,
+          "partCounts": [
+            {
+              "selector": ".response-content-markdown",
+              "elements": 2
+            }
+          ],
+          "status": "PASS"
+        }
+      },
+      "outline": {
+        "question": {
+          "selector": "[data-testid=\"user-message\"]",
+          "valid": true,
+          "elements": 1,
+          "partCounts": [
+            {
+              "selector": "[data-testid=\"user-message\"]",
+              "elements": 1
+            }
+          ],
+          "status": "PASS"
+        },
+        "answer": {
+          "selector": "[data-testid=\"assistant-message\"]",
+          "valid": true,
+          "elements": 1,
+          "partCounts": [
+            {
+              "selector": "[data-testid=\"assistant-message\"]",
+              "elements": 1
+            }
+          ],
+          "status": "PASS"
+        },
+        "HEADINGS": {
+          "selector": "h1, h2, h3, h4, h5, h6",
+          "valid": true,
+          "elements": 10,
+          "partCounts": [
+            {
+              "selector": "h1",
+              "elements": 0
+            },
+            {
+              "selector": "h2",
+              "elements": 2
+            },
+            {
+              "selector": "h3",
+              "elements": 5
+            },
+            {
+              "selector": "h4",
+              "elements": 3
+            },
+            {
+              "selector": "h5",
+              "elements": 0
+            },
+            {
+              "selector": "h6",
+              "elements": 0
+            }
+          ],
+          "status": "PASS"
+        }
+      },
+      "samples": {
+        "[data-testid]": [
+          {
+            "tag": "a",
+            "path": "div.shrink-0 > div.relative.flex.w-full.min-w-0 > ul.flex.w-full.min-w-0.flex-col > li.group/menu-item.whitespace-nowrap.font-semibold.mx-1 > a.peer/menu-button.flex.items-center.gap-2",
+            "className": "peer/menu-button flex items-center gap-2 overflow-hidden rounded-xl text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] focus:outline-none focus:ring-0 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 [&>span:last-child]:truncate [&>svg]:shrink-0 hover:text-primary h-[36px] border-transparent hover:bg-button-ghost-hover data-[state=open]:hover:bg-button-ghost-hover active:bg-button-ghost-active data-[active=true]:bg-button-ghost-active aria-expanded:bg-button-ghost-hover relative flex flex-row gap-1 group/sidebar-item w-full p-[0.375rem] text-sm text-primary rounded-xl hover:bg-transparent active:bg-transparent focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:text-primary select-none",
+            "dataTestId": "new-chat",
+            "role": null,
+            "ariaLabel": null,
+            "text": "New Chat"
+          },
+          {
+            "tag": "div",
+            "path": "body.antialiased.font-body.text-fg-primary.bg-surface-base > div.group/sidebar-wrapper.flex.flex-col.h-svh > div.flex.flex-1.min-h-0.relative > div.flex.w-full.h-full.overflow-hidden > div.flex.w-full.h-full",
+            "className": "flex w-full h-full",
+            "dataTestId": "drop-container",
+            "role": null,
+            "ariaLabel": null,
+            "text": "Share 龙爪槐守望者 在互联网上这个人的履历是怎样的 “龙爪槐守望者”（网名，X账号@ftium4）是一位专注于交互设计（UX/UI）和产品体验的独立设计师，在互联网上以分享设计资源、工具和周报闻名。他的在线形象低调，主要通过博客、X（Twitter）和知乎等平台活跃，没有公开详细的职业简历或LinkedIn页面。以下是基于公开信息汇总的履历概述，信息来"
+          },
+          {
+            "tag": "div",
+            "path": "div.group/sidebar-wrapper.flex.flex-col.h-svh > div.flex.flex-1.min-h-0.relative > div.flex.w-full.h-full.overflow-hidden > div.flex.w-full.h-full > div.flex.w-full.h-full",
+            "className": "flex w-full h-full",
+            "dataTestId": "drop-ui",
+            "role": null,
+            "ariaLabel": null,
+            "text": "Share 龙爪槐守望者 在互联网上这个人的履历是怎样的 “龙爪槐守望者”（网名，X账号@ftium4）是一位专注于交互设计（UX/UI）和产品体验的独立设计师，在互联网上以分享设计资源、工具和周报闻名。他的在线形象低调，主要通过博客、X（Twitter）和知乎等平台活跃，没有公开详细的职业简历或LinkedIn页面。以下是基于公开信息汇总的履历概述，信息来"
+          },
+          {
+            "tag": "div",
+            "path": "div.relative.flex.w-full.flex-col > div#last-reply-container.w-full.flex-col.mx-auto.flex > div.flex.flex-col.items-center > div#response-b57059e7-6526-49a4-b635-050f3dfb00fe.relative.group.flex.flex-col > div#cn-q-0.message-bubble.relative.rounded-3xl.text-primary",
+            "className": "message-bubble relative rounded-3xl text-primary min-h-7 prose dark:prose-invert break-words prose-p:opacity-100 prose-strong:opacity-100 prose-li:opacity-100 prose-ul:opacity-100 prose-ol:opacity-100 prose-ul:my-1 prose-ol:my-1 prose-li:my-2 last:prose-li:mb-3 prose-li:ps-1 prose-li:ms-1 bg-surface-l1 border border-border-l1 max-w-[100%] @sm/mainview:max-w-[90%] has-[pre]:w-full px-4 py-2 rounded-br-lg overflow-x-auto",
+            "dataTestId": "user-message",
+            "role": null,
+            "ariaLabel": null,
+            "text": "龙爪槐守望者 在互联网上这个人的履历是怎样的"
+          },
+          {
+            "tag": "div",
+            "path": "div.relative.flex.w-full.flex-col > div#last-reply-container.w-full.flex-col.mx-auto.flex > div.flex.flex-col.items-center > div#response-b681c7a6-8574-494a-a2ff-978622800359.relative.group.flex.flex-col > div.message-bubble.relative.rounded-3xl.text-primary",
+            "className": "message-bubble relative rounded-3xl text-primary min-h-7 prose dark:prose-invert break-words prose-p:opacity-100 prose-strong:opacity-100 prose-li:opacity-100 prose-ul:opacity-100 prose-ol:opacity-100 prose-ul:my-1 prose-ol:my-1 prose-li:my-2 last:prose-li:mb-3 prose-li:ps-1 prose-li:ms-1 w-full max-w-none",
+            "dataTestId": "assistant-message",
+            "role": null,
+            "ariaLabel": null,
+            "text": "“龙爪槐守望者”（网名，X账号@ftium4）是一位专注于交互设计（UX/UI）和产品体验的独立设计师，在互联网上以分享设计资源、工具和周报闻名。他的在线形象低调，主要通过博客、X（Twitter）和知乎等平台活跃，没有公开详细的职业简历或LinkedIn页面。以下是基于公开信息汇总的履历概述，信息来源于他的个人网站、社交简介和相关平台描述。 基本信息 真实"
+          },
+          {
+            "tag": "div",
+            "path": "div.flex.flex-col.gap-0.justify-center > div.query-bar.group.z-20.relative > div.transition-[padding].duration-75.ease-out.ps-11 > div.relative.z-10.transition-[padding].duration-75 > div.relative.min-h-[60px]",
+            "className": "relative min-h-[60px]",
+            "dataTestId": "chat-input",
+            "role": null,
+            "ariaLabel": null,
+            "text": ""
+          }
+        ],
+        "[data-turn]": [],
+        "[data-message-author-role]": [],
+        "[role]": [
+          {
+            "tag": "div",
+            "path": "div#response-b681c7a6-8574-494a-a2ff-978622800359.relative.group.flex.flex-col > div.action-buttons.h-8.mt-0.5.mb-2 > div.flex.items-center.gap-[2px].w-max > div.opacity-0.group-focus-within:opacity-100.group-hover:opacity-100.[.last-response_&]:opacity-100 > div.inline-flex.flex-row.gap-1.items-center",
+            "className": "inline-flex flex-row gap-1 items-center w-fit py-1 ps-1 pe-2 rounded-full cursor-pointer bg-surface-l1 border border-border-l1 hover:bg-surface-l1-hover",
+            "dataTestId": null,
+            "role": "button",
+            "ariaLabel": "30 sources",
+            "text": "30 sources"
+          },
+          {
+            "tag": "img",
+            "path": "div.flex.items-center.gap-[2px].w-max > div.opacity-0.group-focus-within:opacity-100.group-hover:opacity-100.[.last-response_&]:opacity-100 > div.inline-flex.flex-row.gap-1.items-center > div.flex.items-center.justify-center.overflow-hidden > img.size-4.shrink-0.m-0.rounded-full",
+            "className": "size-4 shrink-0 m-0 rounded-full",
+            "dataTestId": null,
+            "role": "presentation",
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "img",
+            "path": "div.flex.items-center.gap-[2px].w-max > div.opacity-0.group-focus-within:opacity-100.group-hover:opacity-100.[.last-response_&]:opacity-100 > div.inline-flex.flex-row.gap-1.items-center > div.flex.items-center.justify-center.overflow-hidden > img.size-4.shrink-0.m-0.rounded-full",
+            "className": "size-4 shrink-0 m-0 rounded-full",
+            "dataTestId": null,
+            "role": "presentation",
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "img",
+            "path": "div.flex.items-center.gap-[2px].w-max > div.opacity-0.group-focus-within:opacity-100.group-hover:opacity-100.[.last-response_&]:opacity-100 > div.inline-flex.flex-row.gap-1.items-center > div.flex.items-center.justify-center.overflow-hidden > img.size-4.shrink-0.m-0.rounded-full",
+            "className": "size-4 shrink-0 m-0 rounded-full",
+            "dataTestId": null,
+            "role": "presentation",
+            "ariaLabel": null,
+            "text": ""
+          },
+          {
+            "tag": "div",
+            "path": "form.w-full.text-base.flex.flex-col > div.flex.flex-col.gap-0.justify-center > div.query-bar.group.z-20.relative > div.w-full.ps-4.pe-2 > div.w-full.flex-row.gap-2.mt-3",
+            "className": "w-full flex-row gap-2 mt-3 px-1 whitespace-nowrap hidden flex-wrap will-change-[mask-image] @sm:[mask-image:none] [mask-image:linear-gradient(to_right,transparent_0,black_0px,black_calc(100%_-_40px),transparent_100%)]",
+            "dataTestId": null,
+            "role": "list",
+            "ariaLabel": "Conversation attachments",
+            "text": ""
+          },
+          {
+            "tag": "div",
+            "path": "div.transition-[padding].duration-75.ease-out.ps-11 > div.relative.z-10.transition-[padding].duration-75 > div.relative.min-h-[60px] > div > div.tiptap.ProseMirror.w-full.px-2",
+            "className": "tiptap ProseMirror w-full px-2 bg-transparent focus:outline-none text-primary align-bottom max-h-[400px] overflow-y-auto !max-w-none prose [&_ul>li>p]:my-0 [&_ol>li>p]:my-0 [&_li>ol]:my-0 [&_li>ul]:my-0 [&_p]:my-0 [&_ul]:my-0 [&_ol]:my-0 pt-4 my-0 scroll-feather-y",
+            "dataTestId": null,
+            "role": "textbox",
+            "ariaLabel": "Ask Grok anything",
+            "text": ""
+          }
+        ],
+        "article": [],
+        "message-content": [],
+        "user-query": [],
+        "model-response": [],
+        ".markdown": [
+          {
+            "tag": "div",
+            "path": "div.flex.flex-col.items-center > div#response-b57059e7-6526-49a4-b635-050f3dfb00fe.relative.group.flex.flex-col > div#cn-q-0.message-bubble.relative.rounded-3xl.text-primary > div.relative > div.relative.response-content-markdown.markdown.[&_a:not(.not-prose)]:text-current",
+            "className": "relative response-content-markdown markdown [&_a:not(.not-prose)]:text-current [&_a:not(.not-prose):hover]:text-primary [&_a:not(.not-prose):hover]:decoration-primary [&_a:not(.not-prose)]:underline [&_a:not(.not-prose)]:decoration-primary/30 [&_a:not(.not-prose)]:underline-offset-2 [&>:first-child:not(.not-prose)]:mt-0 [&>:last-child:not(.not-prose)]:mb-0",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "龙爪槐守望者 在互联网上这个人的履历是怎样的"
+          },
+          {
+            "tag": "div",
+            "path": "div.flex.flex-col.items-center > div#response-b681c7a6-8574-494a-a2ff-978622800359.relative.group.flex.flex-col > div.message-bubble.relative.rounded-3xl.text-primary > div.relative > div.relative.response-content-markdown.markdown.[&_a:not(.not-prose)]:text-current",
+            "className": "relative response-content-markdown markdown [&_a:not(.not-prose)]:text-current [&_a:not(.not-prose):hover]:text-primary [&_a:not(.not-prose):hover]:decoration-primary [&_a:not(.not-prose)]:underline [&_a:not(.not-prose)]:decoration-primary/30 [&_a:not(.not-prose)]:underline-offset-2 [&>:first-child:not(.not-prose)]:mt-0 [&>:last-child:not(.not-prose)]:mb-0",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "“龙爪槐守望者”（网名，X账号@ftium4）是一位专注于交互设计（UX/UI）和产品体验的独立设计师，在互联网上以分享设计资源、工具和周报闻名。他的在线形象低调，主要通过博客、X（Twitter）和知乎等平台活跃，没有公开详细的职业简历或LinkedIn页面。以下是基于公开信息汇总的履历概述，信息来源于他的个人网站、社交简介和相关平台描述。 基本信息 真实"
+          }
+        ],
+        ".markdown-main-panel": [],
+        ".ds-markdown": [],
+        ".hyc-common-markdown": [],
+        "[class*=\"message\" i]": [
+          {
+            "tag": "div",
+            "path": "div.relative.flex.w-full.flex-col > div#last-reply-container.w-full.flex-col.mx-auto.flex > div.flex.flex-col.items-center > div#response-b57059e7-6526-49a4-b635-050f3dfb00fe.relative.group.flex.flex-col > div#cn-q-0.message-bubble.relative.rounded-3xl.text-primary",
+            "className": "message-bubble relative rounded-3xl text-primary min-h-7 prose dark:prose-invert break-words prose-p:opacity-100 prose-strong:opacity-100 prose-li:opacity-100 prose-ul:opacity-100 prose-ol:opacity-100 prose-ul:my-1 prose-ol:my-1 prose-li:my-2 last:prose-li:mb-3 prose-li:ps-1 prose-li:ms-1 bg-surface-l1 border border-border-l1 max-w-[100%] @sm/mainview:max-w-[90%] has-[pre]:w-full px-4 py-2 rounded-br-lg overflow-x-auto",
+            "dataTestId": "user-message",
+            "role": null,
+            "ariaLabel": null,
+            "text": "龙爪槐守望者 在互联网上这个人的履历是怎样的"
+          },
+          {
+            "tag": "div",
+            "path": "div.relative.flex.w-full.flex-col > div#last-reply-container.w-full.flex-col.mx-auto.flex > div.flex.flex-col.items-center > div#response-b681c7a6-8574-494a-a2ff-978622800359.relative.group.flex.flex-col > div.message-bubble.relative.rounded-3xl.text-primary",
+            "className": "message-bubble relative rounded-3xl text-primary min-h-7 prose dark:prose-invert break-words prose-p:opacity-100 prose-strong:opacity-100 prose-li:opacity-100 prose-ul:opacity-100 prose-ol:opacity-100 prose-ul:my-1 prose-ol:my-1 prose-li:my-2 last:prose-li:mb-3 prose-li:ps-1 prose-li:ms-1 w-full max-w-none",
+            "dataTestId": "assistant-message",
+            "role": null,
+            "ariaLabel": null,
+            "text": "“龙爪槐守望者”（网名，X账号@ftium4）是一位专注于交互设计（UX/UI）和产品体验的独立设计师，在互联网上以分享设计资源、工具和周报闻名。他的在线形象低调，主要通过博客、X（Twitter）和知乎等平台活跃，没有公开详细的职业简历或LinkedIn页面。以下是基于公开信息汇总的履历概述，信息来源于他的个人网站、社交简介和相关平台描述。 基本信息 真实"
+          }
+        ],
+        "[class*=\"chat\" i]": [
+          {
+            "tag": "div",
+            "path": "div.flex.w-full.h-full.overflow-hidden > div.flex.w-full.h-full > div.flex.w-full.h-full > main.h-full.flex-grow.flex-shrink.relative > div.relative.flex.h-full.flex-col",
+            "className": "relative flex h-full flex-col items-center @container/chat min-w-[340px] [--content-max-width:32rem] @[40rem]:[--content-max-width:38rem] @[44rem]:[--content-max-width:40rem] @[52rem]:[--content-max-width:48rem] [--content-gutter:1rem] [--thead-sticky-top:0rem] @xl/mainview:[--thead-sticky-top:0px] breakout",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "龙爪槐守望者 在互联网上这个人的履历是怎样的 “龙爪槐守望者”（网名，X账号@ftium4）是一位专注于交互设计（UX/UI）和产品体验的独立设计师，在互联网上以分享设计资源、工具和周报闻名。他的在线形象低调，主要通过博客、X（Twitter）和知乎等平台活跃，没有公开详细的职业简历或LinkedIn页面。以下是基于公开信息汇总的履历概述，信息来源于他的个人"
+          },
+          {
+            "tag": "div",
+            "path": "div#last-reply-container.w-full.flex-col.mx-auto.flex > div.flex.flex-col.items-center > div#response-b681c7a6-8574-494a-a2ff-978622800359.relative.group.flex.flex-col > div.action-buttons.h-8.mt-0.5.mb-2 > div.flex.items-center.gap-[2px].w-max",
+            "className": "flex items-center gap-[2px] w-max rounded-lg text-xs px-2 start-0 @md/chat:start-3 -ml-4",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "30 sources"
+          },
+          {
+            "tag": "div",
+            "path": "main.h-full.flex-grow.flex-shrink.relative > div.relative.flex.h-full.flex-col > div.absolute.inset-x-0.bottom-0.mx-auto > div.absolute.bottom-0.h-14.w-full > div.chat-input-backdrop.w-full.h-full.bg-surface-base",
+            "className": "chat-input-backdrop w-full h-full bg-surface-base",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": ""
+          }
+        ],
+        "[class*=\"bubble\" i]": [
+          {
+            "tag": "div",
+            "path": "div.relative.flex.w-full.flex-col > div#last-reply-container.w-full.flex-col.mx-auto.flex > div.flex.flex-col.items-center > div#response-b57059e7-6526-49a4-b635-050f3dfb00fe.relative.group.flex.flex-col > div#cn-q-0.message-bubble.relative.rounded-3xl.text-primary",
+            "className": "message-bubble relative rounded-3xl text-primary min-h-7 prose dark:prose-invert break-words prose-p:opacity-100 prose-strong:opacity-100 prose-li:opacity-100 prose-ul:opacity-100 prose-ol:opacity-100 prose-ul:my-1 prose-ol:my-1 prose-li:my-2 last:prose-li:mb-3 prose-li:ps-1 prose-li:ms-1 bg-surface-l1 border border-border-l1 max-w-[100%] @sm/mainview:max-w-[90%] has-[pre]:w-full px-4 py-2 rounded-br-lg overflow-x-auto",
+            "dataTestId": "user-message",
+            "role": null,
+            "ariaLabel": null,
+            "text": "龙爪槐守望者 在互联网上这个人的履历是怎样的"
+          },
+          {
+            "tag": "div",
+            "path": "div.relative.flex.w-full.flex-col > div#last-reply-container.w-full.flex-col.mx-auto.flex > div.flex.flex-col.items-center > div#response-b681c7a6-8574-494a-a2ff-978622800359.relative.group.flex.flex-col > div.message-bubble.relative.rounded-3xl.text-primary",
+            "className": "message-bubble relative rounded-3xl text-primary min-h-7 prose dark:prose-invert break-words prose-p:opacity-100 prose-strong:opacity-100 prose-li:opacity-100 prose-ul:opacity-100 prose-ol:opacity-100 prose-ul:my-1 prose-ol:my-1 prose-li:my-2 last:prose-li:mb-3 prose-li:ps-1 prose-li:ms-1 w-full max-w-none",
+            "dataTestId": "assistant-message",
+            "role": null,
+            "ariaLabel": null,
+            "text": "“龙爪槐守望者”（网名，X账号@ftium4）是一位专注于交互设计（UX/UI）和产品体验的独立设计师，在互联网上以分享设计资源、工具和周报闻名。他的在线形象低调，主要通过博客、X（Twitter）和知乎等平台活跃，没有公开详细的职业简历或LinkedIn页面。以下是基于公开信息汇总的履历概述，信息来源于他的个人网站、社交简介和相关平台描述。 基本信息 真实"
+          }
+        ],
+        "[class*=\"assistant\" i]": [],
+        "[class*=\"user\" i]": [],
+        "[class*=\"markdown\" i]": [
+          {
+            "tag": "div",
+            "path": "div.flex.flex-col.items-center > div#response-b57059e7-6526-49a4-b635-050f3dfb00fe.relative.group.flex.flex-col > div#cn-q-0.message-bubble.relative.rounded-3xl.text-primary > div.relative > div.relative.response-content-markdown.markdown.[&_a:not(.not-prose)]:text-current",
+            "className": "relative response-content-markdown markdown [&_a:not(.not-prose)]:text-current [&_a:not(.not-prose):hover]:text-primary [&_a:not(.not-prose):hover]:decoration-primary [&_a:not(.not-prose)]:underline [&_a:not(.not-prose)]:decoration-primary/30 [&_a:not(.not-prose)]:underline-offset-2 [&>:first-child:not(.not-prose)]:mt-0 [&>:last-child:not(.not-prose)]:mb-0",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "龙爪槐守望者 在互联网上这个人的履历是怎样的"
+          },
+          {
+            "tag": "div",
+            "path": "div.flex.flex-col.items-center > div#response-b681c7a6-8574-494a-a2ff-978622800359.relative.group.flex.flex-col > div.message-bubble.relative.rounded-3xl.text-primary > div.relative > div.relative.response-content-markdown.markdown.[&_a:not(.not-prose)]:text-current",
+            "className": "relative response-content-markdown markdown [&_a:not(.not-prose)]:text-current [&_a:not(.not-prose):hover]:text-primary [&_a:not(.not-prose):hover]:decoration-primary [&_a:not(.not-prose)]:underline [&_a:not(.not-prose)]:decoration-primary/30 [&_a:not(.not-prose)]:underline-offset-2 [&>:first-child:not(.not-prose)]:mt-0 [&>:last-child:not(.not-prose)]:mb-0",
+            "dataTestId": null,
+            "role": null,
+            "ariaLabel": null,
+            "text": "“龙爪槐守望者”（网名，X账号@ftium4）是一位专注于交互设计（UX/UI）和产品体验的独立设计师，在互联网上以分享设计资源、工具和周报闻名。他的在线形象低调，主要通过博客、X（Twitter）和知乎等平台活跃，没有公开详细的职业简历或LinkedIn页面。以下是基于公开信息汇总的履历概述，信息来源于他的个人网站、社交简介和相关平台描述。 基本信息 真实"
+          }
+        ],
+        "[class*=\"conversation\" i]": [],
+        "[class*=\"think\" i]": []
+      }
+    }
+  ],
+  "summary": [
+    "DeepSeek: AUDITED",
+    "YuanBao: AUDITED",
+    "ChatGPT: AUDITED",
+    "Doubao: AUDITED",
+    "Gemini: AUDITED",
+    "Kimi: AUDITED",
+    "Grok: AUDITED"
+  ]
+}

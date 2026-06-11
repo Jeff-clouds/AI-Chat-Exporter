@@ -1,0 +1,80 @@
+{
+  "date": "2026-06-10",
+  "auditor": "cron:dom-selector-audit",
+  "platforms": {
+    "chatgpt": {
+      "status": "PASS",
+      "selectors": {
+        "turn": { "count": 4, "status": "PASS" },
+        "question": { "count": 2, "status": "PASS" },
+        "answer": { "count": 2, "status": "PASS" },
+        "markdownBlock": { "count": 2, "status": "PASS" }
+      }
+    },
+    "deepseek": {
+      "status": "PASS",
+      "selectors": {
+        "title": { "count": 1, "status": "PASS" },
+        "question": { "count": 3, "status": "PASS" },
+        "answer": { "count": 3, "status": "PASS" },
+        "thinking": { "count": 6, "status": "PASS" },
+        "search": { "count": 0, "status": "MISS (expected - no search in conversation)" },
+        "markdownBlock": { "count": 6, "status": "PASS" },
+        "codeBlock": { "count": 0, "status": "MISS (expected - no code in conversation)" },
+        "codeLanguage": { "count": 0, "status": "MISS (expected - no code in conversation)" }
+      }
+    },
+    "doubao": {
+      "status": "FAIL",
+      "selectors": {
+        "title": { "count": 1, "status": "PASS" },
+        "question": { "count": 4, "status": "PASS" },
+        "answer": { "count": 0, "status": "FAIL - conversation-page-message-host no longer exists" },
+        "markdownBlock": { "count": 0, "status": "FAIL - conversation-page-message-host no longer exists" }
+      },
+      "newClasses": {
+        "answerContainer": "container-h3Yzeb (2 matches)",
+        "markdownContent": "container-qX9Csx md-box-root (2 matches)"
+      },
+      "fix": "Update answer and markdownBlock selectors. Old: div[class*='conversation-page-message-host'] → New: div[class*='container-h3Yzeb']. Old markdownBlock same → New: div[class*='container-qX9Csx']"
+    },
+    "gemini": {
+      "status": "PASS",
+      "selectors": {
+        "conversation": { "count": 2, "status": "PASS" },
+        "question": { "count": 6, "status": "PASS" },
+        "answer": { "count": 2, "status": "PASS" },
+        "markdownBlock": { "count": 2, "status": "PASS" }
+      }
+    },
+    "kimi": {
+      "status": "PASS",
+      "selectors": {
+        "question": { "count": 1, "status": "PASS" },
+        "answer": { "count": 4, "status": "PASS" }
+      }
+    },
+    "grok": {
+      "status": "PASS",
+      "selectors": {
+        "question": { "count": 1, "status": "PASS" },
+        "answer": { "count": 1, "status": "PASS" },
+        "markdownBlock": { "count": 2, "status": "PASS" }
+      },
+      "note": "No Cloudflare block this time"
+    },
+    "yuanbao": {
+      "status": "PASS",
+      "selectors": {
+        "title": { "count": 1, "status": "PASS" },
+        "question": { "count": 3, "status": "PASS" },
+        "answer": { "count": 3, "status": "PASS" },
+        "thinking": { "count": 3, "status": "PASS" },
+        "markdownBlock": { "count": 7, "status": "PASS" },
+        "codeBlock": { "count": 0, "status": "MISS (expected - no code in conversation)" },
+        "codeLanguage": { "count": 0, "status": "MISS (expected - no code in conversation)" }
+      }
+    }
+  },
+  "summary": "6/7 platforms pass. Doubao needs selector update due to DOM class name changes."
+}

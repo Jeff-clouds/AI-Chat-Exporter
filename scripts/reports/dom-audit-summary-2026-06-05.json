@@ -1,0 +1,182 @@
+{
+  "timestamp": "2026-06-05T06:40:55.204Z",
+  "status": "FAIL",
+  "policy": {
+    "failureMode": "core selector failures only",
+    "coreFields": [
+      "title",
+      "conversation",
+      "turn",
+      "question",
+      "answer",
+      "thinking",
+      "markdownBlock"
+    ],
+    "optionalFields": [
+      "search",
+      "codeBlock",
+      "codeLanguage"
+    ],
+    "securityChallenge": "warning"
+  },
+  "sourceReport": "/Volumes/SanDisk/Users/Jeff/Obsidian Vault/Projects/Jeff-clouds/AI-Chat-Exporter/scripts/reports/current-chrome-profile-dom-latest.json",
+  "sourceTimestamp": "2026-06-05T06:40:55.083Z",
+  "auditOutput": "message reply handler: Connection invalid\n2026-06-05 14:40:50.848 osascript[36051:1985208] Connection Invalid error for service com.apple.hiservices-xpcservice.\n36:50: syntax error: “标识符”不能跟在“标识符”之后。 (-2740)\n\nAuditing YuanBao: https://yuanbao.tencent.com/chat/naQivTmsDa/105fec2b-3cf5-4382-92d7-e09e60da4b7b\n  YuanBao: ERROR Command failed: osascript -e tell application \"Google Chrome\" to execute active tab of front window javascript \"location.href = \\\"https://yuanbao.tencent.com/chat/naQivTmsDa/105fec2b-3cf5-4382-92d7-e09e60da4b7b\\\"\"\n2026-06-05 14:40:51.526 osascript[36067:1985231] Error received in message reply handler: Connection invalid\n2026-06-05 14:40:51.526 osascript[36067:1985233] Connection Invalid error for service com.apple.hiservices-xpcservice.\n36:50: syntax error: “标识符”不能跟在“标识符”之后。 (-2740)\n\nAuditing ChatGPT: https://chatgpt.com/c/69393a71-a410-8329-b70a-c1bab3d8b2fd\n  ChatGPT: ERROR Command failed: osascript -e tell application \"Google Chrome\" to execute active tab of front window javascript \"location.href = \\\"https://chatgpt.com/c/69393a71-a410-8329-b70a-c1bab3d8b2fd\\\"\"\n2026-06-05 14:40:52.169 osascript[36083:1985260] Connection Invalid error for service com.apple.hiservices-xpcservice.\n2026-06-05 14:40:52.169 osascript[36083:1985258] Error received in message reply handler: Connection invalid\n36:50: syntax error: “标识符”不能跟在“标识符”之后。 (-2740)\n\nAuditing Doubao: https://www.doubao.com/chat/38425731801360898\n  Doubao: ERROR Command failed: osascript -e tell application \"Google Chrome\" to execute active tab of front window javascript \"location.href = \\\"https://www.doubao.com/chat/38425731801360898\\\"\"\n2026-06-05 14:40:52.896 osascript[36099:1985279] Error received in message reply handler: Connection invalid\n2026-06-05 14:40:52.896 osascript[36099:1985280] Connection Invalid error for service com.apple.hiservices-xpcservice.\n36:50: syntax error: “标识符”不能跟在“标识符”之后。 (-2740)\n\nAuditing Gemini: https://gemini.google.com/app/404aea77190bc75f\n  Gemini: ERROR Command failed: osascript -e tell application \"Google Chrome\" to execute active tab of front window javascript \"location.href = \\\"https://gemini.google.com/app/404aea77190bc75f\\\"\"\n2026-06-05 14:40:53.585 osascript[36131:1985320] Error received in message reply handler: Connection invalid\n2026-06-05 14:40:53.585 osascript[36131:1985322] Connection Invalid error for service com.apple.hiservices-xpcservice.\n36:50: syntax error: “标识符”不能跟在“标识符”之后。 (-2740)\n\nAuditing Kimi: https://www.kimi.com/chat/19d04d17-fca2-8505-8000-09c908509e39?chat_enter_method=history\n  Kimi: ERROR Command failed: osascript -e tell application \"Google Chrome\" to execute active tab of front window javascript \"location.href = \\\"https://www.kimi.com/chat/19d04d17-fca2-8505-8000-09c908509e39?chat_enter_method=history\\\"\"\n2026-06-05 14:40:54.251 osascript[36147:1985349] Connection Invalid error for service com.apple.hiservices-xpcservice.\n2026-06-05 14:40:54.251 osascript[36147:1985347] Error received in message reply handler: Connection invalid\n36:50: syntax error: “标识符”不能跟在“标识符”之后。 (-2740)\n\nAuditing Grok: https://grok.com/c/7bb32de1-a9f4-4ba0-99b9-f4760eca1335?rid=b681c7a6-8574-494a-a2ff-978622800359\n  Grok: ERROR Command failed: osascript -e tell application \"Google Chrome\" to execute active tab of front window javascript \"location.href = \\\"https://grok.com/c/7bb32de1-a9f4-4ba0-99b9-f4760eca1335?rid=b681c7a6-8574-494a-a2ff-978622800359\\\"\"\n2026-06-05 14:40:55.075 osascript[36163:1985375] Connection Invalid error for service com.apple.hiservices-xpcservice.\n2026-06-05 14:40:55.075 osascript[36163:1985373] Error received in message reply handler: Connection invalid\n36:50: syntax error: “标识符”不能跟在“标识符”之后。 (-2740)\n\nReport: /Volumes/SanDisk/Users/Jeff/Obsidian Vault/Projects/Jeff-clouds/AI-Chat-Exporter/scripts/reports/current-chrome-profile-dom-2026-06-05T06-40-55-141Z.json\nLatest: /Volumes/SanDisk/Users/Jeff/Obsidian Vault/Projects/Jeff-clouds/AI-Chat-Exporter/scripts/reports/current-chrome-profile-dom-latest.json",
+  "totals": {
+    "platforms": 7,
+    "failures": 7,
+    "warnings": 0
+  },
+  "platforms": [
+    {
+      "key": "deepseek",
+      "name": "DeepSeek",
+      "overall": "ERROR",
+      "url": "https://chat.deepseek.com/a/chat/s/c731cccb-0f0d-4993-9332-3e86299d81db",
+      "failures": [
+        {
+          "platform": "deepseek",
+          "name": "DeepSeek",
+          "reason": "platform_error",
+          "message": "Command failed: osascript -e tell application \"Google Chrome\" to execute active tab of front window javascript \"location.href = \\\"https://chat.deepseek.com/a/chat/s/c731cccb-0f0d-4993-9332-3e86299d81db\\\"\"\n2026-06-05 14:40:50.848 osascript[36051:1985206] Error received in message reply handler: Connection invalid\n2026-06-05 14:40:50.848 osascript[36051:1985208] Connection Invalid error for service com.apple.hiservices-xpcservice.\n36:50: syntax error: “标识符”不能跟在“标识符”之后。 (-2740)\n"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "key": "yuanbao",
+      "name": "YuanBao",
+      "overall": "ERROR",
+      "url": "https://yuanbao.tencent.com/chat/naQivTmsDa/105fec2b-3cf5-4382-92d7-e09e60da4b7b",
+      "failures": [
+        {
+          "platform": "yuanbao",
+          "name": "YuanBao",
+          "reason": "platform_error",
+          "message": "Command failed: osascript -e tell application \"Google Chrome\" to execute active tab of front window javascript \"location.href = \\\"https://yuanbao.tencent.com/chat/naQivTmsDa/105fec2b-3cf5-4382-92d7-e09e60da4b7b\\\"\"\n2026-06-05 14:40:51.526 osascript[36067:1985231] Error received in message reply handler: Connection invalid\n2026-06-05 14:40:51.526 osascript[36067:1985233] Connection Invalid error for service com.apple.hiservices-xpcservice.\n36:50: syntax error: “标识符”不能跟在“标识符”之后。 (-2740)\n"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "key": "chatgpt",
+      "name": "ChatGPT",
+      "overall": "ERROR",
+      "url": "https://chatgpt.com/c/69393a71-a410-8329-b70a-c1bab3d8b2fd",
+      "failures": [
+        {
+          "platform": "chatgpt",
+          "name": "ChatGPT",
+          "reason": "platform_error",
+          "message": "Command failed: osascript -e tell application \"Google Chrome\" to execute active tab of front window javascript \"location.href = \\\"https://chatgpt.com/c/69393a71-a410-8329-b70a-c1bab3d8b2fd\\\"\"\n2026-06-05 14:40:52.169 osascript[36083:1985260] Connection Invalid error for service com.apple.hiservices-xpcservice.\n2026-06-05 14:40:52.169 osascript[36083:1985258] Error received in message reply handler: Connection invalid\n36:50: syntax error: “标识符”不能跟在“标识符”之后。 (-2740)\n"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "key": "doubao",
+      "name": "Doubao",
+      "overall": "ERROR",
+      "url": "https://www.doubao.com/chat/38425731801360898",
+      "failures": [
+        {
+          "platform": "doubao",
+          "name": "Doubao",
+          "reason": "platform_error",
+          "message": "Command failed: osascript -e tell application \"Google Chrome\" to execute active tab of front window javascript \"location.href = \\\"https://www.doubao.com/chat/38425731801360898\\\"\"\n2026-06-05 14:40:52.896 osascript[36099:1985279] Error received in message reply handler: Connection invalid\n2026-06-05 14:40:52.896 osascript[36099:1985280] Connection Invalid error for service com.apple.hiservices-xpcservice.\n36:50: syntax error: “标识符”不能跟在“标识符”之后。 (-2740)\n"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "key": "gemini",
+      "name": "Gemini",
+      "overall": "ERROR",
+      "url": "https://gemini.google.com/app/404aea77190bc75f",
+      "failures": [
+        {
+          "platform": "gemini",
+          "name": "Gemini",
+          "reason": "platform_error",
+          "message": "Command failed: osascript -e tell application \"Google Chrome\" to execute active tab of front window javascript \"location.href = \\\"https://gemini.google.com/app/404aea77190bc75f\\\"\"\n2026-06-05 14:40:53.585 osascript[36131:1985320] Error received in message reply handler: Connection invalid\n2026-06-05 14:40:53.585 osascript[36131:1985322] Connection Invalid error for service com.apple.hiservices-xpcservice.\n36:50: syntax error: “标识符”不能跟在“标识符”之后。 (-2740)\n"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "key": "kimi",
+      "name": "Kimi",
+      "overall": "ERROR",
+      "url": "https://www.kimi.com/chat/19d04d17-fca2-8505-8000-09c908509e39?chat_enter_method=history",
+      "failures": [
+        {
+          "platform": "kimi",
+          "name": "Kimi",
+          "reason": "platform_error",
+          "message": "Command failed: osascript -e tell application \"Google Chrome\" to execute active tab of front window javascript \"location.href = \\\"https://www.kimi.com/chat/19d04d17-fca2-8505-8000-09c908509e39?chat_enter_method=history\\\"\"\n2026-06-05 14:40:54.251 osascript[36147:1985349] Connection Invalid error for service com.apple.hiservices-xpcservice.\n2026-06-05 14:40:54.251 osascript[36147:1985347] Error received in message reply handler: Connection invalid\n36:50: syntax error: “标识符”不能跟在“标识符”之后。 (-2740)\n"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "key": "grok",
+      "name": "Grok",
+      "overall": "ERROR",
+      "url": "https://grok.com/c/7bb32de1-a9f4-4ba0-99b9-f4760eca1335?rid=b681c7a6-8574-494a-a2ff-978622800359",
+      "failures": [
+        {
+          "platform": "grok",
+          "name": "Grok",
+          "reason": "platform_error",
+          "message": "Command failed: osascript -e tell application \"Google Chrome\" to execute active tab of front window javascript \"location.href = \\\"https://grok.com/c/7bb32de1-a9f4-4ba0-99b9-f4760eca1335?rid=b681c7a6-8574-494a-a2ff-978622800359\\\"\"\n2026-06-05 14:40:55.075 osascript[36163:1985375] Connection Invalid error for service com.apple.hiservices-xpcservice.\n2026-06-05 14:40:55.075 osascript[36163:1985373] Error received in message reply handler: Connection invalid\n36:50: syntax error: “标识符”不能跟在“标识符”之后。 (-2740)\n"
+        }
+      ],
+      "warnings": []
+    }
+  ],
+  "failures": [
+    {
+      "platform": "deepseek",
+      "name": "DeepSeek",
+      "reason": "platform_error",
+      "message": "Command failed: osascript -e tell application \"Google Chrome\" to execute active tab of front window javascript \"location.href = \\\"https://chat.deepseek.com/a/chat/s/c731cccb-0f0d-4993-9332-3e86299d81db\\\"\"\n2026-06-05 14:40:50.848 osascript[36051:1985206] Error received in message reply handler: Connection invalid\n2026-06-05 14:40:50.848 osascript[36051:1985208] Connection Invalid error for service com.apple.hiservices-xpcservice.\n36:50: syntax error: “标识符”不能跟在“标识符”之后。 (-2740)\n"
+    },
+    {
+      "platform": "yuanbao",
+      "name": "YuanBao",
+      "reason": "platform_error",
+      "message": "Command failed: osascript -e tell application \"Google Chrome\" to execute active tab of front window javascript \"location.href = \\\"https://yuanbao.tencent.com/chat/naQivTmsDa/105fec2b-3cf5-4382-92d7-e09e60da4b7b\\\"\"\n2026-06-05 14:40:51.526 osascript[36067:1985231] Error received in message reply handler: Connection invalid\n2026-06-05 14:40:51.526 osascript[36067:1985233] Connection Invalid error for service com.apple.hiservices-xpcservice.\n36:50: syntax error: “标识符”不能跟在“标识符”之后。 (-2740)\n"
+    },
+    {
+      "platform": "chatgpt",
+      "name": "ChatGPT",
+      "reason": "platform_error",
+      "message": "Command failed: osascript -e tell application \"Google Chrome\" to execute active tab of front window javascript \"location.href = \\\"https://chatgpt.com/c/69393a71-a410-8329-b70a-c1bab3d8b2fd\\\"\"\n2026-06-05 14:40:52.169 osascript[36083:1985260] Connection Invalid error for service com.apple.hiservices-xpcservice.\n2026-06-05 14:40:52.169 osascript[36083:1985258] Error received in message reply handler: Connection invalid\n36:50: syntax error: “标识符”不能跟在“标识符”之后。 (-2740)\n"
+    },
+    {
+      "platform": "doubao",
+      "name": "Doubao",
+      "reason": "platform_error",
+      "message": "Command failed: osascript -e tell application \"Google Chrome\" to execute active tab of front window javascript \"location.href = \\\"https://www.doubao.com/chat/38425731801360898\\\"\"\n2026-06-05 14:40:52.896 osascript[36099:1985279] Error received in message reply handler: Connection invalid\n2026-06-05 14:40:52.896 osascript[36099:1985280] Connection Invalid error for service com.apple.hiservices-xpcservice.\n36:50: syntax error: “标识符”不能跟在“标识符”之后。 (-2740)\n"
+    },
+    {
+      "platform": "gemini",
+      "name": "Gemini",
+      "reason": "platform_error",
+      "message": "Command failed: osascript -e tell application \"Google Chrome\" to execute active tab of front window javascript \"location.href = \\\"https://gemini.google.com/app/404aea77190bc75f\\\"\"\n2026-06-05 14:40:53.585 osascript[36131:1985320] Error received in message reply handler: Connection invalid\n2026-06-05 14:40:53.585 osascript[36131:1985322] Connection Invalid error for service com.apple.hiservices-xpcservice.\n36:50: syntax error: “标识符”不能跟在“标识符”之后。 (-2740)\n"
+    },
+    {
+      "platform": "kimi",
+      "name": "Kimi",
+      "reason": "platform_error",
+      "message": "Command failed: osascript -e tell application \"Google Chrome\" to execute active tab of front window javascript \"location.href = \\\"https://www.kimi.com/chat/19d04d17-fca2-8505-8000-09c908509e39?chat_enter_method=history\\\"\"\n2026-06-05 14:40:54.251 osascript[36147:1985349] Connection Invalid error for service com.apple.hiservices-xpcservice.\n2026-06-05 14:40:54.251 osascript[36147:1985347] Error received in message reply handler: Connection invalid\n36:50: syntax error: “标识符”不能跟在“标识符”之后。 (-2740)\n"
+    },
+    {
+      "platform": "grok",
+      "name": "Grok",
+      "reason": "platform_error",
+      "message": "Command failed: osascript -e tell application \"Google Chrome\" to execute active tab of front window javascript \"location.href = \\\"https://grok.com/c/7bb32de1-a9f4-4ba0-99b9-f4760eca1335?rid=b681c7a6-8574-494a-a2ff-978622800359\\\"\"\n2026-06-05 14:40:55.075 osascript[36163:1985375] Connection Invalid error for service com.apple.hiservices-xpcservice.\n2026-06-05 14:40:55.075 osascript[36163:1985373] Error received in message reply handler: Connection invalid\n36:50: syntax error: “标识符”不能跟在“标识符”之后。 (-2740)\n"
+    }
+  ],
+  "warnings": []
+}
