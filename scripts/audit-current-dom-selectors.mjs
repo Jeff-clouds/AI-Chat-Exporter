@@ -45,6 +45,13 @@ const LOGIN_INDICATORS = [
   'signin',
 ];
 
+const SECURITY_CHALLENGE_INDICATORS = [
+  '正在进行安全验证',
+  'security verification',
+  'checking if the site connection is secure',
+  'cloudflare',
+];
+
 function parseExporterSelectors() {
   const selectorsPath = join(EXPORTER_DIR, 'src', 'config', 'selectors.js');
   const content = readFileSync(selectorsPath, 'utf8');
@@ -159,10 +166,13 @@ async function auditTarget(context, target, exporterSelectors, outlineSelectors)
     await page.goto(target.url, { waitUntil: 'domcontentloaded', timeout: 20000 });
     await page.waitForTimeout(3000);
 
-    const pageInfo = await page.evaluate((loginIndicators) => {
+    const pageInfo = await page.evaluate((loginIndicators, securityChallengeIndicators) => {
       const bodyText = document.body?.innerText || '';
       const normalized = bodyText.toLowerCase();
       const needsLogin = loginIndicators.some((indicator) => normalized.includes(indicator.toLowerCase()));
+      const securityChallenge = securityChallengeIndicators.some((indicator) =>
+        normalized.includes(indicator.toLowerCase()),
+      );
 
       return {
         title: document.title,
@@ -170,9 +180,10 @@ async function auditTarget(context, target, exporterSelectors, outlineSelectors)
         bodyTextLength: bodyText.length,
         bodySample: bodyText.replace(/\s+/g, ' ').slice(0, 240),
         needsLogin,
+        securityChallenge,
         headingCount: document.querySelectorAll('h1,h2,h3,h4,h5,h6').length,
       };
-    }, LOGIN_INDICATORS);
+    }, LOGIN_INDICATORS, SECURITY_CHALLENGE_INDICATORS);
 
     const exporter = await countSelectors(page, exporterSelectors[target.key]);
     const outline = await countSelectors(page, outlineSelectors[target.key]);
@@ -185,7 +196,11 @@ async function auditTarget(context, target, exporterSelectors, outlineSelectors)
       page: pageInfo,
       exporter,
       outline,
-      overall: pageInfo.needsLogin ? 'SKIP_LOGIN' : 'AUDITED',
+      overall: pageInfo.securityChallenge
+        ? 'SKIP_SECURITY'
+        : pageInfo.needsLogin
+          ? 'SKIP_LOGIN'
+          : 'AUDITED',
     };
   } catch (error) {
     return {

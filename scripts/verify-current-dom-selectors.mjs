@@ -47,6 +47,13 @@ const LOGIN_INDICATORS = [
   '扫码登录',
 ];
 
+const SECURITY_CHALLENGE_INDICATORS = [
+  '正在进行安全验证',
+  'security verification',
+  'checking if the site connection is secure',
+  'cloudflare',
+];
+
 function parseExporterSelectors() {
   const selectorsPath = join(EXPORTER_DIR, 'src', 'config', 'selectors.js');
   const content = readFileSync(selectorsPath, 'utf8');
@@ -151,11 +158,14 @@ async function countSelectors(page, selectors) {
 }
 
 async function getPageState(page) {
-  return page.evaluate((loginIndicators) => {
+  return page.evaluate((loginIndicators, securityChallengeIndicators) => {
     const text = document.body?.innerText || '';
     const compactText = text.replace(/\s+/g, ' ').trim();
     const lowerText = compactText.toLowerCase();
     const needsLogin = loginIndicators.some((indicator) =>
+      lowerText.includes(indicator.toLowerCase()),
+    );
+    const securityChallenge = securityChallengeIndicators.some((indicator) =>
       lowerText.includes(indicator.toLowerCase()),
     );
 
@@ -165,10 +175,11 @@ async function getPageState(page) {
       textLength: text.length,
       sample: compactText.slice(0, 220),
       needsLogin,
+      securityChallenge,
       headings: document.querySelectorAll('h1,h2,h3,h4,h5,h6').length,
       bodyChildren: document.body?.children.length || 0,
     };
-  }, LOGIN_INDICATORS);
+  }, LOGIN_INDICATORS, SECURITY_CHALLENGE_INDICATORS);
 }
 
 function summarizeCounts(counts) {
@@ -214,7 +225,11 @@ async function auditTarget(context, target, exporterSelectors, outlineSelectors)
       exporter: summarizeCounts(result.exporter),
       outline: summarizeCounts(result.outline),
     };
-    result.status = result.page.needsLogin ? 'SKIP_LOGIN' : 'CHECKED';
+    result.status = result.page.securityChallenge
+      ? 'SKIP_SECURITY'
+      : result.page.needsLogin
+        ? 'SKIP_LOGIN'
+        : 'CHECKED';
   } catch (error) {
     result.status = 'ERROR';
     result.error = error.message;

@@ -19,17 +19,28 @@ const OUTLINE_DIR = join(WORKSPACE_DIR, 'AI-Chat-Outline');
 const REPORT_DIR = join(EXPORTER_DIR, 'scripts', 'reports');
 
 const NAVIGATION_WAIT_MS = Number(process.env.CHROME_PROFILE_AUDIT_WAIT_MS || 7000);
+const NAVIGATION_RETRIES = Number(process.env.CHROME_PROFILE_AUDIT_RETRIES || 2);
 
 // Load test URLs from test-urls.json (single source of truth)
 const TEST_URLS_PATH = join(__dirname, 'test-urls.json');
 const testUrlsData = JSON.parse(readFileSync(TEST_URLS_PATH, 'utf8'));
 const OUTLINE_KEY_MAP = { deepseek: 'DEEPSEEK', yuanbao: 'YUANBAO', chatgpt: 'CHATGPT', doubao: 'DOUBAO', gemini: 'GEMINI', grok: 'GROK', kimi: 'KIMI' };
+const requestedTargets = new Set(
+  (process.env.DOM_AUDIT_TARGETS || process.env.CHROME_PROFILE_AUDIT_TARGETS || '')
+    .split(',')
+    .map(value => value.trim().toLowerCase())
+    .filter(Boolean)
+);
 const TARGETS = Object.entries(testUrlsData.platforms).map(([key, info]) => ({
   key,
   outlineKey: OUTLINE_KEY_MAP[key] || key.toUpperCase(),
   name: info.name,
   url: info.url,
-}));
+})).filter(target => requestedTargets.size === 0 || requestedTargets.has(target.key));
+
+if (requestedTargets.size > 0 && TARGETS.length === 0) {
+  throw new Error(`No matching DOM audit targets: ${Array.from(requestedTargets).join(', ')}`);
+}
 
 const LOGIN_INDICATORS = [
   '登录',
@@ -114,17 +125,49 @@ function executeChromeJs(source) {
 }
 
 function openInActiveTab(url) {
-  const script = [
-    'tell application "Google Chrome"',
-    'activate',
-    `set URL of active tab of front window to ${JSON.stringify(url)}`,
-    'end tell',
-  ].join('\n');
-  runAppleScript(script);
+  const script = `tell application "Google Chrome" to set URL of active tab of front window to ${JSON.stringify(url)}`;
+  try {
+    runAppleScript(script);
+  } catch {
+    executeChromeJs(`location.href = ${JSON.stringify(url)}`);
+  }
 }
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function urlsMatch(actual, expected) {
+  try {
+    const actualUrl = new URL(actual);
+    const expectedUrl = new URL(expected);
+    const normalizePath = value => value.replace(/\/+$/, '') || '/';
+    return actualUrl.hostname === expectedUrl.hostname
+      && normalizePath(actualUrl.pathname) === normalizePath(expectedUrl.pathname);
+  } catch {
+    return false;
+  }
+}
+
+async function waitForTargetUrl(targetUrl) {
+  const intervalMs = 1000;
+  const attempts = Math.max(1, Math.ceil(NAVIGATION_WAIT_MS / intervalMs));
+  let lastUrl = '';
+
+  for (let index = 0; index < attempts; index += 1) {
+    await sleep(intervalMs);
+    try {
+      lastUrl = executeChromeJs('location.href');
+      if (urlsMatch(lastUrl, targetUrl)) {
+        await sleep(Math.max(0, NAVIGATION_WAIT_MS - ((index + 1) * intervalMs)));
+        return { matched: true, lastUrl };
+      }
+    } catch (error) {
+      lastUrl = `ERROR: ${error.message}`;
+    }
+  }
+
+  return { matched: false, lastUrl };
 }
 
 function auditJs(input) {
@@ -276,8 +319,24 @@ async function auditTarget(target, exporterSelectors, outlineSelectors) {
   console.log(`Auditing ${target.name}: ${target.url}`);
 
   try {
-    openInActiveTab(target.url);
-    await sleep(NAVIGATION_WAIT_MS);
+    let navigation = { matched: false, lastUrl: '' };
+    for (let attempt = 0; attempt < NAVIGATION_RETRIES && !navigation.matched; attempt += 1) {
+      openInActiveTab(target.url);
+      navigation = await waitForTargetUrl(target.url);
+    }
+
+    if (!navigation.matched) {
+      console.log(`  ${target.name}: NAVIGATION_MISMATCH ${navigation.lastUrl}`);
+      return {
+        key: target.key,
+        name: target.name,
+        targetUrl: target.url,
+        elapsedMs: Date.now() - startedAt,
+        overall: 'NAVIGATION_MISMATCH',
+        error: `Expected ${target.url}, got ${navigation.lastUrl}`,
+      };
+    }
+
     const raw = executeChromeJs(auditJs({
       exporterSelectors: exporterSelectors[target.key],
       outlineSelectors: outlineSelectors[target.key],

@@ -1,0 +1,62 @@
+{
+  "date": "2026-06-05",
+  "type": "dom-selector-audit",
+  "results": {
+    "deepseek": {
+      "status": "PASS",
+      "question": 3,
+      "answer": 3,
+      "thinking": 6,
+      "title": 1,
+      "markdownBlock": 6,
+      "codeBlock": 0,
+      "codeLanguage": 0,
+      "note": "No code blocks in test conversation"
+    },
+    "chatgpt": {
+      "status": "PASS",
+      "question": 2,
+      "answer": 2,
+      "markdownBlock": 4
+    },
+    "kimi": {
+      "status": "PASS",
+      "question": 1,
+      "answer": 4,
+      "markdownBlock": 2,
+      "codeBlock": 0,
+      "note": "No code blocks in test conversation"
+    },
+    "gemini": {
+      "status": "PASS",
+      "conversation": 2,
+      "question": 6,
+      "answer": 2,
+      "markdownBlock": 2
+    },
+    "doubao": {
+      "status": "PASS",
+      "title": 1,
+      "question": 4,
+      "answer": 1,
+      "markdownBlock": 1
+    },
+    "yuanbao": {
+      "status": "PASS",
+      "title": 1,
+      "question": 3,
+      "answer": 3,
+      "thinking": 3,
+      "markdownBlock": 7,
+      "codeBlock": 0,
+      "codeLanguage": 0,
+      "note": "No code blocks in test conversation"
+    },
+    "grok": {
+      "status": "BLOCKED",
+      "note": "Cloudflare challenge page - expected"
+    }
+  },
+  "summary": "6/7 platforms PASS, Grok blocked by Cloudflare (known issue). No selector changes needed. Both Exporter and Outline projects have matching selectors.",
+  "testedBy": "cua-driver page(execute_javascript)"
+}
