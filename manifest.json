@@ -1,9 +1,9 @@
 {
-  "manifest_version": 3,
-  "name": "AI Chat Export Pro",
-  "version": "2.0.1",
-  "description": "AI 对话大纲导航与 Markdown 导出工具",
-  "permissions": [
+  "manifest_version" : 3,
+  "name" : "AI Chat Export Pro",
+  "version" : "2.0.2",
+  "description" : "AI 对话大纲导航与 Markdown 导出工具",
+  "permissions" : [
     "sidePanel",
     "activeTab",
     "scripting",
@@ -12,7 +12,7 @@
     "notifications",
     "storage"
   ],
-  "host_permissions": [
+  "host_permissions" : [
     "*://*.deepseek.com/*",
     "*://*.deepseek.ai/*",
     "*://*.yuanbao.tencent.com/*",
@@ -23,60 +23,60 @@
     "*://*.kimi.com/*",
     "*://*.moonshot.cn/*"
   ],
-  "side_panel": {
-    "default_path": "src/core/sidepanel.html"
+  "side_panel" : {
+    "default_path" : "src/core/sidepanel.html"
   },
-  "background": {
-    "service_worker": "src/core/background.js",
-    "type": "module"
+  "background" : {
+    "service_worker" : "src/core/background.js",
+    "type" : "module"
   },
-  "icons": {
-    "48": "public/assets/icon48.png",
-    "128": "public/assets/icon128.png"
+  "icons" : {
+    "48" : "public/assets/icon48.png",
+    "128" : "public/assets/icon128.png"
   },
-  "action": {
-    "default_icon": {
-      "48": "public/assets/icon48.png",
-      "128": "public/assets/icon128.png"
+  "action" : {
+    "default_icon" : {
+      "48" : "public/assets/icon48.png",
+      "128" : "public/assets/icon128.png"
     }
   },
-  "commands": {
-    "_execute_action": {
-      "suggested_key": {
-        "default": "Ctrl+Shift+O",
-        "mac": "Command+Shift+O"
+  "commands" : {
+    "_execute_action" : {
+      "suggested_key" : {
+        "default" : "Ctrl+Shift+O",
+        "mac" : "Command+Shift+O"
       },
-      "description": "打开/关闭大纲侧边栏"
+      "description" : "打开/关闭大纲侧边栏"
     },
-    "toggle_outline": {
-      "suggested_key": {
-        "default": "Alt+O",
-        "mac": "Alt+O"
+    "toggle_outline" : {
+      "suggested_key" : {
+        "default" : "Alt+O",
+        "mac" : "Alt+O"
       },
-      "description": "展开/折叠所有大纲项"
+      "description" : "展开/折叠所有大纲项"
     },
-    "next_heading": {
-      "suggested_key": {
-        "default": "Alt+J",
-        "mac": "Alt+J"
+    "next_heading" : {
+      "suggested_key" : {
+        "default" : "Alt+J",
+        "mac" : "Alt+J"
       },
-      "description": "跳转到下一个标题"
+      "description" : "跳转到下一个标题"
     },
-    "prev_heading": {
-      "suggested_key": {
-        "default": "Alt+K",
-        "mac": "Alt+K"
+    "prev_heading" : {
+      "suggested_key" : {
+        "default" : "Alt+K",
+        "mac" : "Alt+K"
       },
-      "description": "跳转到上一个标题"
+      "description" : "跳转到上一个标题"
     }
   },
-  "web_accessible_resources": [
+  "web_accessible_resources" : [
     {
-      "resources": [
+      "resources" : [
         "src/config/selectors.json",
         "src/export/config/selectors.js"
       ],
-      "matches": [
+      "matches" : [
         "<all_urls>"
       ]
     }

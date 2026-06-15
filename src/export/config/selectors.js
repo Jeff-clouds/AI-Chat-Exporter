@@ -111,10 +111,11 @@ const doubaoConfig = {
   selectors: {
     conversation: null,
     title: 'div.group\\/title',
+    turn: '[class*="inner-item-"], [class*="top-item-"]',
     question: 'div[class*="send-msg-bubble"], div[class*="bg-g-send-msg-bubble-bg"]',
-    answer: 'div[class*="conversation-page-message-host"]',
+    answer: '.md-box-root, .flow-markdown-body, div[class*="conversation-page-message-host"]',
     thinking: null,
-    markdownBlock: 'div[class*="conversation-page-message-host"]', // 回答内容容器
+    markdownBlock: '.md-box-root, .flow-markdown-body, div[class*="conversation-page-message-host"]',
     search: '', // 豆包暂无搜索结果独立区块
     cleanupSelectors: [
       'div[class*="send-msg-bubble"]', // 去掉嵌在回答宿主中的提问气泡
@@ -129,7 +130,9 @@ const doubaoConfig = {
   features: {
     hasSearch: false,
     titleFromFirstQuestion: true,
-    useTextContent: false
+    useTextContent: false,
+    pairByClassifiedTurns: true,
+    segmentSingleAnswerByQuestions: true
   }
 };
 
@@ -272,28 +275,170 @@ export function extractUnifiedData(url) {
       const pairedTurns = _extractConversationsByTurns(selectors, features);
       conversations.push(...pairedTurns);
 
-      if (features.titleFromFirstQuestion && !selectors.title) {
+      if (features.titleFromFirstQuestion) {
         title = pairedTurns[0]?.question?.substring(0, 50) || title;
       }
     } else {
-      const questions = document.querySelectorAll(selectors.question);
-      const answers = document.querySelectorAll(selectors.answer);
-      const count = Math.min(questions.length, answers.length);
+      const questions = _getNormalizedElements(selectors.question);
 
-      if (features.titleFromFirstQuestion && !selectors.title) {
+      if (features.titleFromFirstQuestion) {
         title = questions[0]?.textContent?.trim().substring(0, 50) || title;
       }
 
-      for (let i = 0; i < count; i++) {
-        const question = questions[i]?.textContent?.trim() || '';
-        const answerBlock = answers[i];
-        const answer = _processAnswer(answerBlock, selectors, features);
-        conversations.push({ question, answer });
+      if (features.pairByClassifiedTurns && selectors.turn) {
+        conversations.push(
+          ..._extractConversationsByClassifiedTurns(selectors, features)
+        );
+      }
+
+      if (conversations.length === 0 && features.segmentSingleAnswerByQuestions) {
+        conversations.push(
+          ..._extractConversationsByQuestionSegments(questions, selectors, features)
+        );
+      }
+
+      if (conversations.length === 0) {
+        const answers = _getNormalizedElements(selectors.answer);
+        const count = Math.min(questions.length, answers.length);
+
+        for (let i = 0; i < count; i++) {
+          const question = questions[i]?.textContent?.trim() || '';
+          const answerBlock = answers[i];
+          const answer = _processAnswer(answerBlock, selectors, features);
+          conversations.push({ question, answer });
+        }
       }
     }
   }
 
   return { title, conversations, platform: name, url };
+}
+
+function _getNormalizedElements(selector, context = document) {
+  if (!selector) return [];
+
+  const elements = Array.from(context.querySelectorAll(selector))
+    .filter(element => element.textContent?.trim());
+
+  const outermostElements = elements.filter(element => {
+    return !elements.some(other =>
+      other !== element &&
+      other.contains(element)
+    );
+  });
+
+  return outermostElements.sort((a, b) => {
+    if (a === b) return 0;
+    const position = a.compareDocumentPosition(b);
+    if (position & Node.DOCUMENT_POSITION_FOLLOWING) return -1;
+    if (position & Node.DOCUMENT_POSITION_PRECEDING) return 1;
+    return 0;
+  });
+}
+
+function _extractConversationsByQuestionSegments(questions, selectors, features) {
+  if (questions.length === 0 || !selectors.answer) return [];
+
+  const answerHosts = Array.from(document.querySelectorAll(selectors.answer))
+    .filter(host => host.textContent?.trim());
+
+  const hostCandidates = answerHosts
+    .map(host => ({
+      host,
+      questions: questions.filter(question => host.contains(question))
+    }))
+    .filter(candidate => candidate.questions.length > 0);
+
+  if (hostCandidates.length === 0) return [];
+
+  const conversations = [];
+
+  questions.forEach(questionElement => {
+    const candidates = hostCandidates
+      .filter(candidate => candidate.host.contains(questionElement))
+      .sort((a, b) => a.questions.length - b.questions.length);
+    const candidate = candidates[0];
+    if (!candidate) return;
+
+    const questionIndex = candidate.questions.indexOf(questionElement);
+    const nextQuestion = candidate.questions[questionIndex + 1] || null;
+    const answerBlock = _cloneRangeAfterQuestion(
+      candidate.host,
+      questionElement,
+      nextQuestion
+    );
+    if (!answerBlock) return;
+
+    const question = questionElement.textContent?.trim() || '';
+    const answer = _processAnswer(answerBlock, selectors, features);
+    if (!question || !_hasMeaningfulAnswer(answer)) return;
+
+    conversations.push({ question, answer });
+  });
+
+  return conversations;
+}
+
+function _extractConversationsByClassifiedTurns(selectors, features) {
+  const turns = _getNormalizedElements(selectors.turn);
+  const conversations = [];
+  let pendingQuestion = '';
+
+  turns.forEach(turn => {
+    const questionElement =
+      (turn.matches(selectors.question) ? turn : null) ||
+      turn.querySelector(selectors.question);
+
+    if (questionElement) {
+      const question = questionElement.textContent?.trim() || '';
+      if (question) pendingQuestion = question;
+      return;
+    }
+
+    const answerBlock =
+      (turn.matches(selectors.answer) ? turn : null) ||
+      turn.querySelector(selectors.answer);
+
+    if (!answerBlock || !pendingQuestion) return;
+
+    const answer = _processAnswer(answerBlock, selectors, features);
+    if (!_hasMeaningfulAnswer(answer)) return;
+
+    conversations.push({ question: pendingQuestion, answer });
+    pendingQuestion = '';
+  });
+
+  return conversations;
+}
+
+function _cloneRangeAfterQuestion(answerHost, questionElement, nextQuestion) {
+  try {
+    const range = document.createRange();
+    range.setStartAfter(questionElement);
+
+    if (nextQuestion && answerHost.contains(nextQuestion)) {
+      range.setEndBefore(nextQuestion);
+    } else {
+      range.selectNodeContents(answerHost);
+      range.setStartAfter(questionElement);
+    }
+
+    const answerBlock = answerHost.cloneNode(false);
+    answerBlock.appendChild(range.cloneContents());
+    return answerBlock;
+  } catch (error) {
+    console.warn('AI Chat Export Pro: Failed to segment Doubao answer', error);
+    return null;
+  }
+}
+
+function _hasMeaningfulAnswer(answer) {
+  return Boolean(
+    answer?.content ||
+    answer?.thinking ||
+    answer?.search ||
+    (answer?.codeBlocks && answer.codeBlocks.length > 0)
+  );
 }
 
 function _extractConversationsByTurns(selectors, features) {
@@ -311,11 +456,7 @@ function _extractConversationsByTurns(selectors, features) {
 
     if (role === 'assistant') {
       const answer = _processAnswer(turn, selectors, features);
-      const hasMeaningfulContent =
-        answer.content ||
-        answer.thinking ||
-        answer.search ||
-        (answer.codeBlocks && answer.codeBlocks.length > 0);
+      const hasMeaningfulContent = _hasMeaningfulAnswer(answer);
 
       if (pendingQuestion && hasMeaningfulContent) {
         conversations.push({ question: pendingQuestion, answer });

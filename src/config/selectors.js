@@ -91,7 +91,7 @@ class SelectorManager {
                     "conversation": null,
                     "title": "div.group\\/title",
                     "question": "div[class*=\"send-msg-bubble\"], div[class*=\"bg-g-send-msg-bubble-bg\"]",
-                    "answer": "div[class*=\"conversation-page-message-host\"]",
+                    "answer": ".md-box-root, .flow-markdown-body, div[class*=\"conversation-page-message-host\"]",
                     "thinking": null,
                     "HEADINGS": [
                         "h1",
@@ -285,6 +285,7 @@ class SelectorManager {
             ],
             answer: [
                 '[aria-label="doc_editor"]',
+                '.flow-markdown-body',
                 'div[class*="conversation-page-message-host"]',
                 'div[class*="message-host"]',
                 '.markdown', 
