@@ -1,5 +1,18 @@
 # 更新日志 / Changelog
 
+## [1.5.6] - 2026-06-16
+
+### 修复问题 / Fixed
+
+- 修复豆包平台回答内容提取失效：DOM 结构升级，`conversation-page-message-host` → `md-box-root`
+- 修复 Gemini 平台标题提取失效：移除旧选择器，改用 `titleFromDocumentTitle` 从页面标题提取
+
+### 优化改进 / Improved
+
+- 新增 DOM selector 审计 Skill 文档，规范化审计流程
+- 将测试 URL 抽取至 `test-urls.json`，审计脚本统一读取
+- 新增 DOM 审计自动化脚本与定时任务，持续监控各平台选择器有效性
+
 ## [1.5.5] - 2026-06-04
 
 ### 新增功能 / Added
