@@ -79,7 +79,8 @@ class SelectorManager {
                     ]
                 },
                 "features": {
-                    "titleFromFirstQuestion": true
+                    "titleFromFirstQuestion": true,
+                    "strictSelectors": true
                 }
             },
             "DOUBAO": {
@@ -118,6 +119,7 @@ class SelectorManager {
                     "question": ".user-query-container",
                     "answer": ".response-container",
                     "thinking": null,
+                    "markdownBlock": ".markdown",
                     "HEADINGS": [
                         "h1",
                         "h2",
@@ -161,8 +163,9 @@ class SelectorManager {
                     "conversation": null,
                     "title": null,
                     "question": ".user-content",
-                    "answer": ".chat-content-item.chat-content-item-assistant .markdown-container, .markdown-body .markdown-container, [class*=\"assistant\"] .markdown-container",
+                    "answer": ".segment-container:has(.segment-content-box > .markdown-container)",
                     "thinking": null,
+                    "markdownBlock": ".segment-content-box > .markdown-container:last-of-type",
                     "HEADINGS": [
                         "h1",
                         "h2",
@@ -172,7 +175,9 @@ class SelectorManager {
                         "h6"
                     ]
                 },
-                "features": {}
+                "features": {
+                    "titleFromFirstQuestion": true
+                }
             },
             "GENERIC": {
                 "name": "Generic AI Chat",
@@ -234,6 +239,7 @@ class SelectorManager {
         if (primarySelector) {
             const elements = context.querySelectorAll(primarySelector);
             if (elements.length > 0) return this._normalizeElements(type, Array.from(elements));
+            if (platform.features && platform.features.strictSelectors) return [];
         }
 
         // 2. 如果主选择器失效，或者没有显式配置，启动智能自愈逻辑

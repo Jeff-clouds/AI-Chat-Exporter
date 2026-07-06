@@ -258,6 +258,8 @@
             display: flex;
             align-items: center;
             font-weight: 600;
+            line-height: 1.35;
+            font-variant-numeric: lining-nums tabular-nums;
             color: var(--text-primary);
             background-color: var(--bg-question);
             padding: 21px 12px;  /* 恢复原来的 padding */
@@ -281,6 +283,12 @@
             font-weight: 400;
             font-size: 13px;
             padding: 12px 12px;
+        }
+
+        .question-text {
+            min-width: 0;
+            line-height: inherit;
+            word-break: break-word;
         }
 
         /* 展开/收起图标 - CSS 绘制 */

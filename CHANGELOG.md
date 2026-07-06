@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.3] - 2026-07-06
+
+### Fixed
+
+- Stabilize ChatGPT outline ordering for virtualized conversations by using turn metadata and native Prompt anchors.
+- Preserve AI answer headings when ChatGPT user turns are virtualized or temporarily empty.
+- Keep side panel collapse state stable across outline refreshes, scrolling, and directory jumps on all supported platforms.
+- Prevent stale outlines from a previous ChatGPT URL from replacing the current side panel state.
+
+### Changed
+
+- Improve export range feedback for currently loaded DOM conversations.
+- Tighten ChatGPT selectors to avoid non-conversation navigation content.
+- Refine Kimi and Gemini selector/export handling.
+
 ## [2.0.1] - 2026-06-09
 
 ### Changed

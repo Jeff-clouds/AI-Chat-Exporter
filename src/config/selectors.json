@@ -70,7 +70,8 @@
                 ]
             },
             "features": {
-                "titleFromFirstQuestion": true
+                "titleFromFirstQuestion": true,
+                "strictSelectors": true
             }
         },
         "DOUBAO": {
@@ -109,6 +110,7 @@
                 "question": ".user-query-container",
                 "answer": ".response-container",
                 "thinking": null,
+                "markdownBlock": ".markdown",
                 "HEADINGS": [
                     "h1",
                     "h2",
@@ -152,7 +154,7 @@
                 "conversation": null,
                 "title": null,
                 "question": ".user-content",
-                "answer": ".chat-content-item.chat-content-item-assistant .markdown-container, .markdown-body .markdown-container, [class*=\"assistant\"] .markdown-container",
+                "answer": ".segment-container:has(.segment-content-box > .markdown-container)",
                 "thinking": null,
                 "HEADINGS": [
                     "h1",
@@ -161,9 +163,12 @@
                     "h4",
                     "h5",
                     "h6"
-                ]
+                ],
+                "markdownBlock": ".segment-content-box > .markdown-container:last-of-type"
             },
-            "features": {}
+            "features": {
+                "titleFromFirstQuestion": true
+            }
         }
     }
 }

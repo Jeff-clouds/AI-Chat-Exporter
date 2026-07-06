@@ -192,12 +192,14 @@ const kimiConfig = {
     conversation: null,
     title: null,
     question: '.user-content',
-    answer: '.chat-content-item.chat-content-item-assistant .markdown-container, .markdown-body .markdown-container, [class*="assistant"] .markdown-container',
+    answer: '.segment-container:has(.segment-content-box > .markdown-container)',
     thinking: null,
-    markdownBlock: null // Kimi usually has markdown-container
+    markdownBlock: '.segment-content-box > .markdown-container:last-of-type'
   },
 
-  features: {}
+  features: {
+    titleFromFirstQuestion: true
+  }
 };
 
 // ===== 导出配置 =====
@@ -595,14 +597,97 @@ function _processMarkdownBlock(markdownBlock, selectors) {
   let content = '';
 
   block.childNodes.forEach(node => {
-    const html = node.outerHTML || node.textContent;
-    if (html) {
-      content += _htmlToMarkdown(html);
+    const markdown = _nodeToMarkdown(node);
+    if (markdown) {
+      content += markdown;
       content += '\n';
     }
   });
 
   return content.trim();
+}
+
+function _nodeToMarkdown(rootNode) {
+  if (!rootNode) return '';
+
+  function processNode(node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      return node.textContent;
+    }
+
+    if (node.nodeType !== Node.ELEMENT_NODE) {
+      return '';
+    }
+
+    let content = '';
+    node.childNodes.forEach(child => {
+      content += processNode(child);
+    });
+
+    const tagName = node.tagName.toLowerCase();
+
+    switch (tagName) {
+      case 'h1': return `# ${content}\n\n`;
+      case 'h2': return `## ${content}\n\n`;
+      case 'h3': return `### ${content}\n\n`;
+      case 'h4': return `#### ${content}\n\n`;
+      case 'h5': return `##### ${content}\n\n`;
+      case 'h6': return `###### ${content}\n\n`;
+
+      case 'p': return `${content}\n\n`;
+      case 'br': return '\n';
+      case 'hr': return '---\n\n';
+      case 'div': return `${content}\n`;
+
+      case 'strong':
+      case 'b': return `**${content}**`;
+      case 'em':
+      case 'i': return `*${content}*`;
+
+      case 'code':
+        if (node.parentElement && node.parentElement.tagName.toLowerCase() === 'pre') {
+          return content;
+        }
+        return `\`${content}\``;
+
+      case 'pre': {
+        const langClass = node.querySelector('code')?.className || '';
+        const langMatch = langClass.match(/language-(\w+)/);
+        const lang = langMatch ? langMatch[1] : '';
+        return `\n\`\`\`${lang}\n${content.trim()}\n\`\`\`\n\n`;
+      }
+
+      case 'ul': return `${content}\n`;
+      case 'ol': return `${content}\n`;
+      case 'li': {
+        const parentTag = node.parentElement ? node.parentElement.tagName.toLowerCase() : 'ul';
+        const prefix = parentTag === 'ol' ? '1. ' : '- ';
+        return `${prefix}${content}\n`;
+      }
+
+      case 'a': {
+        const href = node.getAttribute('href');
+        return href ? `[${content}](${href})` : content;
+      }
+
+      case 'blockquote':
+        return `> ${content.trim().replace(/\n/g, '\n> ')}\n\n`;
+
+      default:
+        return content;
+    }
+  }
+
+  const markdown = processNode(rootNode)
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+
+  return markdown
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&nbsp;/g, ' ');
 }
 
 function _extractCodeBlocks(answerBlock, selectors) {

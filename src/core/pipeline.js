@@ -71,17 +71,19 @@ window.Pipeline = class Pipeline {
                 this._extractNested(items, outline);
                 
                 if (outline.length > 0) {
-                    this._fillStats(outline, diagnostics);
-                    return { outline, diagnostics };
+                    const finalOutline = this._finalizeOutline(outline);
+                    this._fillStats(finalOutline, diagnostics);
+                    return { outline: finalOutline, diagnostics };
                 }
             }
 
             // 2. 回退到扁平模式 (Flat Mode)
             diagnostics.strategy = 'flat';
             this._extractFlat(outline);
-            this._fillStats(outline, diagnostics);
+            const finalOutline = this._finalizeOutline(outline);
+            this._fillStats(finalOutline, diagnostics);
             
-            return { outline, diagnostics };
+            return { outline: finalOutline, diagnostics };
         } catch (err) {
             console.error('AI Chat Export Pro: Extraction error', err);
             diagnostics.error = err.message;
@@ -95,6 +97,196 @@ window.Pipeline = class Pipeline {
             else if (item.type === 'answer') diagnostics.stats.headings++;
         });
         // 注意：这里的 answers 数量在扁平模式下不直接等于 outline 项数
+    }
+
+    _finalizeOutline(outline) {
+        if (this.platformId !== 'CHATGPT') return outline;
+        return this._augmentChatGptNativePrompts(outline);
+    }
+
+    _augmentChatGptNativePrompts(outline) {
+        const { prefix, groups } = this._groupOutlineByQuestion(outline);
+        const prompts = this._getChatGptNativePrompts();
+
+        if (groups.length === 0 && prompts.length === 0) return outline;
+
+        const groupsByTurn = new Map();
+        groups.forEach(group => {
+            const turnNumber = group.question?.metadata?.turnNumber;
+            if (Number.isFinite(turnNumber) && !groupsByTurn.has(turnNumber)) {
+                groupsByTurn.set(turnNumber, group);
+            }
+        });
+
+        prompts.forEach(prompt => {
+            if (groupsByTurn.has(prompt.turnNumber)) {
+                const group = groupsByTurn.get(prompt.turnNumber);
+                group.promptNumber = prompt.promptNumber;
+                return;
+            }
+
+            const question = this._createChatGptPromptQuestion(prompt);
+            const group = {
+                question,
+                answers: [],
+                originalIndex: groups.length,
+                promptNumber: prompt.promptNumber
+            };
+            groups.push(group);
+            groupsByTurn.set(prompt.turnNumber, group);
+        });
+
+        this._attachChatGptLoadedAnswerHeadings(groupsByTurn);
+
+        const sortedGroups = groups
+            .filter(group => group.question)
+            .sort((a, b) => this._chatGptGroupOrder(a) - this._chatGptGroupOrder(b));
+
+        const finalOutline = prompts.length > 0
+            ? prefix.filter(item => item.type !== 'answer')
+            : [...prefix];
+        sortedGroups.forEach((group, index) => {
+            finalOutline.push(this._withQuestionIndex(group.question, index));
+            group.answers.forEach(answer => finalOutline.push(answer));
+        });
+
+        return finalOutline;
+    }
+
+    _attachChatGptLoadedAnswerHeadings(groupsByTurn) {
+        const answers = this._sortElements(
+            window.SELECTOR_MANAGER.getElements(this.platformId, 'answer')
+        );
+
+        answers.forEach((answerEl, answerIndex) => {
+            const answerTurnNumber = this._turnInfo(answerEl).turnNumber;
+            if (!Number.isFinite(answerTurnNumber) || answerTurnNumber % 2 !== 0) return;
+
+            const group = groupsByTurn.get(answerTurnNumber - 1);
+            if (!group) return;
+
+            const knownAnswerKeys = new Set(
+                group.answers.map(answer => this._outlineAnswerKey(answer))
+            );
+            const answerOutline = [];
+            this._processAnswerHeadings(answerEl, answerOutline, answerIndex, {
+                questionIndex: group.question?.metadata?.index ?? null
+            });
+
+            answerOutline.forEach(answer => {
+                const key = this._outlineAnswerKey(answer);
+                if (knownAnswerKeys.has(key)) return;
+                knownAnswerKeys.add(key);
+                group.answers.push(answer);
+            });
+        });
+    }
+
+    _outlineAnswerKey(answer) {
+        const metadata = answer.metadata || {};
+        return metadata.key || `${metadata.turnNumber || ''}:${metadata.textKey || answer.text}`;
+    }
+
+    _groupOutlineByQuestion(outline) {
+        const prefix = [];
+        const groups = [];
+        let currentGroup = null;
+
+        outline.forEach(item => {
+            if (item.type === 'question') {
+                currentGroup = {
+                    question: item,
+                    answers: [],
+                    originalIndex: groups.length,
+                    promptNumber: item.metadata?.promptNumber || null
+                };
+                groups.push(currentGroup);
+                return;
+            }
+
+            if (currentGroup) {
+                currentGroup.answers.push(item);
+            } else {
+                prefix.push(item);
+            }
+        });
+
+        return { prefix, groups };
+    }
+
+    _getChatGptNativePrompts() {
+        const buttons = Array.from(document.querySelectorAll('button[aria-label^="Prompt"]'));
+        return buttons
+            .map(button => {
+                const label = button.getAttribute('aria-label') || '';
+                const match = label.match(/^Prompt\s+(\d+)$/i);
+                if (!match) return null;
+
+                const promptNumber = Number(match[1]);
+                const turnNumber = promptNumber * 2 - 1;
+                const turn = document.querySelector(`[data-testid="conversation-turn-${turnNumber}"][data-turn="user"]`);
+                const rawText = (turn?.textContent || button.textContent || label).replace(/\s+/g, ' ').trim();
+
+                return {
+                    promptNumber,
+                    turnNumber,
+                    turnId: turn?.getAttribute('data-turn-id') || null,
+                    key: turn ? this._elementKey(turn, 'question') : `question:chatgpt-prompt:${promptNumber}`,
+                    textKey: this._hash(rawText),
+                    text: rawText || label
+                };
+            })
+            .filter(Boolean);
+    }
+
+    _createChatGptPromptQuestion(prompt) {
+        const stableId = `cn-q-chatgpt-prompt-${prompt.promptNumber}`;
+        const text = prompt.text.length > 50 ? prompt.text.substring(0, 50) + '...' : prompt.text;
+
+        return {
+            text: `问题 ${prompt.promptNumber}: ${text}`,
+            level: 'h1',
+            id: stableId,
+            type: 'question',
+            metadata: {
+                type: 'question',
+                index: prompt.promptNumber - 1,
+                key: prompt.key,
+                textKey: prompt.textKey,
+                turnId: prompt.turnId,
+                turnNumber: prompt.turnNumber,
+                promptNumber: prompt.promptNumber,
+                nativePrompt: true
+            }
+        };
+    }
+
+    _withQuestionIndex(question, index) {
+        const text = question.text.replace(/^问题\s+\d+\s*:\s*/, '');
+        const promptNumber = question.metadata?.promptNumber || this._promptNumberFromTurn(question.metadata?.turnNumber);
+
+        return {
+            ...question,
+            text: `问题 ${index + 1}: ${text}`,
+            metadata: {
+                ...(question.metadata || {}),
+                index,
+                promptNumber
+            }
+        };
+    }
+
+    _chatGptGroupOrder(group) {
+        const metadata = group.question?.metadata || {};
+        if (Number.isFinite(metadata.turnNumber)) return metadata.turnNumber;
+        if (Number.isFinite(metadata.promptNumber)) return metadata.promptNumber * 2 - 1;
+        return Number.MAX_SAFE_INTEGER - (100000 - group.originalIndex);
+    }
+
+    _promptNumberFromTurn(turnNumber) {
+        if (!Number.isFinite(turnNumber)) return null;
+        if (turnNumber % 2 !== 1) return null;
+        return (turnNumber + 1) / 2;
     }
 
     _extractNested(items, outline) {
@@ -112,7 +304,7 @@ window.Pipeline = class Pipeline {
     _extractFlat(outline) {
         const questions = this._sortElements(
             window.SELECTOR_MANAGER.getElements(this.platformId, 'question')
-        );
+        ).filter(question => question.textContent.trim());
         const answers = this._sortElements(
             window.SELECTOR_MANAGER.getElements(this.platformId, 'answer')
         );
@@ -213,11 +405,14 @@ window.Pipeline = class Pipeline {
 
     _addQuestionToOutline(questionEl, index, outline) {
         // 使用稳定 ID
-        const stableId = `cn-q-${index}`;
+        const key = this._elementKey(questionEl, 'question');
+        const stableId = `cn-q-${this._safeId(key || index)}`;
         if (questionEl.id !== stableId) questionEl.id = stableId;
         
-        let text = questionEl.textContent.trim();
+        let text = questionEl.textContent.replace(/\s+/g, ' ').trim();
+        if (!text) return;
         if (text.length > 50) text = text.substring(0, 50) + '...';
+        const turnInfo = this._turnInfo(questionEl);
         
         outline.push({
             text: `问题 ${index + 1}: ${text}`,
@@ -226,7 +421,11 @@ window.Pipeline = class Pipeline {
             type: 'question',
             metadata: {
                 type: 'question',
-                index: index
+                index: index,
+                key: key,
+                textKey: this._textKey(questionEl),
+                turnId: turnInfo.turnId,
+                turnNumber: turnInfo.turnNumber
             }
         });
     }
@@ -303,8 +502,10 @@ window.Pipeline = class Pipeline {
         sortedHeadings.forEach(({element, level}, headingIndex) => {
             const normalizedLevel = Math.min(6, Math.max(2, level));
             // 使用稳定 ID
-            const stableId = `cn-a-${answerIndex}-${segmentKey}-h-${headingIndex}`;
+            const key = this._elementKey(element, 'heading');
+            const stableId = `cn-a-${this._safeId(`${answerIndex}-${segmentKey}-${key || headingIndex}`)}`;
             if (element.id !== stableId) element.id = stableId;
+            const turnInfo = this._turnInfo(element);
             
             outline.push({
                 text: element.textContent.trim(),
@@ -316,10 +517,66 @@ window.Pipeline = class Pipeline {
                     answerIndex: answerIndex,
                     headingIndex: headingIndex,
                     questionIndex: questionIndex,
+                    key: key,
+                    textKey: this._textKey(element),
+                    turnId: turnInfo.turnId,
+                    turnNumber: turnInfo.turnNumber,
                     segmented: !!startAfter || !!endBefore
                 }
             });
         });
+    }
+
+    _elementKey(element, type) {
+        const stableAttr = this._closestAttr(element, [
+            'data-message-id',
+            'data-turn-id',
+            'data-id'
+        ]);
+        if (type === 'heading') {
+            const parentKey = stableAttr ? `${stableAttr.name}:${stableAttr.value}` : 'text';
+            return `${type}:${parentKey}:${this._textKey(element)}`;
+        }
+        if (stableAttr) return `${type}:${stableAttr.name}:${stableAttr.value}`;
+        return `${type}:text:${this._textKey(element)}`;
+    }
+
+    _turnInfo(element) {
+        const turn = element.closest?.('[data-testid^="conversation-turn-"]');
+        const turnId = turn?.getAttribute('data-turn-id') || null;
+        const match = turn?.getAttribute('data-testid')?.match(/conversation-turn-(\d+)/);
+        return {
+            turnId,
+            turnNumber: match ? Number(match[1]) : null
+        };
+    }
+
+    _closestAttr(element, names) {
+        let current = element;
+        while (current && current instanceof Element) {
+            for (const name of names) {
+                const value = current.getAttribute(name);
+                if (value) return { name, value };
+            }
+            current = current.parentElement;
+        }
+        return null;
+    }
+
+    _textKey(element) {
+        return this._hash((element.textContent || '').replace(/\s+/g, ' ').trim());
+    }
+
+    _hash(text) {
+        let hash = 0;
+        for (let i = 0; i < text.length; i++) {
+            hash = ((hash << 5) - hash + text.charCodeAt(i)) | 0;
+        }
+        return Math.abs(hash).toString(36);
+    }
+
+    _safeId(value) {
+        return String(value).replace(/[^a-zA-Z0-9_-]+/g, '-').replace(/^-|-$/g, '');
     }
 
     // 根据元数据查找元素
@@ -329,7 +586,10 @@ window.Pipeline = class Pipeline {
         if (metadata.type === 'question') {
             const questions = this._sortElements(
                 window.SELECTOR_MANAGER.getElements(this.platformId, 'question')
-            );
+            ).filter(question => question.textContent.trim());
+            const keyedQuestion = this._findByMetadata(questions, metadata, 'question');
+            if (keyedQuestion) return keyedQuestion;
+            if (metadata.key || metadata.textKey || Number.isFinite(metadata.turnNumber)) return null;
             return questions[metadata.index] || null;
         } else if (metadata.type === 'answer') {
             const answers = this._sortElements(
@@ -340,7 +600,7 @@ window.Pipeline = class Pipeline {
 
             const questions = this._sortElements(
                 window.SELECTOR_MANAGER.getElements(this.platformId, 'question')
-            );
+            ).filter(question => question.textContent.trim());
             const segmentQuestion = typeof metadata.questionIndex === 'number'
                 ? questions[metadata.questionIndex] || null
                 : null;
@@ -385,9 +645,24 @@ window.Pipeline = class Pipeline {
             }
 
             const sortedHeadings = sortElementsByDocumentPosition(allHeadings);
+            const keyedHeading = this._findByMetadata(
+                sortedHeadings.map(item => item.element),
+                metadata,
+                'heading'
+            );
+            if (keyedHeading) return keyedHeading;
             const target = sortedHeadings[metadata.headingIndex];
             return target ? target.element : null;
         }
         return null;
+    }
+
+    _findByMetadata(elements, metadata, type) {
+        return elements.find(element => {
+            if (!element.textContent.trim()) return false;
+            const key = this._elementKey(element, type);
+            if (metadata.key && key === metadata.key) return true;
+            return metadata.textKey && this._textKey(element) === metadata.textKey;
+        }) || null;
     }
 };

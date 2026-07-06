@@ -17,10 +17,13 @@
     let readingPositionObserver = null;
     let currentReadingElement = null;
     let mainObserver = null;
+    let removeScrollRefreshListeners = null;
+    let routeWatcher = null;
 
     // 提取大纲并发送
     window.extractAndSendOutline = function() {
         const result = pipeline.extract();
+        cleanupStaleOutlineIds(result.outline);
         chrome.runtime.sendMessage({
             type: 'outline',
             outline: result.outline,
@@ -31,10 +34,20 @@
         setTimeout(initializeReadingPositionDetection, 500);
     }
 
+    function cleanupStaleOutlineIds(outline) {
+        const activeIds = new Set(outline.map(item => item.id).filter(Boolean));
+        document.querySelectorAll('[id^="cn-"]').forEach(element => {
+            if (!activeIds.has(element.id) || !element.textContent.trim()) {
+                element.removeAttribute('id');
+            }
+        });
+    }
+
     function initializeReadingPositionDetection() {
         if (readingPositionObserver) readingPositionObserver.disconnect();
         
-        const outlineElements = Array.from(document.querySelectorAll('[id^="cn-"]'));
+        const outlineElements = Array.from(document.querySelectorAll('[id^="cn-"]'))
+            .filter(element => element.textContent.trim());
         if (outlineElements.length === 0) return;
         
         readingPositionObserver = new IntersectionObserver((entries) => {
@@ -113,27 +126,7 @@
     function handleMessage(message, sender, sendResponse) {
         switch (message.type) {
             case 'scrollTo':
-                let element = document.getElementById(message.elementId);
-                // 备用方案：如果通过 ID 找不到，尝试使用 metadata 查找
-                if (!element && message.metadata) {
-                    element = pipeline.findElement(message.metadata);
-                    // 找到后尝试补回 ID，方便后续高亮
-                    if (element && message.elementId) {
-                         element.id = message.elementId;
-                    }
-                }
-
-                if (element) {
-                    smoothScrollToElement(element);
-                    
-                    // 暂时高亮
-                    element.style.transition = 'background-color 0.5s';
-                    const originalBg = element.style.backgroundColor;
-                    element.style.backgroundColor = 'rgba(255, 255, 0, 0.3)';
-                    setTimeout(() => {
-                        element.style.backgroundColor = originalBg;
-                    }, 1500);
-                }
+                scrollToOutlineTarget(message);
                 break;
             case 'getOutline':
                 extractAndSendOutline();
@@ -151,6 +144,93 @@
         }
     }
 
+    async function scrollToOutlineTarget(message) {
+        let element = findOutlineTarget(message);
+        if (!element && message.metadata) {
+            element = await findVirtualizedTarget(message);
+        }
+
+        if (!element) return;
+
+        if (message.elementId) element.id = message.elementId;
+        smoothScrollToElement(element);
+        
+        // 暂时高亮
+        element.style.transition = 'background-color 0.5s';
+        const originalBg = element.style.backgroundColor;
+        element.style.backgroundColor = 'rgba(255, 255, 0, 0.3)';
+        setTimeout(() => {
+            element.style.backgroundColor = originalBg;
+        }, 1500);
+    }
+
+    function findOutlineTarget(message) {
+        let element = document.getElementById(message.elementId);
+        if (element && !element.textContent.trim()) element = null;
+        if (!element && message.metadata) {
+            element = pipeline.findElement(message.metadata);
+        }
+        return element;
+    }
+
+    async function findVirtualizedTarget(message) {
+        const turnTarget = await findChatGptTurnTarget(message);
+        if (turnTarget) return turnTarget;
+
+        const centerElement = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2);
+        const scrollParent = getScrollParent(centerElement) || getScrollParent(document.body);
+        if (!scrollParent) return null;
+
+        const step = Math.max(300, Math.floor((scrollParent.clientHeight || window.innerHeight) * 0.8));
+        const directions = [-1, 1];
+        const maxSteps = Math.min(50, Math.ceil((scrollParent.scrollHeight || step) / step) + 2);
+
+        // ponytail: bounded scan for virtual lists; replace with platform message-id deep links if ChatGPT exposes one.
+        for (const direction of directions) {
+            for (let i = 0; i < maxSteps; i++) {
+                scrollParent.scrollBy({ top: direction * step, behavior: 'auto' });
+                await new Promise(resolve => setTimeout(resolve, 80));
+
+                const element = findOutlineTarget(message);
+                if (element) return element;
+            }
+        }
+
+        return null;
+    }
+
+    async function findChatGptTurnTarget(message) {
+        const turnNumber = message.metadata?.turnNumber;
+        const promptNumber = message.metadata?.promptNumber || (
+            Number.isFinite(turnNumber) && turnNumber % 2 === 1
+                ? (turnNumber + 1) / 2
+                : null
+        );
+        if (pipeline.platformId !== 'CHATGPT') return null;
+
+        if (Number.isFinite(promptNumber)) {
+            const promptButton = document.querySelector(`button[aria-label="Prompt ${promptNumber}"]`);
+            if (promptButton) {
+                promptButton.click();
+                await new Promise(resolve => setTimeout(resolve, 500));
+                const element = findOutlineTarget(message);
+                if (element) return element;
+
+                const promptTurn = document.querySelector(`[data-testid="conversation-turn-${(promptNumber * 2) - 1}"]`);
+                if (promptTurn && promptTurn.textContent.trim()) return promptTurn;
+            }
+        }
+
+        if (!Number.isFinite(turnNumber)) return null;
+
+        const turn = document.querySelector(`[data-testid="conversation-turn-${turnNumber}"]`);
+        if (!turn) return null;
+
+        turn.scrollIntoView({ behavior: 'auto', block: 'center' });
+        await new Promise(resolve => setTimeout(resolve, 500));
+        return findOutlineTarget(message);
+    }
+
     // 添加消息监听
     chrome.runtime.onMessage.addListener(handleMessage);
 
@@ -166,6 +246,40 @@
             childList: true,
             subtree: true
         });
+
+        initializeScrollRefresh();
+        initializeRouteWatcher();
+    }
+
+    function initializeRouteWatcher() {
+        let lastUrl = window.location.href;
+        routeWatcher = setInterval(() => {
+            if (window.location.href === lastUrl) return;
+            lastUrl = window.location.href;
+            extractAndSendOutline();
+        }, 700);
+    }
+
+    function initializeScrollRefresh() {
+        const { features = {} } = pipeline.config || {};
+        if (pipeline.platformId !== 'CHATGPT' && !features.preserveOutlineAcrossDomUpdates) return;
+
+        const refreshOnScroll = throttle(() => {
+            extractAndSendOutline();
+        }, 700);
+        const centerElement = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2);
+        const scrollParent = getScrollParent(centerElement) || document.scrollingElement || document.documentElement;
+        const targets = [...new Set([window, scrollParent].filter(Boolean))];
+
+        targets.forEach(target => {
+            target.addEventListener('scroll', refreshOnScroll, { passive: true });
+        });
+
+        removeScrollRefreshListeners = () => {
+            targets.forEach(target => {
+                target.removeEventListener('scroll', refreshOnScroll);
+            });
+        };
     }
 
     // 导航功能实现
@@ -218,6 +332,8 @@
     window.chatNavigatorCleanup = function() {
         if (mainObserver) mainObserver.disconnect();
         if (readingPositionObserver) readingPositionObserver.disconnect();
+        if (removeScrollRefreshListeners) removeScrollRefreshListeners();
+        if (routeWatcher) clearInterval(routeWatcher);
         chrome.runtime.onMessage.removeListener(handleMessage);
         window.removeEventListener('load', initializeOutline);
     };

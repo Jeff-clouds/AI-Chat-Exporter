@@ -1,5 +1,6 @@
 // 当前激活标签页ID
 let currentTabId = null;
+let currentTabUrl = '';
 
 // 全局状态：是否所有目录都已收起
 let allCollapsed = false;
@@ -8,6 +9,7 @@ let currentOutlineData = [];
 let licenseStatusState = { active: false, plan: 'free' };
 let exportInProgress = false;
 const selectedQuestionIndexes = new Set();
+const collapsedQuestionKeys = new Set();
 const PURCHASE_URL = 'https://wj.qq.com/s2/26957751/9rvt/';
 
 const SUPPORTED_URL_SNIPPETS = [
@@ -40,14 +42,25 @@ async function injectCurrentContentScripts(tabId) {
     });
 }
 
+function clearOutlineForRequest() {
+    currentOutlineData = [];
+    selectedQuestionIndexes.clear();
+    collapsedQuestionKeys.clear();
+    allCollapsed = false;
+    const outlineContainer = document.getElementById('outline');
+    if (outlineContainer) outlineContainer.innerHTML = '<div class="loading-state"><p>正在分析页面内容...</p></div>';
+    updateToggleAllButton();
+    updatePanelState();
+    return outlineContainer;
+}
+
 // 主动请求当前标签页大纲
 function requestCurrentTabOutline() {
     chrome.tabs.query({active: true, currentWindow: true}, async (tabs) => {
         if (tabs[0]) {
             currentTabId = tabs[0].id;
-            // 清空大纲显示，防止串台
-            const outlineContainer = document.getElementById('outline');
-            if (outlineContainer) outlineContainer.innerHTML = '<div class="loading-state"><p>正在分析页面内容...</p></div>';
+            currentTabUrl = tabs[0].url || '';
+            const outlineContainer = clearOutlineForRequest();
 
             try {
                 if (isSupportedUrl(tabs[0].url)) {
@@ -75,7 +88,7 @@ window.addEventListener('load', () => {
 // 监听标签切换
 chrome.tabs.onActivated && chrome.tabs.onActivated.addListener(requestCurrentTabOutline);
 chrome.tabs.onUpdated && chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if (tab.active && changeInfo.status === 'complete') {
+    if (tab.active && (changeInfo.url || changeInfo.status === 'complete')) {
         requestCurrentTabOutline();
     }
 });
@@ -85,6 +98,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // 只处理当前激活标签页返回的消息
     if (sender.tab && sender.tab.id !== currentTabId) return;
     if (message.type === 'outline') {
+        const outlineUrl = message.diagnostics?.url || sender.tab?.url || '';
+        if (currentTabUrl && outlineUrl && outlineUrl !== currentTabUrl) return;
+
         displayOutline(message.outline, message.diagnostics);
         // 显示网站类型
         const url = sender.tab && sender.tab.url ? sender.tab.url : '';
@@ -163,6 +179,14 @@ function setExportStatus(message, tone = 'neutral') {
 function getQuestionIndex(question) {
     const index = question?.metadata?.index;
     return Number.isInteger(index) ? index : null;
+}
+
+function getQuestionCollapseKey(question) {
+    const metadata = question?.metadata || {};
+    if (metadata.key) return metadata.key;
+    if (Number.isFinite(metadata.turnNumber)) return `turn:${metadata.turnNumber}`;
+    if (Number.isFinite(metadata.promptNumber)) return `prompt:${metadata.promptNumber}`;
+    return question?.id || question?.text || '';
 }
 
 function initializePanelActionControls() {
@@ -318,7 +342,7 @@ function exportFullChat() {
             return;
         }
 
-        setExportStatus(`已导出 ${response.platform || '当前平台'} 的 ${response.count || 0} 组对话`, 'success');
+        setExportStatus(`已导出当前已加载 DOM 中的${response.rangeLabel || '问题 1 到问题 ' + (response.count || 0)}，共 ${response.count || 0} 组对话`, 'success');
     });
 }
 
@@ -350,7 +374,7 @@ function exportSelectedChat() {
             return;
         }
 
-        setExportStatus(`已导出 ${response.count || 0} 组选中对话`, 'success');
+        setExportStatus(`已导出当前已加载 DOM 中的 ${response.count || 0} 组选中对话：${response.rangeLabel || '问题范围未知'}`, 'success');
     });
 }
 
@@ -438,6 +462,8 @@ function renderFlatOutline(items, container) {
 function renderQuestionGroup(question, answers, container) {
     const groupDiv = document.createElement('div');
     groupDiv.className = 'question-group';
+    const collapseKey = getQuestionCollapseKey(question);
+    if (collapseKey) groupDiv.dataset.collapseKey = collapseKey;
 
     // 创建问题元素
     const questionDiv = document.createElement('div');
@@ -450,7 +476,8 @@ function renderQuestionGroup(question, answers, container) {
 
     // 创建展开/收起图标 - 使用 CSS 类控制
     const toggle = document.createElement('span');
-    toggle.className = 'toggle-icon expanded';  // 默认展开
+    const initiallyCollapsed = allCollapsed || collapsedQuestionKeys.has(collapseKey);
+    toggle.className = `toggle-icon ${initiallyCollapsed ? 'collapsed' : 'expanded'}`;
     questionDiv.appendChild(toggle);
 
     const questionIndex = getQuestionIndex(question);
@@ -473,12 +500,13 @@ function renderQuestionGroup(question, answers, container) {
 
     // 添加问题文本
     const text = document.createElement('span');
+    text.className = 'question-text';
     text.textContent = question.text;
     questionDiv.appendChild(text);
 
     // 创建答案容器
     const answersDiv = document.createElement('div');
-    answersDiv.className = 'answers-container';
+    answersDiv.className = `answers-container${initiallyCollapsed ? ' collapsing' : ''}`;
     // 移除初始 display 设置，由 CSS max-height 控制
 
     // 添加问题点击事件（跳转）
@@ -502,6 +530,7 @@ function renderQuestionGroup(question, answers, container) {
         toggle.classList.toggle('collapsed', isExpanded);
 
         if (isExpanded) {
+            if (collapseKey) collapsedQuestionKeys.add(collapseKey);
             // 收起：测量当前高度，设置明确高度，强制重绘，然后收起
             const currentHeight = answersDiv.offsetHeight;
             answersDiv.style.height = currentHeight + 'px';
@@ -515,6 +544,7 @@ function renderQuestionGroup(question, answers, container) {
             };
             answersDiv.addEventListener('transitionend', onEnd);
         } else {
+            if (collapseKey) collapsedQuestionKeys.delete(collapseKey);
             // 展开：移除 collapsing，测量目标高度，动画到目标
             answersDiv.classList.remove('collapsing');
             answersDiv.style.height = 'auto';
@@ -577,7 +607,6 @@ function initializeToggleAllButton() {
 function updateGlobalCollapseState() {
     const allToggles = document.querySelectorAll('.toggle-icon');
     const allAnswersContainers = document.querySelectorAll('.answers-container');
-    const toggleAllBtn = document.getElementById('toggle-all-btn');
 
     if (allToggles.length === 0) return;
 
@@ -591,52 +620,44 @@ function updateGlobalCollapseState() {
 
     // 更新全局状态和按钮
     allCollapsed = allCurrentlyCollapsed;
-    if (toggleAllBtn) {
-        const icon = toggleAllBtn.querySelector('.icon');
-        const text = toggleAllBtn.querySelector('.text');
+    updateToggleAllButton();
+}
 
-        if (allCollapsed) {
-            toggleAllBtn.classList.add('collapsed');
-            icon.textContent = '▶';
-            text.textContent = '展开所有';
-        } else {
-            toggleAllBtn.classList.remove('collapsed');
-            icon.textContent = '▼';
-            text.textContent = '收起所有';
-        }
+function updateToggleAllButton() {
+    const toggleAllBtn = document.getElementById('toggle-all-btn');
+    if (!toggleAllBtn) return;
+
+    const icon = toggleAllBtn.querySelector?.('.icon');
+    const text = toggleAllBtn.querySelector?.('.text');
+
+    if (allCollapsed) {
+        toggleAllBtn.classList.add('collapsed');
+        if (icon) icon.textContent = '▶';
+        if (text) text.textContent = '展开所有';
+    } else {
+        toggleAllBtn.classList.remove('collapsed');
+        if (icon) icon.textContent = '▼';
+        if (text) text.textContent = '收起所有';
     }
 }
 
 // 一键收起/展开所有目录
 function toggleAllDirectories() {
-    const toggleAllBtn = document.getElementById('toggle-all-btn');
     const allToggles = document.querySelectorAll('.toggle-icon');
     const allAnswersContainers = document.querySelectorAll('.answers-container');
 
     allCollapsed = !allCollapsed;
-
-    // 更新按钮状态
-    if (toggleAllBtn) {
-        const icon = toggleAllBtn.querySelector('.icon');
-        const text = toggleAllBtn.querySelector('.text');
-
-        if (allCollapsed) {
-            toggleAllBtn.classList.add('collapsed');
-            icon.textContent = '▶';
-            text.textContent = '展开所有';
-        } else {
-            toggleAllBtn.classList.remove('collapsed');
-            icon.textContent = '▼';
-            text.textContent = '收起所有';
-        }
-    }
+    updateToggleAllButton();
+    if (!allCollapsed) collapsedQuestionKeys.clear();
 
     // 更新所有目录状态 - 使用 height 动画
     allToggles.forEach((toggle, index) => {
         const answersContainer = allAnswersContainers[index];
         if (!answersContainer) return;
+        const collapseKey = toggle.closest('.question-group')?.dataset.collapseKey;
 
         if (allCollapsed) {
+            if (collapseKey) collapsedQuestionKeys.add(collapseKey);
             // 收起：测量、设置、强制重绘、添加类
             toggle.classList.remove('expanded');
             toggle.classList.add('collapsed');
@@ -650,6 +671,7 @@ function toggleAllDirectories() {
             };
             answersContainer.addEventListener('transitionend', onEnd);
         } else {
+            if (collapseKey) collapsedQuestionKeys.delete(collapseKey);
             // 展开：移除类、测量、动画
             toggle.classList.remove('collapsed');
             toggle.classList.add('expanded');

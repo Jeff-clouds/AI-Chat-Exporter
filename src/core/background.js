@@ -103,7 +103,8 @@ async function handleExportFullChat() {
 
     return {
         platform: unifiedData.platform,
-        count: unifiedData.conversations.length
+        count: unifiedData.conversations.length,
+        rangeLabel: getConversationRangeLabel(unifiedData.conversations)
     };
 }
 
@@ -147,8 +148,17 @@ async function handleExportSelectedChat(questionIndexes = []) {
 
     return {
         platform: unifiedData.platform,
-        count: conversations.length
+        count: conversations.length,
+        rangeLabel: getConversationRangeLabel(conversations)
     };
+}
+
+function getConversationRangeLabel(conversations = []) {
+    if (conversations.length === 0) return '问题 0 到问题 0';
+    const indexes = conversations
+        .map((conversation, index) => Number.isInteger(conversation.questionIndex) ? conversation.questionIndex : index)
+        .sort((a, b) => a - b);
+    return `问题 ${indexes[0] + 1} 到问题 ${indexes[indexes.length - 1] + 1}`;
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {

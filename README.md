@@ -15,7 +15,7 @@
 
 ## 📖 简介
 
-**AI Chat Export Pro** 是一款面向 AI 长对话整理的浏览器扩展。当前对外版本为 **v2.0.1**，是原 **AI Chat Outline** 的迭代合并版：保留侧边栏大纲导航能力，合并完整 Markdown 导出能力，并新增 Pro 局部导出。
+**AI Chat Export Pro** 是一款面向 AI 长对话整理的浏览器扩展。当前对外版本为 **v2.0.3**，是原 **AI Chat Outline** 的迭代合并版：保留侧边栏大纲导航能力，合并完整 Markdown 导出能力，并新增 Pro 局部导出。
 
 无论您是研究者、开发者还是学生，这款工具都能帮您高效浏览长对话，并把有价值的 AI 内容沉淀到本地知识库。
 
@@ -132,6 +132,7 @@ git clone https://github.com/Jeff-clouds/AI-Chat-Export-Pro.git
 
 | 日期 | 版本 | 更新内容 |
 |------|------|----------|
+| 2026-07-06 | v2.0.3 | 修复 ChatGPT 虚拟列表目录排序、保留 AI 回答大纲，并稳定所有平台的侧边栏展开/收起状态 |
 | 2026-06-09 | v2.0.1 | 同步 GitHub 仓库命名为 AI-Chat-Export-Pro，更新安装文档与发布包 |
 | 2026-06-08 | v2.0.0 | 对外命名为 AI Chat Export Pro，作为 AI Chat Outline 的迭代合并版，统一大纲导航、完整 Markdown 导出与 Pro 局部导出 |
 | 2026-06-07 | v1.1.2 | 优化侧边栏 Pro 布局，底部固定完整导出/已选导出，减少大纲区域按钮拥挤 |
