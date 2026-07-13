@@ -18,8 +18,8 @@ const deepseekConfig = {
   urlPatterns: ['deepseek.com', 'deepseek.ai'],
   selectors: {
     conversation: null,
-    title: '.f8d1e4c0',
-    question: '._9663006',
+    title: '.f8d1e4c0.the-header > div > div:first-child',
+    question: '._9663006, ._72b6158',
     answer: '._4f9bf79._43c05b5',
     thinking: '.ds-think-content, ._74c0879',
     search: '.a6d716f5.db5991dd',
@@ -111,11 +111,11 @@ const doubaoConfig = {
   selectors: {
     conversation: null,
     title: 'div.group\\/title',
-    turn: '[class*="inner-item-"], [class*="top-item-"]',
+    turn: '[data-message-id], [class*="inner-item-"], [class*="top-item-"]',
     question: 'div[class*="send-msg-bubble"], div[class*="bg-g-send-msg-bubble-bg"]',
-    answer: '.md-box-root, .flow-markdown-body, div[class*="conversation-page-message-host"]',
+    answer: '[data-message-id], .md-box-root, .flow-markdown-body, div[class*="conversation-page-message-host"]',
     thinking: null,
-    markdownBlock: '.md-box-root, .flow-markdown-body, div[class*="conversation-page-message-host"]',
+    markdownBlock: '[data-message-id], .md-box-root, .flow-markdown-body, div[class*="conversation-page-message-host"]',
     search: '', // 豆包暂无搜索结果独立区块
     cleanupSelectors: [
       'div[class*="send-msg-bubble"]', // 去掉嵌在回答宿主中的提问气泡

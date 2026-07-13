@@ -27,6 +27,7 @@ const SUPPORTED_URL_SNIPPETS = [
 const CONTENT_SCRIPT_FILES = [
     'src/config/selectors.js',
     'src/utils/common.js',
+    'src/core/conversation-index.js',
     'src/core/pipeline.js',
     'src/core/content.js'
 ];
@@ -35,11 +36,34 @@ function isSupportedUrl(url = '') {
     return SUPPORTED_URL_SNIPPETS.some(snippet => url.includes(snippet));
 }
 
-async function injectCurrentContentScripts(tabId) {
+async function injectCurrentContentScripts(tabId, url = '') {
     await chrome.scripting.executeScript({
         target: { tabId },
         files: CONTENT_SCRIPT_FILES
     });
+    if (url.includes('chatgpt.com')) {
+        await chrome.scripting.executeScript({
+            target: { tabId },
+            world: 'MAIN',
+            func: async () => {
+                const conversationId = location.pathname.match(/\/c\/([^/?#]+)/)?.[1];
+                if (!conversationId) return;
+                try {
+                    const response = await fetch(`/backend-api/conversation/${encodeURIComponent(conversationId)}?offset=0&limit=100000`, {
+                        credentials: 'include'
+                    });
+                    if (!response.ok) return;
+                    window.postMessage({
+                        source: 'ai-chat-export-pro',
+                        type: 'chatgpt-conversation',
+                        payload: await response.json()
+                    }, location.origin);
+                } catch (error) {
+                    console.warn('AI Chat Export Pro: ChatGPT outline API bridge failed', error);
+                }
+            }
+        });
+    }
 }
 
 function clearOutlineForRequest() {
@@ -64,7 +88,7 @@ function requestCurrentTabOutline() {
 
             try {
                 if (isSupportedUrl(tabs[0].url)) {
-                    await injectCurrentContentScripts(currentTabId);
+                    await injectCurrentContentScripts(currentTabId, tabs[0].url || '');
                 }
                 chrome.tabs.sendMessage(currentTabId, {type: 'getOutline'});
             } catch (err) {
@@ -342,7 +366,8 @@ function exportFullChat() {
             return;
         }
 
-        setExportStatus(`已导出当前已加载 DOM 中的${response.rangeLabel || '问题 1 到问题 ' + (response.count || 0)}，共 ${response.count || 0} 组对话`, 'success');
+        const sourceLabel = response.passiveIndex ? '已索引消息中的' : '';
+        setExportStatus(`已导出${sourceLabel}${response.rangeLabel || '问题 1 到问题 ' + (response.count || 0)}，共 ${response.count || 0} 组对话`, 'success');
     });
 }
 
@@ -374,7 +399,8 @@ function exportSelectedChat() {
             return;
         }
 
-        setExportStatus(`已导出当前已加载 DOM 中的 ${response.count || 0} 组选中对话：${response.rangeLabel || '问题范围未知'}`, 'success');
+        const sourceLabel = response.passiveIndex ? '已索引消息中的 ' : '';
+        setExportStatus(`已导出${sourceLabel}${response.count || 0} 组选中对话：${response.rangeLabel || '问题范围未知'}`, 'success');
     });
 }
 

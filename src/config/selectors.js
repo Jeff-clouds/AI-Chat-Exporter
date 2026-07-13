@@ -17,8 +17,8 @@ class SelectorManager {
                 ],
                 "selectors": {
                     "conversation": null,
-                    "title": ".f8d1e4c0",
-                    "question": "._9663006",
+                    "title": ".f8d1e4c0.the-header > div > div:first-child",
+                    "question": "._9663006, ._72b6158",
                     "answer": "._4f9bf79._43c05b5",
                     "thinking": ".ds-think-content, ._74c0879",
                     "HEADINGS": [
@@ -92,7 +92,7 @@ class SelectorManager {
                     "conversation": null,
                     "title": "div.group\\/title",
                     "question": "div[class*=\"send-msg-bubble\"], div[class*=\"bg-g-send-msg-bubble-bg\"]",
-                    "answer": ".md-box-root, .flow-markdown-body, div[class*=\"conversation-page-message-host\"]",
+                    "answer": "[data-message-id], .md-box-root, .flow-markdown-body, div[class*=\"conversation-page-message-host\"]",
                     "thinking": null,
                     "HEADINGS": [
                         "h1",

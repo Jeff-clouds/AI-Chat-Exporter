@@ -59,9 +59,51 @@ async function extractCurrentChatData() {
         target: { tabId: tab.id },
         files: [
             'src/export/lib/turndown.js',
-            'src/export/lib/turndown-plugin-gfm.js'
+            'src/export/lib/turndown-plugin-gfm.js',
+            'src/core/conversation-index.js'
         ]
     });
+
+    if (platformConfig.key === 'chatgpt') {
+        await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            world: 'MAIN',
+            func: async () => {
+                const conversationId = location.pathname.match(/\/c\/([^/?#]+)/)?.[1];
+                if (!conversationId) return;
+                try {
+                    const response = await fetch(`/backend-api/conversation/${encodeURIComponent(conversationId)}?offset=0&limit=100000`, {
+                        credentials: 'include'
+                    });
+                    if (!response.ok) return;
+                    window.postMessage({
+                        source: 'ai-chat-export-pro',
+                        type: 'chatgpt-conversation',
+                        payload: await response.json()
+                    }, location.origin);
+                } catch (error) {
+                    console.warn('AI Chat Export Pro: ChatGPT page API bridge failed', error);
+                }
+            }
+        });
+    }
+
+    // ChatGPT 使用会话 API；豆包只记录用户滚动时挂载的 data-message-id。
+    // 导出不得主动移动用户页面。
+    if (platformConfig.key === 'chatgpt' || platformConfig.key === 'doubao') {
+        const [indexedResult] = await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            func: async () => {
+                const index = window.AI_CHAT_CONVERSATION_INDEX;
+                if (!index) return null;
+                await index.refresh();
+                return index.toUnifiedData();
+            }
+        });
+        if (indexedResult?.result?.conversations?.length) {
+            return addConversationIndexes(indexedResult.result, tab.url, platformConfig.name);
+        }
+    }
 
     const [result] = await chrome.scripting.executeScript({
         target: { tabId: tab.id },
@@ -85,13 +127,18 @@ async function extractCurrentChatData() {
         throw new Error(`未找到 ${platformConfig.name} 对话内容，请确认当前页面是对话页`);
     }
 
+    return addConversationIndexes(unifiedData, tab.url, platformConfig.name);
+}
+
+function addConversationIndexes(unifiedData, url, platform) {
+    unifiedData.url = url;
+    unifiedData.platform = platform;
     unifiedData.conversations = unifiedData.conversations.map((conversation, index) => ({
         ...conversation,
         conversationId: `conversation-${index}`,
         questionIndex: index,
         answerIndex: index
     }));
-
     return unifiedData;
 }
 
@@ -104,7 +151,8 @@ async function handleExportFullChat() {
     return {
         platform: unifiedData.platform,
         count: unifiedData.conversations.length,
-        rangeLabel: getConversationRangeLabel(unifiedData.conversations)
+        rangeLabel: getConversationRangeLabel(unifiedData.conversations),
+        passiveIndex: !!unifiedData.passiveIndex
     };
 }
 
@@ -149,7 +197,8 @@ async function handleExportSelectedChat(questionIndexes = []) {
     return {
         platform: unifiedData.platform,
         count: conversations.length,
-        rangeLabel: getConversationRangeLabel(conversations)
+        rangeLabel: getConversationRangeLabel(conversations),
+        passiveIndex: !!unifiedData.passiveIndex
     };
 }
 

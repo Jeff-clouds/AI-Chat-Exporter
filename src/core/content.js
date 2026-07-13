@@ -17,12 +17,21 @@
     let readingPositionObserver = null;
     let currentReadingElement = null;
     let mainObserver = null;
-    let removeScrollRefreshListeners = null;
     let routeWatcher = null;
+    let lastOutlineJson = '';
+    const refreshOutlineFromIndex = throttle(() => extractAndSendOutline(), 350);
 
     // 提取大纲并发送
-    window.extractAndSendOutline = function() {
-        const result = pipeline.extract();
+    window.extractAndSendOutline = async function() {
+        const result = await pipeline.extractWithIndex();
+
+        // 避免重复发送相同的大纲（减少侧边栏无意义的刷新）
+        const outlineJson = JSON.stringify(result.outline.map(i => i.id || i.text));
+        if (outlineJson === lastOutlineJson && result.outline.length > 0) {
+            return;
+        }
+        lastOutlineJson = outlineJson;
+
         cleanupStaleOutlineIds(result.outline);
         chrome.runtime.sendMessage({
             type: 'outline',
@@ -174,61 +183,46 @@
     }
 
     async function findVirtualizedTarget(message) {
+        const indexedTarget = await findIndexedMessageTarget(message.metadata);
+        if (indexedTarget) return indexedTarget;
+
         const turnTarget = await findChatGptTurnTarget(message);
         if (turnTarget) return turnTarget;
+        return null;
+    }
+
+    async function findIndexedMessageTarget(metadata) {
+        if (!metadata?.messageId && !metadata?.turnId) return null;
+        const escape = value => window.CSS?.escape ? CSS.escape(value) : String(value).replace(/[^a-zA-Z0-9_-]/g, '\\$&');
+        const selector = metadata.messageId
+            ? `[data-message-id="${escape(metadata.messageId)}"]`
+            : `[data-turn-id="${escape(metadata.turnId)}"]`;
+        let element = document.querySelector(selector);
+        if (element) return element;
 
         const centerElement = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2);
-        const scrollParent = getScrollParent(centerElement) || getScrollParent(document.body);
+        const scrollParent = getScrollParent(centerElement) || document.scrollingElement;
         if (!scrollParent) return null;
-
-        const step = Math.max(300, Math.floor((scrollParent.clientHeight || window.innerHeight) * 0.8));
-        const directions = [-1, 1];
-        const maxSteps = Math.min(50, Math.ceil((scrollParent.scrollHeight || step) / step) + 2);
-
-        // ponytail: bounded scan for virtual lists; replace with platform message-id deep links if ChatGPT exposes one.
-        for (const direction of directions) {
-            for (let i = 0; i < maxSteps; i++) {
-                scrollParent.scrollBy({ top: direction * step, behavior: 'auto' });
-                await new Promise(resolve => setTimeout(resolve, 80));
-
-                const element = findOutlineTarget(message);
-                if (element) return element;
-            }
+        if (Number.isFinite(metadata.offset)) {
+            scrollParent.scrollTo({ top: metadata.offset, behavior: 'auto' });
+            await new Promise(resolve => setTimeout(resolve, 180));
+            element = document.querySelector(selector);
+            if (element) return element;
         }
-
         return null;
     }
 
     async function findChatGptTurnTarget(message) {
         const turnNumber = message.metadata?.turnNumber;
-        const promptNumber = message.metadata?.promptNumber || (
-            Number.isFinite(turnNumber) && turnNumber % 2 === 1
-                ? (turnNumber + 1) / 2
-                : null
-        );
         if (pipeline.platformId !== 'CHATGPT') return null;
-
-        if (Number.isFinite(promptNumber)) {
-            const promptButton = document.querySelector(`button[aria-label="Prompt ${promptNumber}"]`);
-            if (promptButton) {
-                promptButton.click();
-                await new Promise(resolve => setTimeout(resolve, 500));
-                const element = findOutlineTarget(message);
-                if (element) return element;
-
-                const promptTurn = document.querySelector(`[data-testid="conversation-turn-${(promptNumber * 2) - 1}"]`);
-                if (promptTurn && promptTurn.textContent.trim()) return promptTurn;
-            }
-        }
 
         if (!Number.isFinite(turnNumber)) return null;
 
         const turn = document.querySelector(`[data-testid="conversation-turn-${turnNumber}"]`);
         if (!turn) return null;
 
-        turn.scrollIntoView({ behavior: 'auto', block: 'center' });
-        await new Promise(resolve => setTimeout(resolve, 500));
-        return findOutlineTarget(message);
+        // 交给调用方做唯一一次居中滚动，避免“先虚拟跳转、再平滑居中”的双重滚动。
+        return turn;
     }
 
     // 添加消息监听
@@ -244,10 +238,13 @@
 
         mainObserver.observe(document.body, {
             childList: true,
-            subtree: true
+            subtree: true,
+            characterData: true
         });
 
-        initializeScrollRefresh();
+        // 豆包虚拟列表在用户滚动后可能复用节点而不新增子节点；只做静默目录刷新。
+        window.addEventListener('ai-chat-index-updated', refreshOutlineFromIndex);
+
         initializeRouteWatcher();
     }
 
@@ -260,27 +257,7 @@
         }, 700);
     }
 
-    function initializeScrollRefresh() {
-        const { features = {} } = pipeline.config || {};
-        if (pipeline.platformId !== 'CHATGPT' && !features.preserveOutlineAcrossDomUpdates) return;
 
-        const refreshOnScroll = throttle(() => {
-            extractAndSendOutline();
-        }, 700);
-        const centerElement = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2);
-        const scrollParent = getScrollParent(centerElement) || document.scrollingElement || document.documentElement;
-        const targets = [...new Set([window, scrollParent].filter(Boolean))];
-
-        targets.forEach(target => {
-            target.addEventListener('scroll', refreshOnScroll, { passive: true });
-        });
-
-        removeScrollRefreshListeners = () => {
-            targets.forEach(target => {
-                target.removeEventListener('scroll', refreshOnScroll);
-            });
-        };
-    }
 
     // 导航功能实现
     function navigateHeadings(direction) {
@@ -332,8 +309,8 @@
     window.chatNavigatorCleanup = function() {
         if (mainObserver) mainObserver.disconnect();
         if (readingPositionObserver) readingPositionObserver.disconnect();
-        if (removeScrollRefreshListeners) removeScrollRefreshListeners();
         if (routeWatcher) clearInterval(routeWatcher);
+        window.removeEventListener('ai-chat-index-updated', refreshOutlineFromIndex);
         chrome.runtime.onMessage.removeListener(handleMessage);
         window.removeEventListener('load', initializeOutline);
     };

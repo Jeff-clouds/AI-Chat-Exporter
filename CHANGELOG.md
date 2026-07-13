@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.4] - 2026-07-13
+
+### Fixed
+
+- Replace one-time DOM reads for virtualized ChatGPT and Doubao conversations with a deduplicated, ordered message index.
+- Read ChatGPT's active conversation branch through its same-origin conversation response when available, with mounted-DOM fallback.
+- Stop Doubao from auto-scrolling through the conversation; its outline now silently grows as the user scrolls or an explicit outline jump mounts new messages.
+- Remove redundant ChatGPT automatic scrolling during outline jumps.
+
+### Changed
+
+- Keep ChatGPT and Doubao outline/export records keyed by stable message IDs, ordered by turn or virtual-list position, and refreshed silently after new DOM mounts.
+- Make export status accurately distinguish passive indexed content from a fully fetched ChatGPT conversation.
+
 ## [2.0.3] - 2026-07-06
 
 ### Fixed

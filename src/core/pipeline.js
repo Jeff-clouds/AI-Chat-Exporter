@@ -2,6 +2,8 @@ window.Pipeline = class Pipeline {
     static version = '2026-06-02-heading-level-normalization';
 
     constructor() {
+        this.chatGptAnswerOutlineCache = new Map();
+        this.chatGptCacheUrl = null;
         this.config = this._getPlatformConfig(window.location.href);
         if (this.config) {
             console.log(`AI Chat Export Pro: Identified platform ${this.config.name}`);
@@ -53,7 +55,7 @@ window.Pipeline = class Pipeline {
 
         try {
             if (!this.config) return { outline: [], diagnostics };
-            
+
             const outline = [];
 
             // 1. 尝试识别对话容器 (Conversation Item Mode)
@@ -91,6 +93,97 @@ window.Pipeline = class Pipeline {
         }
     }
 
+    async extractWithIndex() {
+        const diagnostics = {
+            platform: this.platformId,
+            url: window.location.href,
+            configFound: !!this.config,
+            strategy: 'message-index',
+            error: null,
+            stats: { conversations: 0, questions: 0, answers: 0, headings: 0 }
+        };
+        try {
+            const indexedOutline = await this._extractVirtualizedOutline();
+            if (indexedOutline.length > 0) {
+                this._fillStats(indexedOutline, diagnostics);
+                return { outline: indexedOutline, diagnostics };
+            }
+        } catch (error) {
+            console.warn('AI Chat Export Pro: Virtual message index unavailable', error);
+        }
+        return this.extract();
+    }
+
+    async _extractVirtualizedOutline() {
+        if (this.platformId !== 'CHATGPT' && this.platformId !== 'DOUBAO') return [];
+        const index = window.AI_CHAT_CONVERSATION_INDEX;
+        if (!index) return [];
+        // 被动索引：目录刷新绝不驱动页面滚动；只读取当前已挂载或用户滚动后新增的消息。
+        await index.refresh();
+        const messages = index.getMessages();
+        if (messages.length === 0) return [];
+
+        const outline = [];
+        let questionIndex = 0;
+        let pendingQuestion = null;
+        messages.forEach(message => {
+            if (message.role === 'user') {
+                pendingQuestion = message;
+                const questionId = `cn-q-${this._safeId(message.id)}`;
+                const text = message.text.length > 50 ? `${message.text.slice(0, 50)}...` : message.text;
+                outline.push({
+                    text: `问题 ${questionIndex + 1}: ${text}`,
+                    level: 'h1',
+                    id: questionId,
+                    type: 'question',
+                    metadata: {
+                        type: 'question', index: questionIndex, key: `message:${message.id}`,
+                        messageId: message.id, turnId: message.turnId || null,
+                        turnNumber: message.turnNumber || null, offset: message.offset
+                    }
+                });
+                questionIndex++;
+                return;
+            }
+            if (message.role !== 'assistant' || !pendingQuestion) return;
+            const headings = this._indexedHeadings(message);
+            headings.forEach((heading, headingIndex) => {
+                outline.push({
+                    text: heading.text,
+                    level: heading.level,
+                    id: `cn-a-${this._safeId(`${message.id}-${headingIndex}-${heading.text}`)}`,
+                    type: 'answer',
+                    metadata: {
+                        type: 'answer', answerIndex: questionIndex - 1, headingIndex,
+                        questionIndex: questionIndex - 1, key: `message:${message.id}:${headingIndex}`,
+                        messageId: message.id, turnId: message.turnId || null,
+                        turnNumber: message.turnNumber || null, offset: message.offset
+                    }
+                });
+            });
+            pendingQuestion = null;
+        });
+        return outline;
+    }
+
+    _indexedHeadings(message) {
+        const headings = [];
+        if (message.html) {
+            const container = document.createElement('div');
+            container.innerHTML = message.html;
+            container.querySelectorAll('h1,h2,h3,h4,h5,h6').forEach(element => {
+                const text = element.textContent.trim();
+                if (text) headings.push({ text, level: element.tagName.toLowerCase() });
+            });
+        }
+        if (headings.length > 0) return headings;
+        String(message.markdown || message.text || '').split('\n').forEach(line => {
+            const match = line.match(/^(#{1,6})\s+(.+)$/);
+            if (match) headings.push({ text: match[2].trim(), level: `h${match[1].length}` });
+        });
+        return headings;
+    }
+
     _fillStats(outline, diagnostics) {
         outline.forEach(item => {
             if (item.type === 'question') diagnostics.stats.questions++;
@@ -101,6 +194,10 @@ window.Pipeline = class Pipeline {
 
     _finalizeOutline(outline) {
         if (this.platformId !== 'CHATGPT') return outline;
+        if (this.chatGptCacheUrl !== window.location.href) {
+            this.chatGptAnswerOutlineCache.clear();
+            this.chatGptCacheUrl = window.location.href;
+        }
         return this._augmentChatGptNativePrompts(outline);
     }
 
@@ -136,7 +233,26 @@ window.Pipeline = class Pipeline {
             groupsByTurn.set(prompt.turnNumber, group);
         });
 
-        this._attachChatGptLoadedAnswerHeadings(groupsByTurn);
+        const loadedAnswerTurns = this._attachChatGptLoadedAnswerHeadings(groupsByTurn);
+        groupsByTurn.forEach((group, turnNumber) => {
+            if (loadedAnswerTurns.has(turnNumber)) {
+                if (group.answers.length > 0) {
+                    this.chatGptAnswerOutlineCache.set(turnNumber, [...group.answers]);
+                } else {
+                    this.chatGptAnswerOutlineCache.delete(turnNumber);
+                }
+                return;
+            }
+
+            const cachedAnswers = this.chatGptAnswerOutlineCache.get(turnNumber) || [];
+            const knownAnswerKeys = new Set(group.answers.map(answer => this._outlineAnswerKey(answer)));
+            cachedAnswers.forEach(answer => {
+                const key = this._outlineAnswerKey(answer);
+                if (knownAnswerKeys.has(key)) return;
+                knownAnswerKeys.add(key);
+                group.answers.push(answer);
+            });
+        });
 
         const sortedGroups = groups
             .filter(group => group.question)
@@ -157,13 +273,16 @@ window.Pipeline = class Pipeline {
         const answers = this._sortElements(
             window.SELECTOR_MANAGER.getElements(this.platformId, 'answer')
         );
+        const loadedAnswerTurns = new Set();
 
         answers.forEach((answerEl, answerIndex) => {
             const answerTurnNumber = this._turnInfo(answerEl).turnNumber;
             if (!Number.isFinite(answerTurnNumber) || answerTurnNumber % 2 !== 0) return;
 
-            const group = groupsByTurn.get(answerTurnNumber - 1);
+            const questionTurnNumber = answerTurnNumber - 1;
+            const group = groupsByTurn.get(questionTurnNumber);
             if (!group) return;
+            loadedAnswerTurns.add(questionTurnNumber);
 
             const knownAnswerKeys = new Set(
                 group.answers.map(answer => this._outlineAnswerKey(answer))
@@ -180,6 +299,8 @@ window.Pipeline = class Pipeline {
                 group.answers.push(answer);
             });
         });
+
+        return loadedAnswerTurns;
     }
 
     _outlineAnswerKey(answer) {
@@ -503,7 +624,10 @@ window.Pipeline = class Pipeline {
             const normalizedLevel = Math.min(6, Math.max(2, level));
             // 使用稳定 ID
             const key = this._elementKey(element, 'heading');
-            const stableId = `cn-a-${this._safeId(`${answerIndex}-${segmentKey}-${key || headingIndex}`)}`;
+            const stableIdPart = key
+                ? `${segmentKey}-${key}-${headingIndex}`
+                : `${answerIndex}-${segmentKey}-${headingIndex}`;
+            const stableId = `cn-a-${this._safeId(stableIdPart)}`;
             if (element.id !== stableId) element.id = stableId;
             const turnInfo = this._turnInfo(element);
             
@@ -595,7 +719,16 @@ window.Pipeline = class Pipeline {
             const answers = this._sortElements(
                 window.SELECTOR_MANAGER.getElements(this.platformId, 'answer')
             );
-            const answerEl = answers[metadata.answerIndex];
+            const answerEl = answers.find(answer => {
+                const turnInfo = this._turnInfo(answer);
+                if (metadata.turnId && turnInfo.turnId === metadata.turnId) return true;
+                return Number.isFinite(metadata.turnNumber)
+                    && turnInfo.turnNumber === metadata.turnNumber;
+            }) || (
+                !metadata.turnId && !Number.isFinite(metadata.turnNumber)
+                    ? answers[metadata.answerIndex]
+                    : null
+            );
             if (!answerEl) return null;
 
             const questions = this._sortElements(
