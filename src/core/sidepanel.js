@@ -11,6 +11,27 @@ let exportInProgress = false;
 const selectedQuestionIndexes = new Set();
 const collapsedQuestionKeys = new Set();
 const PURCHASE_URL = 'https://wj.qq.com/s2/26957751/9rvt/';
+const DEMO_MODE = /(?:^|[?&])demo(?:=1)?(?:&|$)/.test((window.location && window.location.search) || '');
+const DEMO_PLATFORM = /(?:^|[?&])platform=doubao(?:&|$)/.test((window.location && window.location.search) || '') ? 'doubao' : 'chatgpt';
+const HAS_CHROME_API = typeof chrome !== 'undefined' && Boolean(chrome.runtime && chrome.tabs && chrome.scripting);
+const demoQuestion = (index, text) => `问题 ${index}: ${DEMO_PLATFORM === 'chatgpt' ? '你说：' : ''}${text}`;
+
+// 供 sidepanel-example.html 和 sidepanel.html?demo=1 使用，不读取当前标签页。
+const DEMO_OUTLINE = [
+    { id: 'demo-q1', type: 'question', level: 'h1', text: demoQuestion(1, '如何为虚拟滚动的 AI 对话设计稳定的导出架构？'), metadata: { index: 1, key: 'demo-q1' } },
+    { id: 'demo-a1', type: 'answer', level: 'h2', text: '先建立按消息 ID 去重的会话索引', metadata: { index: 1 } },
+    { id: 'demo-a2', type: 'answer', level: 'h3', text: '索引应保存角色、原始顺序、纯文本与可导出的内容', metadata: { index: 1 } },
+    { id: 'demo-a3', type: 'answer', level: 'h3', text: '目录刷新必须跟随用户浏览，不应改变阅读位置', metadata: { index: 1 } },
+    { id: 'demo-q2', type: 'question', level: 'h1', text: demoQuestion(2, '消息缓存如何保证排序、去重与新 DOM 静默补充？'), metadata: { index: 2, key: 'demo-q2' } },
+    { id: 'demo-b1', type: 'answer', level: 'h2', text: '以 data-message-id 为稳定键，重复挂载只更新同一条记录', metadata: { index: 2 } },
+    { id: 'demo-b2', type: 'answer', level: 'h3', text: '使用虚拟列表中的绝对位置排序，而不是当前 DOM 的显示顺序', metadata: { index: 2 } },
+    { id: 'demo-b3', type: 'answer', level: 'h4', text: '用户滚动或目录跳转导致挂载新节点后，再安静地补全目录', metadata: { index: 2 } },
+    { id: 'demo-q3', type: 'question', level: 'h1', text: demoQuestion(3, '一个很长的问题标题示例：侧栏在窄宽度下如何保持可读性、层级关系和点击区域？'), metadata: { index: 3, key: 'demo-q3' } },
+    { id: 'demo-c1', type: 'answer', level: 'h2', text: '当前阅读位置与目录跳转状态', metadata: { index: 3 } },
+    { id: 'demo-c2', type: 'answer', level: 'h3', text: '支持展开、收起、全局收起和 Pro 局部导出选择', metadata: { index: 3 } },
+    { id: 'demo-q4', type: 'question', level: 'h1', text: demoQuestion(4, '导出时怎样向用户说明索引范围？'), metadata: { index: 4, key: 'demo-q4' } },
+    { id: 'demo-d1', type: 'answer', level: 'h2', text: '已完整获取的会话与被动索引内容需要明确区分', metadata: { index: 4 } }
+];
 
 const SUPPORTED_URL_SNIPPETS = [
     'deepseek.com',
@@ -80,6 +101,7 @@ function clearOutlineForRequest() {
 
 // 主动请求当前标签页大纲
 function requestCurrentTabOutline() {
+    if (DEMO_MODE || !HAS_CHROME_API) return;
     chrome.tabs.query({active: true, currentWindow: true}, async (tabs) => {
         if (tabs[0]) {
             currentTabId = tabs[0].id;
@@ -102,23 +124,33 @@ function requestCurrentTabOutline() {
 
 // 侧边栏加载时请求大纲
 window.addEventListener('load', () => {
-    requestCurrentTabOutline();
     // 初始化一键操作按钮
     initializeToggleAllButton();
     initializePanelActionControls();
+    if (DEMO_MODE) {
+        const siteInfo = document.getElementById('site-info');
+        if (siteInfo) siteInfo.textContent = `示例页面：${DEMO_PLATFORM === 'chatgpt' ? 'ChatGPT' : '豆包'} 长对话大纲`;
+        renderLicenseStatus({ active: true, plan: 'demo' });
+        displayOutline(DEMO_OUTLINE);
+        setExportStatus('示例数据：可直接点击、收起目录或切换部分导出', 'success');
+        return;
+    }
+    requestCurrentTabOutline();
     refreshLicenseStatus();
 });
 
 // 监听标签切换
-chrome.tabs.onActivated && chrome.tabs.onActivated.addListener(requestCurrentTabOutline);
-chrome.tabs.onUpdated && chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if (tab.active && (changeInfo.url || changeInfo.status === 'complete')) {
-        requestCurrentTabOutline();
-    }
-});
+if (HAS_CHROME_API) {
+    chrome.tabs.onActivated && chrome.tabs.onActivated.addListener(requestCurrentTabOutline);
+    chrome.tabs.onUpdated && chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+        if (tab.active && (changeInfo.url || changeInfo.status === 'complete')) {
+            requestCurrentTabOutline();
+        }
+    });
+}
 
 // 监听来自content script的消息
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+if (HAS_CHROME_API && chrome.runtime.onMessage?.addListener) chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // 只处理当前激活标签页返回的消息
     if (sender.tab && sender.tab.id !== currentTabId) return;
     if (message.type === 'outline') {
@@ -220,6 +252,10 @@ function initializePanelActionControls() {
 
     if (purchaseButton) {
         purchaseButton.addEventListener('click', () => {
+            if (DEMO_MODE) {
+                setExportStatus('示例页面不会打开购买链接', 'neutral');
+                return;
+            }
             chrome.tabs.create({ url: PURCHASE_URL });
         });
     }
@@ -252,6 +288,10 @@ function initializePanelActionControls() {
 }
 
 function refreshLicenseStatus() {
+    if (DEMO_MODE || !HAS_CHROME_API) {
+        renderLicenseStatus({ active: true, plan: 'demo' });
+        return;
+    }
     chrome.runtime.sendMessage({ action: 'getLicenseStatus' }, (response) => {
         if (chrome.runtime.lastError || !response || !response.success) {
             renderLicenseStatus({ active: false, plan: 'free' });
@@ -352,6 +392,13 @@ function exportFullChat() {
     updatePanelState();
     setExportStatus('正在提取当前对话并生成 Markdown');
 
+    if (DEMO_MODE) {
+        exportInProgress = false;
+        updatePanelState();
+        setExportStatus('示例：将导出 4 组对话', 'success');
+        return;
+    }
+
     chrome.runtime.sendMessage({ action: 'exportFullChat' }, (response) => {
         exportInProgress = false;
         updatePanelState();
@@ -385,6 +432,13 @@ function exportSelectedChat() {
     updatePanelState();
     setExportStatus('正在导出选中的问题组');
 
+    if (DEMO_MODE) {
+        exportInProgress = false;
+        updatePanelState();
+        setExportStatus(`示例：将导出 ${questionIndexes.length} 组已选对话`, 'success');
+        return;
+    }
+
     chrome.runtime.sendMessage({ action: 'exportSelectedChat', questionIndexes }, (response) => {
         exportInProgress = false;
         updatePanelState();
@@ -408,6 +462,24 @@ function renderCurrentOutline() {
     if (currentOutlineData.length > 0) {
         displayOutline(currentOutlineData);
     }
+}
+
+function scrollToOutlineItem(item) {
+    if (DEMO_MODE || !HAS_CHROME_API) {
+        document.querySelectorAll('.outline-item').forEach(node => node.classList.remove('current-reading'));
+        const target = document.querySelector(`.outline-item[data-element-id="${item.id}"]`);
+        if (target) target.classList.add('current-reading');
+        setExportStatus(`示例：已定位「${item.text}」`, 'neutral');
+        return;
+    }
+
+    chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+        chrome.tabs.sendMessage(tabs[0].id, {
+            type: 'scrollTo',
+            elementId: item.id,
+            metadata: item.metadata
+        });
+    });
 }
 
 // 显示大纲
@@ -470,18 +542,46 @@ function renderFlatOutline(items, container) {
             itemDiv.dataset.metadata = JSON.stringify(item.metadata);
         }
 
-        itemDiv.addEventListener('click', () => {
-            chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
-                chrome.tabs.sendMessage(tabs[0].id, {
-                    type: 'scrollTo',
-                    elementId: item.id,
-                    metadata: item.metadata
-                });
-            });
-        });
+        itemDiv.addEventListener('click', () => scrollToOutlineItem(item));
 
         container.appendChild(itemDiv);
     });
+}
+
+function renderQuestionLabel(container, rawText) {
+    const text = String(rawText || '');
+    const match = text.match(/^问题\s*(\d+)\s*:\s*(你说：)?\s*(.*)$/);
+    if (!match) {
+        container.textContent = text;
+        return;
+    }
+
+    const [, number, speaker = '', body] = match;
+    const label = document.createElement('span');
+    label.className = 'question-label';
+    label.textContent = 'Q';
+
+    const numberSpan = document.createElement('span');
+    numberSpan.className = 'question-number';
+    numberSpan.textContent = number;
+    label.appendChild(numberSpan);
+    const colon = document.createElement('span');
+    colon.textContent = ':';
+    label.appendChild(colon);
+    container.appendChild(label);
+
+    if (speaker) {
+        const speakerSpan = document.createElement('span');
+        speakerSpan.className = 'question-speaker';
+        speakerSpan.textContent = speaker;
+        container.appendChild(speakerSpan);
+    }
+
+    if (body) {
+        const bodySpan = document.createElement('span');
+        bodySpan.textContent = body;
+        container.appendChild(bodySpan);
+    }
 }
 
 // 渲染问题组（问题及其答案）
@@ -527,7 +627,7 @@ function renderQuestionGroup(question, answers, container) {
     // 添加问题文本
     const text = document.createElement('span');
     text.className = 'question-text';
-    text.textContent = question.text;
+    renderQuestionLabel(text, question.text);
     questionDiv.appendChild(text);
 
     // 创建答案容器
@@ -538,13 +638,7 @@ function renderQuestionGroup(question, answers, container) {
     // 添加问题点击事件（跳转）
     questionDiv.addEventListener('click', (e) => {
         if (e.target !== toggle && !e.target.closest('.toggle-icon')) {
-            chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
-                chrome.tabs.sendMessage(tabs[0].id, {
-                    type: 'scrollTo',
-                    elementId: question.id,
-                    metadata: question.metadata
-                });
-            });
+            scrollToOutlineItem(question);
         }
     });
 
@@ -603,15 +697,7 @@ function renderQuestionGroup(question, answers, container) {
         }
 
         // 添加答案点击事件
-        answerDiv.addEventListener('click', () => {
-            chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
-                chrome.tabs.sendMessage(tabs[0].id, {
-                    type: 'scrollTo',
-                    elementId: answer.id,
-                    metadata: answer.metadata
-                });
-            });
-        });
+        answerDiv.addEventListener('click', () => scrollToOutlineItem(answer));
 
         answersDiv.appendChild(answerDiv);
     });

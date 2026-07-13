@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AI Chat Export Pro · Side Panel Example</title>
+    <style>
+        :root { color-scheme: dark light; }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            padding: 32px;
+            display: grid;
+            place-items: center;
+            background: #111827;
+            color: #e5e7eb;
+            font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+        main { width: min(100%, 430px); }
+        h1 { margin: 0 0 8px; font-size: 18px; }
+        p { margin: 0 0 18px; color: #9ca3af; }
+        .platform-switch { display: flex; gap: 8px; margin: -6px 0 18px; }
+        .platform-switch a {
+            padding: 6px 10px;
+            border: 1px solid #4b5563;
+            border-radius: 7px;
+            color: #dbeafe;
+            text-decoration: none;
+        }
+        .platform-switch a:hover { background: #273449; }
+        .panel-frame {
+            height: min(760px, calc(100vh - 150px));
+            min-height: 560px;
+            overflow: hidden;
+            border: 1px solid #4b5563;
+            border-radius: 14px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, .38);
+            background: #1e1e1e;
+        }
+        iframe { width: 100%; height: 100%; border: 0; }
+        code { padding: 2px 5px; border-radius: 4px; background: #273449; color: #bfdbfe; }
+    </style>
+</head>
+<body>
+    <main>
+        <h1>Side Panel UI 示例</h1>
+        <p>这页使用真实侧栏样式与交互，数据为本地示例。可直接点击目录、展开/收起、切换部分导出并观察反馈。</p>
+        <nav class="platform-switch" aria-label="选择示例平台">
+            <a href="?platform=chatgpt">ChatGPT 示例</a>
+            <a href="?platform=doubao">豆包示例</a>
+        </nav>
+        <div class="panel-frame">
+            <iframe id="panel-demo" title="AI Chat Export Pro Side Panel 示例"></iframe>
+        </div>
+        <p>ChatGPT 问题显示 <code>Q1: 你说：…</code>；豆包显示 <code>Q1: …</code>。</p>
+    <script>
+        const platform = new URLSearchParams(location.search).get('platform') === 'doubao' ? 'doubao' : 'chatgpt';
+        document.getElementById('panel-demo').src = `sidepanel.html?demo=1&platform=${platform}`;
+    </script>
+    </main>
+</body>
+</html>

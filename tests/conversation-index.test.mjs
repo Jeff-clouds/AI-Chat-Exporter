@@ -25,18 +25,35 @@ const payload = {
 };
 
 const helpers = context.window.__AI_CHAT_EXPORT_TESTS__;
+const index = context.window.AI_CHAT_CONVERSATION_INDEX;
+assert.equal(index.version, '2026-07-13-chatgpt-dom-heading-cache');
 assert.deepEqual(Array.from(helpers.currentBranchNodes(payload), node => node.id), [
   'root', 'user1', 'assistant1', 'user2', 'assistant-2'
 ]);
 assert.equal(helpers.contentToText({ parts: ['one', { text: 'two' }] }), 'one two');
+assert.equal(
+  helpers.contentToMarkdown({ parts: ['intro\n\n# first heading\nbody', '## second heading\nmore'] }),
+  'intro\n\n# first heading\nbody\n## second heading\nmore'
+);
 
 context.window.AI_CHAT_CONVERSATION_INDEX.importChatGptPayload(payload);
 const unified = context.window.AI_CHAT_CONVERSATION_INDEX.toUnifiedData();
 assert.equal(unified.conversations.length, 2);
 assert.equal(unified.conversations[1].question, 'second question');
 assert.equal(unified.conversations[1].answer.content, '## second answer');
+assert.deepEqual(Array.from(index.getMessages(), message => message.turnNumber), [1, 2, 3, 4]);
 
-const index = context.window.AI_CHAT_CONVERSATION_INDEX;
+const headingPayload = {
+  current_node: 'heading-assistant',
+  mapping: {
+    root: { id: 'root', parent: null },
+    headingUser: { id: 'headingUser', parent: 'root', message: { id: 'heading-u', author: { role: 'user' }, content: { parts: ['question'] } } },
+    'heading-assistant': { id: 'heading-assistant', parent: 'headingUser', message: { id: 'heading-a', author: { role: 'assistant' }, content: { parts: ['intro\n\n# H1 title\ntext\n\n## H2 title'] } } }
+  }
+};
+index.importChatGptPayload(headingPayload);
+assert.equal(index.records.get('heading-a').markdown, 'intro\n\n# H1 title\ntext\n\n## H2 title');
+
 index.platform = 'DOUBAO';
 index.records.clear();
 index.order = [];

@@ -259,7 +259,8 @@
             align-items: center;
             font-weight: 600;
             line-height: 1.35;
-            font-variant-numeric: lining-nums tabular-nums;
+            font-variant-numeric: normal;
+            font-feature-settings: "tnum" 0;
             color: var(--text-primary);
             background-color: var(--bg-question);
             padding: 21px 12px;  /* 恢复原来的 padding */
@@ -283,12 +284,43 @@
             font-weight: 400;
             font-size: 13px;
             padding: 12px 12px;
+            font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+            letter-spacing: 0;
+            word-spacing: 0;
+            text-autospace: no-autospace;
         }
 
         .question-text {
             min-width: 0;
             line-height: inherit;
             word-break: break-word;
+            /* 不使用全局 Söhne：它没有中文字符，会与回退中文字体混排并造成基线不齐。 */
+            font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+            letter-spacing: 0;
+            word-spacing: 0;
+            text-autospace: no-autospace;
+        }
+
+        /* 问题前缀单独排版，避免中文、数字和英文混排时出现额外字距或基线下沉。 */
+        .question-label {
+            display: inline;
+            white-space: nowrap;
+            letter-spacing: 0;
+            word-spacing: 0;
+            font-variant-numeric: normal;
+            font-feature-settings: "tnum" 0;
+        }
+
+        .question-number {
+            display: inline;
+            margin: 0;
+            vertical-align: baseline;
+        }
+
+        .question-speaker {
+            white-space: nowrap;
+            letter-spacing: 0;
+            word-spacing: 0;
         }
 
         /* 展开/收起图标 - CSS 绘制 */

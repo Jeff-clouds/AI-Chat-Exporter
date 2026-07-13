@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.5] - 2026-07-13
+
+### Fixed
+
+- Preserve ChatGPT API Markdown line breaks so H1-H6 headings remain detectable.
+- Supplement the complete ChatGPT API message index with headings from currently mounted assistant DOM; mounted DOM no longer gets skipped when the API succeeds.
+- Align ChatGPT API turn numbering with rendered `conversation-turn-N` values by excluding the mapping root node.
+- Replace stale in-page message-index instances after an extension update so the newest extraction logic takes effect without relying on old cached code.
+
+### Changed
+
+- Render question prefixes as `Q1:` / `Q1: 你说：…` and use a unified CJK font stack for question and answer outline text to avoid mixed-script spacing and baseline drift.
+
 ## [2.0.4] - 2026-07-13
 
 ### Fixed

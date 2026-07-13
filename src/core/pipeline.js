@@ -146,7 +146,11 @@ window.Pipeline = class Pipeline {
                 return;
             }
             if (message.role !== 'assistant' || !pendingQuestion) return;
-            const headings = this._indexedHeadings(message);
+            const markdownHeadings = this._indexedHeadings(message).map((heading, headingIndex) => ({ ...heading, headingIndex }));
+            const domHeadings = this.platformId === 'CHATGPT'
+                ? index.getChatGptDomHeadings(message.turnNumber)
+                : [];
+            const headings = this._mergeIndexedHeadings(domHeadings, markdownHeadings);
             headings.forEach((heading, headingIndex) => {
                 outline.push({
                     text: heading.text,
@@ -154,7 +158,8 @@ window.Pipeline = class Pipeline {
                     id: `cn-a-${this._safeId(`${message.id}-${headingIndex}-${heading.text}`)}`,
                     type: 'answer',
                     metadata: {
-                        type: 'answer', answerIndex: questionIndex - 1, headingIndex,
+                        type: 'answer', answerIndex: questionIndex - 1,
+                        headingIndex: Number.isFinite(heading.headingIndex) ? heading.headingIndex : headingIndex,
                         questionIndex: questionIndex - 1, key: `message:${message.id}:${headingIndex}`,
                         messageId: message.id, turnId: message.turnId || null,
                         turnNumber: message.turnNumber || null, offset: message.offset
@@ -182,6 +187,18 @@ window.Pipeline = class Pipeline {
             if (match) headings.push({ text: match[2].trim(), level: `h${match[1].length}` });
         });
         return headings;
+    }
+
+    _mergeIndexedHeadings(domHeadings, markdownHeadings) {
+        const merged = [];
+        const known = new Set();
+        [...domHeadings, ...markdownHeadings].forEach(heading => {
+            const key = `${heading.level}:${heading.text}`;
+            if (!heading.text || known.has(key)) return;
+            known.add(key);
+            merged.push(heading);
+        });
+        return merged;
     }
 
     _fillStats(outline, diagnostics) {

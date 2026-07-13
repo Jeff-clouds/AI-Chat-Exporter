@@ -3,6 +3,7 @@
 
     const CHATGPT_API = /chatgpt\.com/;
     const DOUBAO = /doubao\.com/;
+    const INDEX_VERSION = '2026-07-13-chatgpt-dom-heading-cache';
     const cleanText = value => String(value || '').replace(/\s+/g, ' ').trim();
 
     function currentConversationId() {
@@ -10,14 +11,18 @@
         return match ? (match[1] || match[2]) : '';
     }
 
-    function contentToText(content) {
+    function contentToMarkdown(content) {
         const parts = content?.parts;
-        if (!Array.isArray(parts)) return cleanText(content?.text || '');
-        return cleanText(parts.map(part => {
+        if (!Array.isArray(parts)) return String(content?.text || '').replace(/\r\n?/g, '\n').trim();
+        return parts.map(part => {
             if (typeof part === 'string') return part;
             if (typeof part?.text === 'string') return part.text;
             return '';
-        }).join('\n'));
+        }).join('\n').replace(/\r\n?/g, '\n').trim();
+    }
+
+    function contentToText(content) {
+        return cleanText(contentToMarkdown(content));
     }
 
     function currentBranchNodes(payload) {
@@ -47,10 +52,12 @@
 
     class ConversationIndex {
         constructor() {
+            this.version = INDEX_VERSION;
             this.url = '';
             this.platform = '';
             this.records = new Map();
             this.order = [];
+            this.chatGptDomHeadings = new Map();
             this.nextSequence = 0;
             this.title = '';
             this.observer = null;
@@ -73,6 +80,7 @@
             this.platform = CHATGPT_API.test(nextUrl) ? 'CHATGPT' : (DOUBAO.test(nextUrl) ? 'DOUBAO' : '');
             this.records.clear();
             this.order = [];
+            this.chatGptDomHeadings.clear();
             this.nextSequence = 0;
             this.title = document.title || '';
         }
@@ -113,7 +121,9 @@
         async refresh(options = {}) {
             this.resetForLocation();
             if (this.platform === 'CHATGPT') {
-                await this.loadChatGptApi();
+                const apiLoaded = await this.loadChatGptApi();
+                // API 提供完整消息顺序；DOM 提供 ChatGPT 实际渲染出的标题，两者必须并行缓存。
+                this.scanChatGptDom({ cacheMessages: !apiLoaded });
             } else if (this.platform === 'DOUBAO') {
                 this.scanDoubaoWindow();
                 this.observeDoubao();
@@ -140,17 +150,22 @@
 
         importChatGptPayload(payload) {
             if (!payload?.mapping) return false;
-            currentBranchNodes(payload).forEach((node, index) => {
+            let turnNumber = 0;
+            currentBranchNodes(payload).forEach(node => {
                 const role = node?.message?.author?.role;
                 if (role !== 'user' && role !== 'assistant') return;
-                const text = contentToText(node.message.content);
+                turnNumber++;
+                const markdown = contentToMarkdown(node.message.content);
+                const text = cleanText(markdown);
                 this.upsert({
                     id: node.message.id || node.id,
                     turnId: node.message.id || node.id,
-                    turnNumber: index + 1,
+                    // mapping 会包含无消息的 root 节点；只为真实 user/assistant 递增，才能和 conversation-turn-N 对齐。
+                    turnNumber,
                     role,
                     text,
-                    markdown: text,
+                    // ChatGPT 的 API 不提供标题 HTML；必须保留 Markdown 换行，供侧栏识别 H1-H6。
+                    markdown,
                     offset: null
                 });
             });
@@ -158,20 +173,36 @@
             return this.order.length > 0;
         }
 
-        scanChatGptDom() {
+        scanChatGptDom({ cacheMessages = true } = {}) {
             Array.from(document.querySelectorAll('[data-turn]')).forEach((element, index) => {
                 const role = element.getAttribute('data-turn');
+                const turnNumber = Number((element.getAttribute('data-testid') || '').match(/conversation-turn-(\d+)/)?.[1]) || index + 1;
+                if (role === 'assistant') {
+                    const headings = Array.from(element.querySelectorAll('h1,h2,h3,h4,h5,h6'))
+                        .map((heading, headingIndex) => ({
+                            text: cleanText(heading.textContent),
+                            level: heading.tagName.toLowerCase(),
+                            headingIndex
+                        }))
+                        .filter(heading => heading.text);
+                    if (headings.length > 0) this.chatGptDomHeadings.set(turnNumber, headings);
+                }
+                if (!cacheMessages) return;
                 const text = cleanText(element.textContent);
                 this.upsert({
                     id: element.getAttribute('data-turn-id') || `chatgpt-turn-${index}`,
                     turnId: element.getAttribute('data-turn-id') || null,
-                    turnNumber: Number((element.getAttribute('data-testid') || '').match(/conversation-turn-(\d+)/)?.[1]) || index + 1,
+                    turnNumber,
                     role,
                     text,
                     markdown: text,
                     offset: null
                 });
             });
+        }
+
+        getChatGptDomHeadings(turnNumber) {
+            return (this.chatGptDomHeadings.get(turnNumber) || []).map(heading => ({ ...heading }));
         }
 
         findDoubaoScroller() {
@@ -249,6 +280,12 @@
         }
     }
 
-    window.AI_CHAT_CONVERSATION_INDEX = window.AI_CHAT_CONVERSATION_INDEX || new ConversationIndex();
-    window.__AI_CHAT_EXPORT_TESTS__ = { currentBranchNodes, contentToText };
+    // 扩展更新后 content script 会再次注入到同一页面；不能继续复用旧类实例，
+    // 否则新版本的 Markdown 保真与标题解析逻辑不会生效。
+    const existingIndex = window.AI_CHAT_CONVERSATION_INDEX;
+    if (!existingIndex || existingIndex.version !== INDEX_VERSION) {
+        existingIndex?.disconnect?.();
+        window.AI_CHAT_CONVERSATION_INDEX = new ConversationIndex();
+    }
+    window.__AI_CHAT_EXPORT_TESTS__ = { currentBranchNodes, contentToMarkdown, contentToText };
 })();
