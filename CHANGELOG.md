@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.9] - 2026-07-14
+
+### Added
+
+- Add a dismissible first-use tip that introduces free outline navigation and full Markdown export without interrupting users with a Pro popup.
+- Add a top-right help drawer covering quick use, ChatGPT/Doubao long-conversation behavior, free vs. Pro, and privacy.
+
+### Changed
+
+- Make ChatGPT and Doubao indexing feedback contextual in the side panel; Doubao explicitly states that the extension does not auto-scroll the conversation.
+- Rename the free-user Pro entry to “了解 Pro” and keep purchase information behind an explicit user action.
+
 ## [2.0.8] - 2026-07-14
 
 ### Changed

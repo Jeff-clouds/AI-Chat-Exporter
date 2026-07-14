@@ -64,6 +64,49 @@
             transition: background-color 0.3s ease, color 0.3s ease;
         }
 
+        #panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        #panel-title {
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        #help-button,
+        #welcome-dismiss,
+        #help-close-button,
+        #help-purchase-action,
+        #help-activate-action {
+            border: 0;
+            cursor: pointer;
+            font: inherit;
+        }
+
+        #help-button {
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        #help-button:hover,
+        #help-button[aria-expanded="true"] {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
         #site-info {
             padding: 10px 14px;
             margin-bottom: 10px;
@@ -72,6 +115,41 @@
             font-size: 13px;
             color: var(--text-secondary);
             border: 1px solid var(--border-color);
+        }
+
+        #welcome-tip {
+            position: relative;
+            margin: 0 0 10px;
+            padding: 12px 42px 12px 14px;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            background: #eff6ff;
+            color: #1e3a8a;
+            font-size: 12px;
+            line-height: 1.55;
+        }
+
+        #welcome-tip strong {
+            display: block;
+            margin-bottom: 2px;
+            color: #1d4ed8;
+            font-size: 13px;
+        }
+
+        #welcome-dismiss {
+            position: absolute;
+            top: 8px;
+            right: 9px;
+            padding: 4px;
+            border-radius: 4px;
+            background: transparent;
+            color: #1d4ed8;
+            font-size: 16px;
+            line-height: 1;
+        }
+
+        #welcome-dismiss:hover {
+            background: rgba(37, 99, 235, 0.12);
         }
 
         #pro-action-row {
@@ -88,6 +166,109 @@
             font-weight: 500;
             line-height: 1.35;
             min-width: 0;
+        }
+
+        #help-drawer[hidden],
+        #welcome-tip[hidden] {
+            display: none;
+        }
+
+        #help-drawer {
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            display: flex;
+            justify-content: flex-end;
+            background: rgba(17, 24, 39, 0.28);
+        }
+
+        #help-panel {
+            width: min(100%, 360px);
+            height: 100%;
+            box-sizing: border-box;
+            overflow-y: auto;
+            padding: 18px 16px 28px;
+            background: var(--bg-primary);
+            border-left: 1px solid var(--border-color);
+            box-shadow: -12px 0 32px var(--shadow);
+        }
+
+        .help-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .help-panel-header h2 {
+            margin: 0;
+            color: var(--text-primary);
+            font-size: 17px;
+        }
+
+        #help-close-button {
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-size: 18px;
+            line-height: 1;
+        }
+
+        .help-section {
+            margin-top: 18px;
+        }
+
+        .help-section h3 {
+            margin: 0 0 7px;
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+
+        .help-section p,
+        .help-section li {
+            color: var(--text-secondary);
+            font-size: 13px;
+            line-height: 1.55;
+        }
+
+        .help-section p {
+            margin: 0;
+        }
+
+        .help-section ul {
+            margin: 0;
+            padding-left: 19px;
+        }
+
+        .help-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        #help-purchase-action,
+        #help-activate-action {
+            padding: 10px 8px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        #help-purchase-action {
+            background: var(--accent-green);
+            color: #ffffff;
+        }
+
+        #help-activate-action {
+            border: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
         }
 
         .pro-action-button,
@@ -534,11 +715,20 @@
     </style>
 </head>
 <body>
+    <header id="panel-header">
+        <div id="panel-title">AI Chat Exporter</div>
+        <button id="help-button" type="button" aria-label="打开使用帮助" aria-controls="help-drawer" aria-expanded="false">?</button>
+    </header>
     <div id="site-info"></div>
+    <section id="welcome-tip" hidden aria-label="首次使用提示">
+        <strong>从这里开始</strong>
+        点击目录可快速定位；底部可免费导出完整对话。
+        <button id="welcome-dismiss" type="button" aria-label="关闭首次使用提示">×</button>
+    </section>
     <div id="pro-action-row">
-        <div id="pro-mode-label">Pro用户可选择部分导出</div>
-        <button id="pro-purchase-action" class="pro-action-button purchase">购买Pro</button>
-        <button id="pro-mode-action" class="pro-action-button activate">激活Pro</button>
+        <div id="pro-mode-label">Pro · 只导出重要问答</div>
+        <button id="pro-purchase-action" class="pro-action-button purchase">了解 Pro</button>
+        <button id="pro-mode-action" class="pro-action-button activate">激活 Pro</button>
     </div>
     <div id="export-status" aria-live="polite"></div>
     <div id="outline"></div>
@@ -548,6 +738,37 @@
             <span class="text">收起所有</span>
         </button>
         <button id="bottom-export-btn" class="primary-action">导出完整对话</button>
+    </div>
+    <div id="help-drawer" hidden>
+        <section id="help-panel" role="dialog" aria-modal="true" aria-labelledby="help-title">
+            <header class="help-panel-header">
+                <h2 id="help-title">使用帮助</h2>
+                <button id="help-close-button" type="button" aria-label="关闭帮助">×</button>
+            </header>
+            <section class="help-section">
+                <h3>快速使用</h3>
+                <p>点击目录跳转到对应内容；底部“导出完整对话”可免费保存当前对话为 Markdown。</p>
+            </section>
+            <section class="help-section">
+                <h3>长对话加载</h3>
+                <ul>
+                    <li>ChatGPT 会优先读取完整会话；暂时无法读取时，使用当前已加载的内容。</li>
+                    <li>豆包不会被扩展自动滚动。继续浏览原对话，目录会随滚动逐步补全。</li>
+                </ul>
+            </section>
+            <section class="help-section">
+                <h3>免费版与 Pro</h3>
+                <p>大纲、定位和完整 Markdown 导出免费。Pro 可勾选重要问题组，仅导出需要保留的问答。</p>
+            </section>
+            <section class="help-section">
+                <h3>隐私</h3>
+                <p>对话内容在浏览器本地处理，不上传到开发者服务器。</p>
+            </section>
+            <div class="help-actions">
+                <button id="help-purchase-action" type="button">了解 Pro</button>
+                <button id="help-activate-action" type="button">激活授权码</button>
+            </div>
+        </section>
     </div>
     <script src="sidepanel.js"></script>
 </body>

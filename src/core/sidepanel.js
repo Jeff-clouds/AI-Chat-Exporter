@@ -14,6 +14,8 @@ const PURCHASE_URL = 'https://wj.qq.com/s2/26957751/9rvt/';
 const DEMO_MODE = /(?:^|[?&])demo(?:=1)?(?:&|$)/.test((window.location && window.location.search) || '');
 const DEMO_PLATFORM = /(?:^|[?&])platform=doubao(?:&|$)/.test((window.location && window.location.search) || '') ? 'doubao' : 'chatgpt';
 const HAS_CHROME_API = typeof chrome !== 'undefined' && Boolean(chrome.runtime && chrome.tabs && chrome.scripting);
+const HAS_LOCAL_STORAGE_API = typeof chrome !== 'undefined' && Boolean(chrome.storage?.local);
+const WELCOME_DISMISSED_KEY = 'aiChatExporterWelcomeDismissed';
 const demoQuestion = (index, text) => `问题 ${index}: ${DEMO_PLATFORM === 'chatgpt' ? '你说：' : ''}${text}`;
 
 // 供 sidepanel-example.html 和 sidepanel.html?demo=1 使用，不读取当前标签页。
@@ -55,6 +57,27 @@ const CONTENT_SCRIPT_FILES = [
 
 function isSupportedUrl(url = '') {
     return SUPPORTED_URL_SNIPPETS.some(snippet => url.includes(snippet));
+}
+
+function setOutlineLoadStatus(url = '') {
+    if (url.includes('chatgpt.com')) {
+        setExportStatus('正在读取完整会话...', 'neutral');
+    } else if (url.includes('doubao.com')) {
+        setExportStatus('正在读取当前内容；目录会随滚动补全', 'neutral');
+    } else {
+        setExportStatus('正在生成对话目录...', 'neutral');
+    }
+}
+
+function setOutlineReadyStatus(url = '') {
+    if (exportInProgress) return;
+    if (url.includes('doubao.com')) {
+        setExportStatus('目录已生成；继续滚动原对话可补全更多内容', 'neutral');
+    } else if (url.includes('chatgpt.com')) {
+        setExportStatus('目录已生成；长对话会优先读取完整会话', 'neutral');
+    } else {
+        setExportStatus('目录已生成', 'neutral');
+    }
 }
 
 async function injectCurrentContentScripts(tabId, url = '') {
@@ -107,6 +130,7 @@ function requestCurrentTabOutline() {
             currentTabId = tabs[0].id;
             currentTabUrl = tabs[0].url || '';
             const outlineContainer = clearOutlineForRequest();
+            setOutlineLoadStatus(currentTabUrl);
 
             try {
                 if (isSupportedUrl(tabs[0].url)) {
@@ -127,6 +151,8 @@ window.addEventListener('load', () => {
     // 初始化一键操作按钮
     initializeToggleAllButton();
     initializePanelActionControls();
+    initializeHelpControls();
+    initializeWelcomeTip();
     if (DEMO_MODE) {
         const siteInfo = document.getElementById('site-info');
         if (siteInfo) siteInfo.textContent = `示例页面：${DEMO_PLATFORM === 'chatgpt' ? 'ChatGPT' : '豆包'} 长对话大纲`;
@@ -180,6 +206,7 @@ if (HAS_CHROME_API && chrome.runtime.onMessage?.addListener) chrome.runtime.onMe
                 siteInfo.textContent = '当前网站: 普通网页';
             }
         }
+        setOutlineReadyStatus(url);
     } else if (message.type === 'updateReadingPosition') {
         highlightCurrentReadingPosition(message.elementId, message.elementText);
     }
@@ -251,13 +278,7 @@ function initializePanelActionControls() {
     const bottomExportButton = document.getElementById('bottom-export-btn');
 
     if (purchaseButton) {
-        purchaseButton.addEventListener('click', () => {
-            if (DEMO_MODE) {
-                setExportStatus('示例页面不会打开购买链接', 'neutral');
-                return;
-            }
-            chrome.tabs.create({ url: PURCHASE_URL });
-        });
+        purchaseButton.addEventListener('click', openPurchasePage);
     }
 
     if (proActionButton) {
@@ -285,6 +306,81 @@ function initializePanelActionControls() {
     }
 
     updatePanelState();
+}
+
+function openPurchasePage() {
+    if (DEMO_MODE || !HAS_CHROME_API) {
+        setExportStatus('示例页面不会打开购买链接', 'neutral');
+        return;
+    }
+    chrome.tabs.create({ url: PURCHASE_URL });
+}
+
+function initializeHelpControls() {
+    const helpButton = document.getElementById('help-button');
+    const helpDrawer = document.getElementById('help-drawer');
+    const closeButton = document.getElementById('help-close-button');
+    const purchaseButton = document.getElementById('help-purchase-action');
+    const activateButton = document.getElementById('help-activate-action');
+    const proActionButton = document.getElementById('pro-mode-action');
+    if (!helpButton || !helpDrawer) return;
+
+    const closeHelp = () => {
+        helpDrawer.hidden = true;
+        helpButton.setAttribute('aria-expanded', 'false');
+        helpButton.focus();
+    };
+    const openHelp = () => {
+        helpDrawer.hidden = false;
+        helpButton.setAttribute('aria-expanded', 'true');
+        closeButton?.focus();
+    };
+
+    helpButton.addEventListener('click', openHelp);
+    closeButton?.addEventListener('click', closeHelp);
+    helpDrawer.addEventListener('click', event => {
+        if (event.target === helpDrawer) closeHelp();
+    });
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && !helpDrawer.hidden) closeHelp();
+    });
+    purchaseButton?.addEventListener('click', openPurchasePage);
+    activateButton?.addEventListener('click', () => {
+        closeHelp();
+        if (licenseStatusState.active) {
+            setExportStatus('Pro 已激活', 'success');
+            return;
+        }
+        activateProLicense(proActionButton || activateButton);
+    });
+}
+
+function initializeWelcomeTip() {
+    const welcomeTip = document.getElementById('welcome-tip');
+    const dismissButton = document.getElementById('welcome-dismiss');
+    if (!welcomeTip || !dismissButton) return;
+
+    const hideTip = () => {
+        welcomeTip.hidden = true;
+        if (HAS_LOCAL_STORAGE_API) {
+            chrome.storage.local.set({ [WELCOME_DISMISSED_KEY]: true });
+        } else {
+            window.localStorage?.setItem(WELCOME_DISMISSED_KEY, 'true');
+        }
+    };
+
+    dismissButton.addEventListener('click', hideTip);
+    if (DEMO_MODE) {
+        welcomeTip.hidden = false;
+        return;
+    }
+    if (HAS_LOCAL_STORAGE_API) {
+        chrome.storage.local.get(WELCOME_DISMISSED_KEY, result => {
+            welcomeTip.hidden = Boolean(result?.[WELCOME_DISMISSED_KEY]);
+        });
+    } else {
+        welcomeTip.hidden = window.localStorage?.getItem(WELCOME_DISMISSED_KEY) === 'true';
+    }
 }
 
 function refreshLicenseStatus() {
@@ -349,7 +445,7 @@ function updatePanelState() {
     const isPro = Boolean(licenseStatusState.active);
 
     if (proLabel) {
-        proLabel.textContent = isPro ? 'Pro用户' : 'Pro用户可选择部分导出';
+        proLabel.textContent = isPro ? 'Pro · 可选择重要问答导出' : 'Pro · 只导出重要问答';
     }
 
     if (purchaseButton) {
@@ -361,7 +457,7 @@ function updatePanelState() {
         proActionButton.disabled = exportInProgress;
         proActionButton.classList.remove('activate', 'partial', 'exit');
         if (!isPro) {
-            proActionButton.textContent = '激活Pro';
+            proActionButton.textContent = '激活 Pro';
             proActionButton.classList.add('activate');
         } else if (selectionMode) {
             proActionButton.textContent = '退出选择模式';
