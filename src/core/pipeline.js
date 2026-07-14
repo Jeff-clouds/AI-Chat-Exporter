@@ -119,6 +119,9 @@ window.Pipeline = class Pipeline {
         } catch (error) {
             console.warn('AI Chat Export Pro: Virtual message index unavailable', error);
         }
+        // ChatGPT 的完整 DOM 查询在真实长对话上可能长时间阻塞；API 不可用时宁可显示空目录，
+        // 也不能回退到全页选择器扫描而影响聊天页面本身。
+        if (this.platformId === 'CHATGPT') return { outline: [], diagnostics };
         return this.extract();
     }
 
@@ -126,12 +129,10 @@ window.Pipeline = class Pipeline {
         if (this.platformId !== 'CHATGPT' && this.platformId !== 'DOUBAO') return [];
         const index = window.AI_CHAT_CONVERSATION_INDEX;
         if (!index) return [];
-        // 侧栏对 ChatGPT 只做一次轻量 DOM 目录扫描。完整会话 API 仅在用户主动导出时调用，
-        // 不能因为打开侧栏就与 ChatGPT 页面自身加载竞争网络和主线程。
+        // ChatGPT 仅在侧栏打开时读取一次完整会话；没有持续 observer，也不会随 DOM 变化反复请求。
+        // bridge 会合并同会话并发请求，并只传递当前分支的精简消息给隔离上下文。
         if (this.platformId === 'CHATGPT') {
-            if (typeof index.scanChatGptDom !== 'function') return [];
-            index.resetForLocation?.();
-            index.scanChatGptDom();
+            await index.refresh({ observe: false });
         } else {
             // 豆包被动索引：目录刷新绝不驱动页面滚动；只读取用户浏览时挂载的消息。
             await index.refresh();

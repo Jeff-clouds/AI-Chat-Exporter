@@ -207,11 +207,10 @@
             this.resetForLocation();
             const refreshUrl = location.href;
             if (this.platform === 'CHATGPT') {
-                const apiLoaded = await this.loadChatGptApi(options);
+                await this.loadChatGptApi(options);
                 // SPA 切换可能发生在 API 等待期间；旧请求只缓存，不能生成新会话的目录。
                 if (location.href !== refreshUrl) return this.refresh(options);
-                // API 提供完整消息顺序；DOM 提供 ChatGPT 实际渲染出的标题，两者必须并行缓存。
-                this.scanChatGptDom({ cacheMessages: !apiLoaded });
+                // ChatGPT 的真实长对话 DOM 查询可能阻塞页面；侧栏只使用 API 当前分支数据。
             } else if (this.platform === 'DOUBAO') {
                 this.scanDoubaoWindow();
                 if (options.observe !== false) this.observeDoubao();
@@ -250,8 +249,7 @@
                 this.importChatGptPayload(payload);
                 return this.order.length > 0;
             }).catch(error => {
-                console.warn('AI Chat Export Pro: ChatGPT API unavailable; using mounted DOM', error);
-                if (conversationId === currentConversationId()) this.scanChatGptDom();
+                console.warn('AI Chat Export Pro: ChatGPT API unavailable; outline remains empty to avoid scanning the page DOM', error);
                 return false;
             }).finally(() => this.chatGptLoads.delete(conversationId));
             this.chatGptLoads.set(conversationId, load);

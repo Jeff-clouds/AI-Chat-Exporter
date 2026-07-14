@@ -19,14 +19,18 @@ assert.match(backgroundSource, /refresh\(\{ force: true, observe: false \}\)/);
 assert.match(backgroundSource, /if \(!retainedByPanel\) index\.disconnect\(\)/);
 assert.match(backgroundSource, /withTabExtractionLock\(tab\.id/);
 assert.match(backgroundSource, /tabExtractionLocks\.delete\(tabId\)/);
-assert.doesNotMatch(sidepanelSource, /chatgpt-api-bridge\.js/);
+assert.match(sidepanelSource, /chatgpt-api-bridge\.js/);
 assert.doesNotMatch(sidepanelSource, /backend-api\/conversation/);
 assert.match(sidepanelSource, /changeInfo\.status === 'complete'/);
 assert.match(sidepanelSource, /scheduleReloadOutlineRequest\(\)/);
 assert.match(indexSource, /CHATGPT_REQUEST_TIMEOUT_MS = 20000/);
 assert.match(indexSource, /ai-chat-index-updated/);
+assert.doesNotMatch(indexSource, /scanChatGptDom\(\{ cacheMessages: !apiLoaded \}\)/);
+assert.doesNotMatch(indexSource, /API unavailable; using mounted DOM/);
 const pipelineSource = fs.readFileSync(new URL('../src/core/pipeline.js', import.meta.url), 'utf8');
-assert.match(pipelineSource, /if \(this\.platformId === 'CHATGPT'\)[\s\S]*?index\.scanChatGptDom\(\)[\s\S]*?else \{[\s\S]*?await index\.refresh\(\);/);
+assert.match(pipelineSource, /if \(this\.platformId === 'CHATGPT'\)[\s\S]*?await index\.refresh\(\{ observe: false \}\)/);
+assert.match(pipelineSource, /if \(this\.platformId === 'CHATGPT'\) return \{ outline: \[\], diagnostics \}/);
+assert.match(contentSource, /if \(outlineExtraction\) return outlineExtraction/);
 assert.match(contentSource, /pipeline\.platformId === 'CHATGPT' \|\| pipeline\.platformId === 'DOUBAO'/);
 
 // MAIN-world bridge：并发同 ID、连续同 ID 都只 fetch 一次；force、换 ID 才重取；失败进入冷却。
@@ -52,6 +56,18 @@ assert.match(contentSource, /pipeline\.platformId === 'CHATGPT' \|\| pipeline\.p
     };
     vm.runInNewContext(bridgeSource, context);
     const bridge = window.__AI_CHAT_EXPORTER_CHATGPT_BRIDGE__;
+    const compacted = bridge.compactConversationPayload({
+        title: 'compact test',
+        current_node: 'terminal',
+        mapping: {
+            root: { id: 'root', parent: null },
+            user: { id: 'user', parent: 'root', message: { id: 'u1', author: { role: 'user', extra: 'drop' }, content: { parts: ['question'] }, metadata: { drop: true } } },
+            terminal: { id: 'terminal', parent: 'user' }
+        }
+    });
+    assert.deepEqual(Object.keys(compacted.mapping).sort(), ['root', 'terminal', 'user']);
+    assert.equal(compacted.mapping.user.message.author.extra, undefined, 'bridge must discard non-export message metadata');
+    assert.equal(compacted.mapping.terminal.message, undefined, 'non-message current node must remain traversable');
     await Promise.all([bridge.loadConversation('same'), bridge.loadConversation('same')]);
     assert.equal(fetchCount, 1, 'concurrent same-id bridge requests must coalesce');
     await bridge.loadConversation('same');

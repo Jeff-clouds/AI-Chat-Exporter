@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    const BRIDGE_VERSION = '2026-07-14-bounded-cache';
+    const BRIDGE_VERSION = '2026-07-14-compact-payload';
     const REQUEST_SOURCE = 'ai-chat-exporter-index';
     const RESPONSE_SOURCE = 'ai-chat-export-pro';
     const FAILURE_COOLDOWN_MS = 5000;
@@ -14,6 +14,37 @@
     const payloads = existing?.payloads instanceof Map ? existing.payloads : new Map();
     const inFlight = new Map();
     const failures = new Map();
+
+    function compactConversationPayload(payload) {
+        const mapping = payload?.mapping || {};
+        const compactMapping = {};
+        let node = mapping[payload?.current_node];
+        const seen = new Set();
+        while (node && !seen.has(node.id)) {
+            seen.add(node.id);
+            const message = node.message;
+            const role = message?.author?.role;
+            const compactNode = {
+                id: node.id,
+                parent: node.parent
+            };
+            if (role === 'user' || role === 'assistant') {
+                compactNode.message = {
+                    id: message.id || node.id,
+                    author: { role },
+                    content: message.content
+                };
+            }
+            // 保留当前分支的非消息节点，保证 current_node 可从末端一直回溯到 root。
+            compactMapping[node.id] = compactNode;
+            node = mapping[node.parent];
+        }
+        return {
+            title: payload?.title || '',
+            current_node: payload?.current_node || '',
+            mapping: compactMapping
+        };
+    }
 
     function cachePayload(conversationId, payload) {
         payloads.delete(conversationId);
@@ -40,7 +71,7 @@
             credentials: 'include'
         }).then(async response => {
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const payload = await response.json();
+            const payload = compactConversationPayload(await response.json());
             cachePayload(conversationId, payload);
             failures.delete(conversationId);
             return payload;
@@ -93,6 +124,7 @@
         version: BRIDGE_VERSION,
         payloads,
         loadConversation,
+        compactConversationPayload,
         cleanup() {
             window.removeEventListener('message', handleRequest);
             inFlight.clear();

@@ -1,7 +1,7 @@
 {
   "manifest_version" : 3,
   "name" : "AI Chat Exporter",
-  "version" : "2.1.1",
+  "version" : "2.1.2",
   "description" : "AI 对话侧边栏大纲、快速定位与多格式导出工具",
   "permissions" : [
     "sidePanel",

@@ -37,7 +37,7 @@ assert.deepEqual(Array.from(headings, heading => ({ text: heading.text, level: h
 ]);
 
 context.window.AI_CHAT_CONVERSATION_INDEX = {
-  scanChatGptDom: () => {},
+  refresh: async () => {},
   getMessages: () => [
     { id: 'u1', role: 'user', text: '你说：问题', turnNumber: 1 },
     { id: 'a1', role: 'assistant', text: 'plain API response', markdown: 'plain API response', turnNumber: 2 }
@@ -55,5 +55,12 @@ assert.deepEqual(
     { text: 'DOM 中的二级标题', level: 'h2', headingIndex: 1 }
   ]
 );
+
+context.window.AI_CHAT_CONVERSATION_INDEX = { refresh: async () => {}, getMessages: () => [] };
+pipeline.extract = () => { throw new Error('ChatGPT must not fall back to a full DOM scan'); };
+const safeChatGptFallback = await pipeline.extractWithIndex();
+assert.equal(safeChatGptFallback.outline.length, 0);
+assert.equal(safeChatGptFallback.diagnostics.strategy, 'message-index');
+assert.equal(safeChatGptFallback.diagnostics.error, null);
 
 console.log('chatgpt markdown headings ok');

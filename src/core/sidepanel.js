@@ -84,6 +84,13 @@ function setOutlineReadyStatus(url = '') {
 }
 
 async function injectCurrentContentScripts(tabId, url = '') {
+    if (url.includes('chatgpt.com')) {
+        await chrome.scripting.executeScript({
+            target: { tabId },
+            world: 'MAIN',
+            files: ['src/core/chatgpt-api-bridge.js']
+        });
+    }
     await chrome.scripting.executeScript({
         target: { tabId },
         files: CONTENT_SCRIPT_FILES

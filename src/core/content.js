@@ -22,6 +22,7 @@
     let outlineRefreshTimer = null;
     let readingDetectionTimer = null;
     let observerRetryTimer = null;
+    let outlineExtraction = null;
     let started = false;
     const activePanelPorts = new Set();
     const highlightTimers = new Set();
@@ -38,31 +39,37 @@
     }
 
     // 提取大纲并发送
-    window.extractAndSendOutline = async function() {
-        if (!started) return;
-        const result = await pipeline.extractWithIndex();
-        if (!started) return;
+    window.extractAndSendOutline = function() {
+        if (!started) return Promise.resolve();
+        if (outlineExtraction) return outlineExtraction;
+        outlineExtraction = (async () => {
+            const result = await pipeline.extractWithIndex();
+            if (!started) return;
 
-        // 避免重复发送相同的大纲（减少侧边栏无意义的刷新）
-        const outlineJson = JSON.stringify(result.outline.map(i => i.id || i.text));
-        if (outlineJson === lastOutlineJson && result.outline.length > 0) {
-            return;
-        }
-        lastOutlineJson = outlineJson;
+            // 避免重复发送相同的大纲（减少侧边栏无意义的刷新）
+            const outlineJson = JSON.stringify(result.outline.map(i => i.id || i.text));
+            if (outlineJson === lastOutlineJson && result.outline.length > 0) {
+                return;
+            }
+            lastOutlineJson = outlineJson;
 
-        cleanupStaleOutlineIds(result.outline);
-        chrome.runtime.sendMessage({
-            type: 'outline',
-            outline: result.outline,
-            diagnostics: result.diagnostics
+            cleanupStaleOutlineIds(result.outline);
+            chrome.runtime.sendMessage({
+                type: 'outline',
+                outline: result.outline,
+                diagnostics: result.diagnostics
+            });
+
+            // 初始化阅读位置检测
+            if (readingDetectionTimer) clearTimeout(readingDetectionTimer);
+            readingDetectionTimer = setTimeout(() => {
+                readingDetectionTimer = null;
+                initializeReadingPositionDetection();
+            }, 500);
+        })().finally(() => {
+            outlineExtraction = null;
         });
-        
-        // 初始化阅读位置检测
-        if (readingDetectionTimer) clearTimeout(readingDetectionTimer);
-        readingDetectionTimer = setTimeout(() => {
-            readingDetectionTimer = null;
-            initializeReadingPositionDetection();
-        }, 500);
+        return outlineExtraction;
     }
 
     function cleanupStaleOutlineIds(outline) {
@@ -382,6 +389,7 @@
         readingDetectionTimer = null;
         if (observerRetryTimer) clearTimeout(observerRetryTimer);
         observerRetryTimer = null;
+        outlineExtraction = null;
         highlightTimers.forEach(timer => clearTimeout(timer));
         highlightTimers.clear();
         window.AI_CHAT_CONVERSATION_INDEX?.disconnect?.();
