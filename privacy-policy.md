@@ -1,4 +1,4 @@
-# AI Chat Export Pro 隐私政策 / Privacy Policy
+# AI Chat Exporter 隐私政策 / Privacy Policy
 
 ## 中文版本
 
@@ -7,10 +7,11 @@
 本扩展程序仅在以下范围内处理数据：
 
 - 读取当前打开的 AI 对话页面内容，用于生成页面大纲和导出 Markdown 文件
-- 在浏览器本地处理页面内容，不会收集或传输任何用户数据
+- 在浏览器本地处理页面内容，不会向开发者服务器或第三方传输对话内容
 - 在本地保存 Pro 授权码状态，用于解锁付费功能
 - 不会记录或存储任何对话内容
 - 不会追踪用户的浏览行为
+- 不会将网站内容或浏览活动用于广告、分析、信用判断或其他无关用途
 
 ### 2. 权限说明
 
@@ -43,6 +44,7 @@
 - 不会向任何外部服务器发送数据
 - 不会保存任何用户数据或对话记录
 - 不使用任何分析或追踪工具
+- 数据处理仅用于用户可见的对话大纲、阅读定位与导出功能，符合 Chrome Web Store User Data Policy 的 Limited Use 要求
 
 ### 5. 更新说明
 
@@ -50,7 +52,7 @@
 
 ### 6. 联系方式
 
-如您对本隐私政策有任何疑问，请通过[940180276@qq.com]联系我们。
+如您对本隐私政策有任何疑问，请通过 [940180276@qq.com](mailto:940180276@qq.com) 联系我们。
 
 ## English Version
 
@@ -61,9 +63,10 @@ This extension only processes data within the following scope:
 - Reads current AI chat page content to generate page outlines and export Markdown files
 - Processes page content locally in the browser
 - Stores Pro license activation status locally
-- Does not collect or transmit any user data
+- Does not transmit conversation content to the developer's servers or third parties
 - Does not record or store any conversation content
 - Does not track user browsing behavior
+- Does not use website content or browsing activity for advertising, analytics, credit decisions, or unrelated purposes
 
 ### 2. Permissions Explanation
 
@@ -96,6 +99,7 @@ This extension only operates on:
 - No data is sent to any external servers
 - No user data or chat records are saved
 - No analytics or tracking tools are used
+- Data handling is limited to the user-facing conversation outline, navigation, and export features, in compliance with the Limited Use requirements of the Chrome Web Store User Data Policy
 
 ### 5. Updates
 
@@ -103,8 +107,8 @@ Any changes to this privacy policy will be communicated through extension update
 
 ### 6. Contact
 
-If you have any questions about this privacy policy, please contact us at [940180276@qq.com].
+If you have any questions about this privacy policy, please contact us at [940180276@qq.com](mailto:940180276@qq.com).
 
 ---
 
-最后更新日期 / Last Updated: 2026-06-08
+最后更新日期 / Last Updated: 2026-07-14
