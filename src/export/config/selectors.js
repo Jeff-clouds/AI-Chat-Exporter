@@ -313,6 +313,18 @@ export function extractUnifiedData(url) {
     }
   }
 
+  if (platformKey === 'chatgpt') {
+    conversations.forEach(conversation => {
+      conversation.question = String(conversation.question || '')
+        .replace(/^(?:你说|You said)\s*[:：]\s*/i, '');
+      if (conversation.answer?.content) {
+        conversation.answer.content = String(conversation.answer.content)
+          .replace(/^ChatGPT\s*(?:说|said)\s*[:：]\s*/i, '');
+      }
+    });
+    title = String(title || '').replace(/^(?:你说|You said)\s*[:：]\s*/i, '');
+  }
+
   return { title, conversations, platform: name, url };
 }
 

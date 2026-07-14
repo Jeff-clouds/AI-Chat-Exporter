@@ -15,6 +15,14 @@ window.Pipeline = class Pipeline {
         }
     }
 
+    _stripChatGptRolePrefix(value, role) {
+        const text = String(value || '').replace(/\s+/g, ' ').trim();
+        if (this.platformId !== 'CHATGPT') return text;
+        if (role === 'user') return text.replace(/^(?:你说|You said)\s*[:：]\s*/i, '');
+        if (role === 'assistant') return text.replace(/^ChatGPT\s*(?:说|said)\s*[:：]\s*/i, '');
+        return text;
+    }
+
     _getPlatformConfig(url) {
         for (const key in window.SELECTORS) {
             if (key === 'GENERIC') continue;
@@ -130,7 +138,8 @@ window.Pipeline = class Pipeline {
             if (message.role === 'user') {
                 pendingQuestion = message;
                 const questionId = `cn-q-${this._safeId(message.id)}`;
-                const text = message.text.length > 50 ? `${message.text.slice(0, 50)}...` : message.text;
+                const questionText = this._stripChatGptRolePrefix(message.text, 'user');
+                const text = questionText.length > 50 ? `${questionText.slice(0, 50)}...` : questionText;
                 outline.push({
                     text: `问题 ${questionIndex + 1}: ${text}`,
                     level: 'h1',
@@ -193,10 +202,11 @@ window.Pipeline = class Pipeline {
         const merged = [];
         const known = new Set();
         [...domHeadings, ...markdownHeadings].forEach(heading => {
-            const key = `${heading.level}:${heading.text}`;
-            if (!heading.text || known.has(key)) return;
+            const normalizedText = this._stripChatGptRolePrefix(heading.text, 'assistant');
+            const key = `${heading.level}:${normalizedText}`;
+            if (!normalizedText || known.has(key)) return;
             known.add(key);
-            merged.push(heading);
+            merged.push({ ...heading, text: normalizedText });
         });
         return merged;
     }
@@ -363,7 +373,7 @@ window.Pipeline = class Pipeline {
                 const promptNumber = Number(match[1]);
                 const turnNumber = promptNumber * 2 - 1;
                 const turn = document.querySelector(`[data-testid="conversation-turn-${turnNumber}"][data-turn="user"]`);
-                const rawText = (turn?.textContent || button.textContent || label).replace(/\s+/g, ' ').trim();
+                const rawText = this._stripChatGptRolePrefix(turn?.textContent || button.textContent || label, 'user');
 
                 return {
                     promptNumber,
@@ -547,7 +557,7 @@ window.Pipeline = class Pipeline {
         const stableId = `cn-q-${this._safeId(key || index)}`;
         if (questionEl.id !== stableId) questionEl.id = stableId;
         
-        let text = questionEl.textContent.replace(/\s+/g, ' ').trim();
+        let text = this._stripChatGptRolePrefix(questionEl.textContent, 'user');
         if (!text) return;
         if (text.length > 50) text = text.substring(0, 50) + '...';
         const turnInfo = this._turnInfo(questionEl);
@@ -648,8 +658,10 @@ window.Pipeline = class Pipeline {
             if (element.id !== stableId) element.id = stableId;
             const turnInfo = this._turnInfo(element);
             
+            const headingText = this._stripChatGptRolePrefix(element.textContent, 'assistant');
+            if (!headingText) return;
             outline.push({
-                text: element.textContent.trim(),
+                text: headingText,
                 level: `h${normalizedLevel}`,
                 id: element.id,
                 type: 'answer',

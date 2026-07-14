@@ -168,6 +168,30 @@
             min-width: 0;
         }
 
+        #export-format-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: -4px 0 14px;
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+
+        #export-format {
+            min-width: 118px;
+            padding: 7px 28px 7px 9px;
+            border: 1px solid var(--border-color);
+            border-radius: 7px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font: inherit;
+        }
+
+        #export-format-hint {
+            min-width: 0;
+            color: var(--text-tertiary);
+        }
+
         #help-drawer[hidden],
         #welcome-tip[hidden] {
             display: none;
@@ -730,6 +754,16 @@
         <button id="pro-purchase-action" class="pro-action-button purchase">了解 Pro</button>
         <button id="pro-mode-action" class="pro-action-button activate">激活 Pro</button>
     </div>
+    <div id="export-format-row">
+        <label for="export-format">导出格式</label>
+        <select id="export-format" aria-describedby="export-format-hint">
+            <option value="markdown">Markdown · 免费</option>
+            <option value="html" data-pro-format>HTML · Pro</option>
+            <option value="json" data-pro-format>JSON · Pro</option>
+            <option value="txt" data-pro-format>TXT · Pro</option>
+        </select>
+        <span id="export-format-hint">更多格式为 Pro 功能</span>
+    </div>
     <div id="export-status" aria-live="polite"></div>
     <div id="outline"></div>
     <div id="bottom-actions">
@@ -758,7 +792,7 @@
             </section>
             <section class="help-section">
                 <h3>免费版与 Pro</h3>
-                <p>大纲、定位和完整 Markdown 导出免费。Pro 可勾选重要问题组，仅导出需要保留的问答。</p>
+                <p>大纲、定位和完整 Markdown 导出免费。Pro 可勾选重要问题组，并支持 HTML、JSON、TXT 格式。</p>
             </section>
             <section class="help-section">
                 <h3>隐私</h3>

@@ -1,23 +1,11 @@
 import { getPlatformConfig } from '../export/config/selectors.js';
-import { markdownGenerator } from '../export/utils/markdown-generator.js';
+import { authorizeExport, generateExport } from '../export/utils/export-generators.js';
 import { downloadManager } from '../export/utils/download-manager.js';
 import { sanitizeFilename } from '../export/utils/sanitizer.js';
 import { activateLicense, canUse, getLicenseStatus } from './license.js';
 
 // 注册侧面板
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
-
-const SUPPORTED_URL_PATTERNS = [
-    "*://*.deepseek.com/*",
-    "*://*.deepseek.ai/*",
-    "*://*.yuanbao.tencent.com/*",
-    "*://*.chatgpt.com/*",
-    "*://*.doubao.com/*",
-    "*://*.gemini.google.com/*",
-    "*://*.grok.com/*",
-    "*://*.kimi.com/*",
-    "*://*.moonshot.cn/*"
-];
 
 const SUPPORTED_URL_SNIPPETS = [
     "deepseek.com",
@@ -30,6 +18,7 @@ const SUPPORTED_URL_SNIPPETS = [
     "kimi.com",
     "moonshot.cn"
 ];
+const tabExtractionLocks = new Map();
 
 function isSupportedUrl(url = '') {
     return SUPPORTED_URL_SNIPPETS.some(snippet => url.includes(snippet));
@@ -43,8 +32,29 @@ async function getActiveTab() {
     return tab;
 }
 
+async function withTabExtractionLock(tabId, operation) {
+    const previous = tabExtractionLocks.get(tabId) || Promise.resolve();
+    let release;
+    const gate = new Promise(resolve => { release = resolve; });
+    const current = previous.catch(() => {}).then(() => gate);
+    tabExtractionLocks.set(tabId, current);
+
+    await previous.catch(() => {});
+    try {
+        return await operation();
+    } finally {
+        release();
+        if (tabExtractionLocks.get(tabId) === current) tabExtractionLocks.delete(tabId);
+    }
+}
+
 async function extractCurrentChatData() {
     const tab = await getActiveTab();
+
+    return withTabExtractionLock(tab.id, () => extractTabChatData(tab));
+}
+
+async function extractTabChatData(tab) {
 
     if (!isSupportedUrl(tab.url || '')) {
         throw new Error('当前页面不是支持的 AI 对话页面');
@@ -68,23 +78,7 @@ async function extractCurrentChatData() {
         await chrome.scripting.executeScript({
             target: { tabId: tab.id },
             world: 'MAIN',
-            func: async () => {
-                const conversationId = location.pathname.match(/\/c\/([^/?#]+)/)?.[1];
-                if (!conversationId) return;
-                try {
-                    const response = await fetch(`/backend-api/conversation/${encodeURIComponent(conversationId)}?offset=0&limit=100000`, {
-                        credentials: 'include'
-                    });
-                    if (!response.ok) return;
-                    window.postMessage({
-                        source: 'ai-chat-export-pro',
-                        type: 'chatgpt-conversation',
-                        payload: await response.json()
-                    }, location.origin);
-                } catch (error) {
-                    console.warn('AI Chat Export Pro: ChatGPT page API bridge failed', error);
-                }
-            }
+            files: ['src/core/chatgpt-api-bridge.js']
         });
     }
 
@@ -96,8 +90,15 @@ async function extractCurrentChatData() {
             func: async () => {
                 const index = window.AI_CHAT_CONVERSATION_INDEX;
                 if (!index) return null;
-                await index.refresh();
-                return index.toUnifiedData();
+                const retainedByPanel = window.__AI_CHAT_EXPORTER_PANEL_ACTIVE__ === true;
+                // 导出只做一次快照，不创建豆包 MutationObserver/scroll listener。
+                try {
+                    await index.refresh({ force: true, observe: false });
+                    return index.toUnifiedData();
+                } finally {
+                    // 导出独立运行时连 window message listener 也不常驻；侧栏正在使用则保留其索引。
+                    if (!retainedByPanel) index.disconnect();
+                }
             }
         });
         if (indexedResult?.result?.conversations?.length) {
@@ -142,24 +143,34 @@ function addConversationIndexes(unifiedData, url, platform) {
     return unifiedData;
 }
 
-async function handleExportFullChat() {
-    const unifiedData = await extractCurrentChatData();
-    const markdown = markdownGenerator.generate(unifiedData);
+async function assertExportAccess(format, { selected = false } = {}) {
+    return authorizeExport(format, { selected, canUse });
+}
+
+function downloadExport(unifiedData, format) {
+    const generated = generateExport(unifiedData, format);
     const filename = sanitizeFilename(unifiedData.title);
-    downloadManager.downloadMarkdown(markdown, filename);
+    downloadManager.download(generated.content, filename, generated);
+    return generated;
+}
+
+async function handleExportFullChat(format = 'markdown') {
+    const normalizedFormat = await assertExportAccess(format);
+    const unifiedData = await extractCurrentChatData();
+    const generated = downloadExport(unifiedData, normalizedFormat);
 
     return {
         platform: unifiedData.platform,
         count: unifiedData.conversations.length,
         rangeLabel: getConversationRangeLabel(unifiedData.conversations),
-        passiveIndex: !!unifiedData.passiveIndex
+        passiveIndex: !!unifiedData.passiveIndex,
+        format: generated.format,
+        formatLabel: generated.label
     };
 }
 
-async function handleExportSelectedChat(questionIndexes = []) {
-    if (!await canUse('selected_markdown_export')) {
-        throw new Error('勾选局部导出是 Pro 功能，请先激活授权码');
-    }
+async function handleExportSelectedChat(questionIndexes = [], format = 'markdown') {
+    const normalizedFormat = await assertExportAccess(format, { selected: true });
 
     const selectedIndexes = Array.from(new Set(
         questionIndexes
@@ -190,15 +201,15 @@ async function handleExportSelectedChat(questionIndexes = []) {
         conversations
     };
 
-    const markdown = markdownGenerator.generate(selectedData);
-    const filename = sanitizeFilename(selectedData.title);
-    downloadManager.downloadMarkdown(markdown, filename);
+    const generated = downloadExport(selectedData, normalizedFormat);
 
     return {
         platform: unifiedData.platform,
         count: conversations.length,
         rangeLabel: getConversationRangeLabel(conversations),
-        passiveIndex: !!unifiedData.passiveIndex
+        passiveIndex: !!unifiedData.passiveIndex,
+        format: generated.format,
+        formatLabel: generated.label
     };
 }
 
@@ -212,7 +223,7 @@ function getConversationRangeLabel(conversations = []) {
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request && request.action === 'exportFullChat') {
-        handleExportFullChat()
+        handleExportFullChat(request.format || 'markdown')
             .then(result => sendResponse({ success: true, ...result }))
             .catch(error => {
                 console.error('AI Chat Export Pro export failed:', error);
@@ -228,7 +239,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 
     if (request && request.action === 'exportSelectedChat') {
-        handleExportSelectedChat(request.questionIndexes || [])
+        handleExportSelectedChat(request.questionIndexes || [], request.format || 'markdown')
             .then(result => sendResponse({ success: true, ...result }))
             .catch(error => {
                 console.error('AI Chat Export Pro selected export failed:', error);
@@ -252,125 +263,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 });
 
-// 监听插件安装或更新
-chrome.runtime.onInstalled.addListener(async () => {
-    // 获取所有匹配的标签页
-    const tabs = await chrome.tabs.query({
-        url: SUPPORTED_URL_PATTERNS
-    });
-    
-    // 为每个匹配的标签页注入content script
-    for (const tab of tabs) {
-        try {
-            await chrome.scripting.executeScript({
-                target: { tabId: tab.id },
-                files: [
-                    'src/config/selectors.js',
-                    'src/utils/common.js',
-                    'src/core/pipeline.js',
-                    'src/core/content.js'
-                ]
-            });
-        } catch (err) {
-            console.error(`Failed to inject content script into tab ${tab.id}:`, err);
-        }
-    }
-});
-
-// 当标签页更新时，注入content script
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if (changeInfo.status === 'complete' && tab.url) {
-        const isMatchingUrl = isSupportedUrl(tab.url);
-        
-        if (isMatchingUrl) {
-            chrome.scripting.executeScript({
-                target: { tabId: tabId },
-                files: [
-                    'src/config/selectors.js',
-                    'src/utils/common.js',
-                    'src/core/pipeline.js',
-                    'src/core/content.js'
-                ]
-            });
-        }
-    }
-});
-
-// 添加标签页切换监听器
-chrome.tabs.onActivated.addListener(async (activeInfo) => {
-    const tab = await chrome.tabs.get(activeInfo.tabId);
-    const isMatchingUrl = isSupportedUrl(tab.url);
-    
-    if (isMatchingUrl) {
-        // 注入 content script
-        await chrome.scripting.executeScript({
-            target: { tabId: tab.id },
-            files: [
-                    'src/config/selectors.js',
-                    'src/utils/common.js',
-                    'src/core/pipeline.js',
-                    'src/core/content.js'
-                ]
-        });
-        
-        // 触发大纲提取
-        await chrome.scripting.executeScript({
-            target: { tabId: tab.id },
-            function: () => {
-                if (typeof extractAndSendOutline === 'function') {
-                    extractAndSendOutline();
-                }
-            }
-        });
-    }
-});
-
-// 监听插件图标点击事件
-chrome.action.onClicked.addListener(async (tab) => {
-    const isMatchingUrl = isSupportedUrl(tab.url);
-    
-    if (isMatchingUrl) {
-        // 注入 content script
-        await chrome.scripting.executeScript({
-            target: { tabId: tab.id },
-            files: [
-                    'src/config/selectors.js',
-                    'src/utils/common.js',
-                    'src/core/pipeline.js',
-                    'src/core/content.js'
-                ]
-        });
-        
-        // 触发大纲提取
-        await chrome.scripting.executeScript({
-            target: { tabId: tab.id },
-            function: () => {
-                // 手动触发一次大纲提取
-                if (typeof extractAndSendOutline === 'function') {
-                    extractAndSendOutline();
-                }
-            }
-        });
-    }
-});
+// 页面分析脚本只由侧栏打开或用户主动导出时注入。
+// 不在安装、页面更新或标签切换时后台常驻扫描。
 
 // 处理快捷键命令
-chrome.commands.onCommand.addListener((command) => {
-    switch (command) {
-        case 'toggle_outline':
-            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-                chrome.tabs.sendMessage(tabs[0].id, { type: 'toggle_outline' });
-            });
-            break;
-        case 'next_heading':
-            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-                chrome.tabs.sendMessage(tabs[0].id, { type: 'next_heading' });
-            });
-            break;
-        case 'prev_heading':
-            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-                chrome.tabs.sendMessage(tabs[0].id, { type: 'prev_heading' });
-            });
-            break;
-    }
+chrome.commands.onCommand.addListener(async (command) => {
+    if (!['toggle_outline', 'next_heading', 'prev_heading'].includes(command)) return;
+    const tab = await getActiveTab();
+    if (!isSupportedUrl(tab.url || '')) return;
+
+    // 快捷键同样按需打开侧栏，由侧栏建立 Port 后再注入分析脚本。
+    // 这样从未打开过扩展的标签页也可工作，同时不会留下无主 observer。
+    await chrome.sidePanel.open({ tabId: tab.id });
+    if (command === 'toggle_outline') return;
+    setTimeout(() => {
+        chrome.tabs.sendMessage(tab.id, { type: command }).catch(() => {});
+    }, 600);
 }); 

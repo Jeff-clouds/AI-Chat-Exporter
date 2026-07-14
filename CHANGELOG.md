@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-07-14
+
+### Added
+
+- Add Pro HTML, JSON, and TXT formats for both complete and selected conversation exports; complete Markdown export remains free.
+- Add a compact format selector that keeps Pro formats visible but locked for free users.
+
+### Changed
+
+- Extend every valid Pro license, including legacy codes with an older feature list, to all current Pro functionality.
+- Remove ChatGPT's accessibility speaker prefixes such as “你说” and “ChatGPT 说” from question and answer outline text without altering conversation content on other platforms.
+- Run page analysis only while the side panel is open, with automatic observer, timer, listener, and index cleanup after it closes.
+- Cache and coalesce ChatGPT conversation requests by conversation ID; keep at most two recent payloads while the panel is open and release them after it closes.
+- Prevent late responses from a previous ChatGPT route from replacing the current conversation outline; merge newly mounted turns without overwriting API Markdown.
+- Change Doubao indexing to fingerprint-based incremental conversion with debounced mutation and scroll scans.
+
+### Removed
+
+- Remove automatic content-script injection on extension install, page completion, and background tab activation.
+
+### Security
+
+- Enforce selected-export and additional-format entitlements in the background export handler, independently of side-panel controls.
+
 ## [2.0.9] - 2026-07-14
 
 ### Added

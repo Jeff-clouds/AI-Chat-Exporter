@@ -1,5 +1,5 @@
 (function() {
-    window.CHAT_NAVIGATOR_CONTENT_VERSION = '2026-06-02-heading-level-normalization';
+    window.CHAT_NAVIGATOR_CONTENT_VERSION = '2026-07-14-panel-lifecycle';
 
     // 清理旧的实例和监听器
     if (window.chatNavigatorCleanup) {
@@ -18,12 +18,30 @@
     let currentReadingElement = null;
     let mainObserver = null;
     let routeWatcher = null;
+    let initialRefreshTimer = null;
+    let outlineRefreshTimer = null;
+    let readingDetectionTimer = null;
+    let observerRetryTimer = null;
+    let started = false;
+    const activePanelPorts = new Set();
+    const highlightTimers = new Set();
     let lastOutlineJson = '';
-    const refreshOutlineFromIndex = throttle(() => extractAndSendOutline(), 350);
+    const refreshOutlineFromIndex = () => scheduleOutlineRefresh(350);
+
+    function scheduleOutlineRefresh(delay = 1200) {
+        if (!started) return;
+        if (outlineRefreshTimer) clearTimeout(outlineRefreshTimer);
+        outlineRefreshTimer = setTimeout(() => {
+            outlineRefreshTimer = null;
+            extractAndSendOutline();
+        }, delay);
+    }
 
     // 提取大纲并发送
     window.extractAndSendOutline = async function() {
+        if (!started) return;
         const result = await pipeline.extractWithIndex();
+        if (!started) return;
 
         // 避免重复发送相同的大纲（减少侧边栏无意义的刷新）
         const outlineJson = JSON.stringify(result.outline.map(i => i.id || i.text));
@@ -40,7 +58,11 @@
         });
         
         // 初始化阅读位置检测
-        setTimeout(initializeReadingPositionDetection, 500);
+        if (readingDetectionTimer) clearTimeout(readingDetectionTimer);
+        readingDetectionTimer = setTimeout(() => {
+            readingDetectionTimer = null;
+            initializeReadingPositionDetection();
+        }, 500);
     }
 
     function cleanupStaleOutlineIds(outline) {
@@ -168,9 +190,11 @@
         element.style.transition = 'background-color 0.5s';
         const originalBg = element.style.backgroundColor;
         element.style.backgroundColor = 'rgba(255, 255, 0, 0.3)';
-        setTimeout(() => {
+        const highlightTimer = setTimeout(() => {
             element.style.backgroundColor = originalBg;
+            highlightTimers.delete(highlightTimer);
         }, 1500);
+        highlightTimers.add(highlightTimer);
     }
 
     function findOutlineTarget(message) {
@@ -225,22 +249,63 @@
         return turn;
     }
 
-    // 添加消息监听
+    // 添加消息监听；只有侧栏端口存在时才启动持续分析。
     chrome.runtime.onMessage.addListener(handleMessage);
 
-    function initializeOutline() {
-        setTimeout(extractAndSendOutline, 1000);
-        
-        // 监听DOM变化
-        mainObserver = new MutationObserver(throttle(() => {
-            extractAndSendOutline();
-        }, 1000)); // 1秒节流
+    function handlePanelConnect(port) {
+        if (port.name !== 'ai-chat-exporter-panel') return;
+        activePanelPorts.add(port);
+        initializeOutline();
+        port.onDisconnect.addListener(() => {
+            activePanelPorts.delete(port);
+            if (activePanelPorts.size === 0) window.chatNavigatorCleanup();
+        });
+    }
 
-        mainObserver.observe(document.body, {
+    chrome.runtime.onConnect.addListener(handlePanelConnect);
+
+    function findObservationRoot() {
+        if (pipeline.platformId === 'DOUBAO') {
+            return window.AI_CHAT_CONVERSATION_INDEX?.findDoubaoScroller?.() || null;
+        }
+        return document.querySelector(
+            'main, [role="main"], [data-testid="conversation-turn-1"]' +
+            ', .chat-detail-main, [class*="conversation"], [class*="chat-content"]'
+        );
+    }
+
+    function observeConversationRoot() {
+        if (!started || mainObserver) return;
+        // 豆包的虚拟列表由 ConversationIndex 自己做按消息 ID 的增量观察，避免双 observer。
+        if (pipeline.platformId === 'DOUBAO') return;
+        const root = findObservationRoot();
+        if (!root) {
+            observerRetryTimer = setTimeout(() => {
+                observerRetryTimer = null;
+                observeConversationRoot();
+            }, 1500);
+            return;
+        }
+
+        mainObserver = new MutationObserver(() => scheduleOutlineRefresh(1400));
+        mainObserver.observe(root, {
             childList: true,
             subtree: true,
             characterData: true
         });
+    }
+
+    function initializeOutline() {
+        if (started) return;
+        started = true;
+        window.__AI_CHAT_EXPORTER_PANEL_ACTIVE__ = true;
+        initialRefreshTimer = setTimeout(() => {
+            initialRefreshTimer = null;
+            extractAndSendOutline();
+        }, 250);
+
+        // 只观察会话容器；流式输出合并为停止变化约 1.4 秒后的一次刷新。
+        observeConversationRoot();
 
         // 豆包虚拟列表在用户滚动后可能复用节点而不新增子节点；只做静默目录刷新。
         window.addEventListener('ai-chat-index-updated', refreshOutlineFromIndex);
@@ -254,7 +319,7 @@
             if (window.location.href === lastUrl) return;
             lastUrl = window.location.href;
             extractAndSendOutline();
-        }, 700);
+        }, 1500);
     }
 
 
@@ -298,21 +363,34 @@
         }
     }
 
-    // 启动
-    if (document.readyState === 'complete') {
-        initializeOutline();
-    } else {
-        window.addEventListener('load', initializeOutline);
-    }
-
     // 注册清理函数
     window.chatNavigatorCleanup = function() {
+        started = false;
+        window.__AI_CHAT_EXPORTER_PANEL_ACTIVE__ = false;
         if (mainObserver) mainObserver.disconnect();
+        mainObserver = null;
         if (readingPositionObserver) readingPositionObserver.disconnect();
+        readingPositionObserver = null;
         if (routeWatcher) clearInterval(routeWatcher);
+        routeWatcher = null;
+        if (initialRefreshTimer) clearTimeout(initialRefreshTimer);
+        initialRefreshTimer = null;
+        if (outlineRefreshTimer) clearTimeout(outlineRefreshTimer);
+        outlineRefreshTimer = null;
+        if (readingDetectionTimer) clearTimeout(readingDetectionTimer);
+        readingDetectionTimer = null;
+        if (observerRetryTimer) clearTimeout(observerRetryTimer);
+        observerRetryTimer = null;
+        highlightTimers.forEach(timer => clearTimeout(timer));
+        highlightTimers.clear();
+        window.AI_CHAT_CONVERSATION_INDEX?.disconnect?.();
         window.removeEventListener('ai-chat-index-updated', refreshOutlineFromIndex);
         chrome.runtime.onMessage.removeListener(handleMessage);
-        window.removeEventListener('load', initializeOutline);
+        chrome.runtime.onConnect.removeListener(handlePanelConnect);
+        activePanelPorts.forEach(port => {
+            try { port.disconnect(); } catch (_) {}
+        });
+        activePanelPorts.clear();
     };
 
 })();

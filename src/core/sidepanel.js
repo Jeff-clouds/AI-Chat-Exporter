@@ -1,6 +1,9 @@
 // 当前激活标签页ID
 let currentTabId = null;
 let currentTabUrl = '';
+let activeContentPort = null;
+let outlineRequestSerial = 0;
+let tabReloadTimer = null;
 
 // 全局状态：是否所有目录都已收起
 let allCollapsed = false;
@@ -16,7 +19,7 @@ const DEMO_PLATFORM = /(?:^|[?&])platform=doubao(?:&|$)/.test((window.location &
 const HAS_CHROME_API = typeof chrome !== 'undefined' && Boolean(chrome.runtime && chrome.tabs && chrome.scripting);
 const HAS_LOCAL_STORAGE_API = typeof chrome !== 'undefined' && Boolean(chrome.storage?.local);
 const WELCOME_DISMISSED_KEY = 'aiChatExporterWelcomeDismissed';
-const demoQuestion = (index, text) => `问题 ${index}: ${DEMO_PLATFORM === 'chatgpt' ? '你说：' : ''}${text}`;
+const demoQuestion = (index, text) => `问题 ${index}: ${text}`;
 
 // 供 sidepanel-example.html 和 sidepanel.html?demo=1 使用，不读取当前标签页。
 const DEMO_OUTLINE = [
@@ -81,33 +84,48 @@ function setOutlineReadyStatus(url = '') {
 }
 
 async function injectCurrentContentScripts(tabId, url = '') {
-    await chrome.scripting.executeScript({
-        target: { tabId },
-        files: CONTENT_SCRIPT_FILES
-    });
     if (url.includes('chatgpt.com')) {
         await chrome.scripting.executeScript({
             target: { tabId },
             world: 'MAIN',
-            func: async () => {
-                const conversationId = location.pathname.match(/\/c\/([^/?#]+)/)?.[1];
-                if (!conversationId) return;
-                try {
-                    const response = await fetch(`/backend-api/conversation/${encodeURIComponent(conversationId)}?offset=0&limit=100000`, {
-                        credentials: 'include'
-                    });
-                    if (!response.ok) return;
-                    window.postMessage({
-                        source: 'ai-chat-export-pro',
-                        type: 'chatgpt-conversation',
-                        payload: await response.json()
-                    }, location.origin);
-                } catch (error) {
-                    console.warn('AI Chat Export Pro: ChatGPT outline API bridge failed', error);
-                }
-            }
+            files: ['src/core/chatgpt-api-bridge.js']
         });
     }
+    await chrome.scripting.executeScript({
+        target: { tabId },
+        files: CONTENT_SCRIPT_FILES
+    });
+}
+
+function disconnectActiveContentPort() {
+    const port = activeContentPort;
+    activeContentPort = null;
+    if (!port) return;
+    try { port.disconnect(); } catch (_) {}
+}
+
+function connectContentLifecycle(tabId) {
+    disconnectActiveContentPort();
+    if (!chrome.tabs.connect) return;
+    const port = chrome.tabs.connect(tabId, { name: 'ai-chat-exporter-panel' });
+    activeContentPort = port;
+    port.onDisconnect.addListener(() => {
+        if (activeContentPort === port) activeContentPort = null;
+    });
+}
+
+function scheduleReloadOutlineRequest() {
+    if (tabReloadTimer) clearTimeout(tabReloadTimer);
+    tabReloadTimer = setTimeout(() => {
+        tabReloadTimer = null;
+        requestCurrentTabOutline();
+    }, 180);
+}
+
+function cleanupContentLifecycle() {
+    if (tabReloadTimer) clearTimeout(tabReloadTimer);
+    tabReloadTimer = null;
+    disconnectActiveContentPort();
 }
 
 function clearOutlineForRequest() {
@@ -125,8 +143,12 @@ function clearOutlineForRequest() {
 // 主动请求当前标签页大纲
 function requestCurrentTabOutline() {
     if (DEMO_MODE || !HAS_CHROME_API) return;
+    if (tabReloadTimer) clearTimeout(tabReloadTimer);
+    tabReloadTimer = null;
+    const requestSerial = ++outlineRequestSerial;
     chrome.tabs.query({active: true, currentWindow: true}, async (tabs) => {
-        if (tabs[0]) {
+        if (tabs[0] && requestSerial === outlineRequestSerial) {
+            disconnectActiveContentPort();
             currentTabId = tabs[0].id;
             currentTabUrl = tabs[0].url || '';
             const outlineContainer = clearOutlineForRequest();
@@ -135,8 +157,12 @@ function requestCurrentTabOutline() {
             try {
                 if (isSupportedUrl(tabs[0].url)) {
                     await injectCurrentContentScripts(currentTabId, tabs[0].url || '');
+                    if (requestSerial !== outlineRequestSerial) return;
+                    connectContentLifecycle(currentTabId);
+                    await chrome.tabs.sendMessage(currentTabId, {type: 'getOutline'});
+                } else {
+                    showErrorMessage(outlineContainer, '当前页面不是支持的 AI 对话页面');
                 }
-                chrome.tabs.sendMessage(currentTabId, {type: 'getOutline'});
             } catch (err) {
                 showErrorMessage(outlineContainer, '无法注入页面分析脚本，请刷新当前页面后重试', {
                     error: err.message
@@ -169,10 +195,11 @@ window.addEventListener('load', () => {
 if (HAS_CHROME_API) {
     chrome.tabs.onActivated && chrome.tabs.onActivated.addListener(requestCurrentTabOutline);
     chrome.tabs.onUpdated && chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-        if (tab.active && (changeInfo.url || changeInfo.status === 'complete')) {
-            requestCurrentTabOutline();
-        }
+        if (!tab.active) return;
+        if (changeInfo.url) requestCurrentTabOutline();
+        else if (changeInfo.status === 'complete') scheduleReloadOutlineRequest();
     });
+    window.addEventListener('unload', cleanupContentLifecycle);
 }
 
 // 监听来自content script的消息
@@ -276,6 +303,7 @@ function initializePanelActionControls() {
     const purchaseButton = document.getElementById('pro-purchase-action');
     const proActionButton = document.getElementById('pro-mode-action');
     const bottomExportButton = document.getElementById('bottom-export-btn');
+    const formatSelect = document.getElementById('export-format');
 
     if (purchaseButton) {
         purchaseButton.addEventListener('click', openPurchasePage);
@@ -304,6 +332,8 @@ function initializePanelActionControls() {
             }
         });
     }
+
+    formatSelect?.addEventListener('change', updatePanelState);
 
     updatePanelState();
 }
@@ -441,8 +471,21 @@ function updatePanelState() {
     const purchaseButton = document.getElementById('pro-purchase-action');
     const proActionButton = document.getElementById('pro-mode-action');
     const bottomExportButton = document.getElementById('bottom-export-btn');
+    const formatSelect = document.getElementById('export-format');
+    const formatHint = document.getElementById('export-format-hint');
     const selectedCount = selectedQuestionIndexes.size;
     const isPro = Boolean(licenseStatusState.active);
+
+    if (formatSelect) {
+        formatSelect.querySelectorAll?.('[data-pro-format]')?.forEach(option => {
+            option.disabled = !isPro;
+        });
+        if (!isPro && formatSelect.value !== 'markdown') formatSelect.value = 'markdown';
+        formatSelect.disabled = exportInProgress;
+    }
+    if (formatHint) {
+        formatHint.textContent = isPro ? 'Pro 已解锁全部格式' : '更多格式为 Pro 功能';
+    }
 
     if (proLabel) {
         proLabel.textContent = isPro ? 'Pro · 可选择重要问答导出' : 'Pro · 只导出重要问答';
@@ -480,13 +523,24 @@ function updatePanelState() {
     }
 }
 
+function getExportFormat() {
+    return document.getElementById('export-format')?.value || 'markdown';
+}
+
+function getExportFormatLabel() {
+    const select = document.getElementById('export-format');
+    return select?.selectedOptions?.[0]?.textContent?.split('·')[0]?.trim() || 'Markdown';
+}
+
 function exportFullChat() {
     const bottomExportButton = document.getElementById('bottom-export-btn');
     if (!bottomExportButton || exportInProgress) return;
 
     exportInProgress = true;
     updatePanelState();
-    setExportStatus('正在提取当前对话并生成 Markdown');
+    const format = getExportFormat();
+    const formatLabel = getExportFormatLabel();
+    setExportStatus(`正在提取当前对话并生成 ${formatLabel}`);
 
     if (DEMO_MODE) {
         exportInProgress = false;
@@ -495,7 +549,7 @@ function exportFullChat() {
         return;
     }
 
-    chrome.runtime.sendMessage({ action: 'exportFullChat' }, (response) => {
+    chrome.runtime.sendMessage({ action: 'exportFullChat', format }, (response) => {
         exportInProgress = false;
         updatePanelState();
 
@@ -510,7 +564,7 @@ function exportFullChat() {
         }
 
         const sourceLabel = response.passiveIndex ? '已索引消息中的' : '';
-        setExportStatus(`已导出${sourceLabel}${response.rangeLabel || '问题 1 到问题 ' + (response.count || 0)}，共 ${response.count || 0} 组对话`, 'success');
+        setExportStatus(`已导出 ${response.formatLabel || formatLabel}：${sourceLabel}${response.rangeLabel || '问题 1 到问题 ' + (response.count || 0)}，共 ${response.count || 0} 组对话`, 'success');
     });
 }
 
@@ -526,7 +580,9 @@ function exportSelectedChat() {
 
     exportInProgress = true;
     updatePanelState();
-    setExportStatus('正在导出选中的问题组');
+    const format = getExportFormat();
+    const formatLabel = getExportFormatLabel();
+    setExportStatus(`正在将选中的问题组导出为 ${formatLabel}`);
 
     if (DEMO_MODE) {
         exportInProgress = false;
@@ -535,7 +591,7 @@ function exportSelectedChat() {
         return;
     }
 
-    chrome.runtime.sendMessage({ action: 'exportSelectedChat', questionIndexes }, (response) => {
+    chrome.runtime.sendMessage({ action: 'exportSelectedChat', questionIndexes, format }, (response) => {
         exportInProgress = false;
         updatePanelState();
 
@@ -550,7 +606,7 @@ function exportSelectedChat() {
         }
 
         const sourceLabel = response.passiveIndex ? '已索引消息中的 ' : '';
-        setExportStatus(`已导出${sourceLabel}${response.count || 0} 组选中对话：${response.rangeLabel || '问题范围未知'}`, 'success');
+        setExportStatus(`已导出 ${response.formatLabel || formatLabel}：${sourceLabel}${response.count || 0} 组选中对话，${response.rangeLabel || '问题范围未知'}`, 'success');
     });
 }
 

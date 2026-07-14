@@ -1,4 +1,4 @@
-import { FEATURES, isProFeature } from './features.js';
+import { getFeaturesForPlan, isProFeature } from './features.js';
 import { LICENSE_PUBLIC_KEY } from './license-public-key.js';
 
 const LICENSE_STORAGE_KEY = 'aiChatKnowledgeSuiteLicense';
@@ -84,13 +84,17 @@ export async function activateLicense(code) {
     return getLicenseStatus(license);
 }
 
+export function resolveLicensedFeatures(plan = 'free', _legacyPayloadFeatures = []) {
+    return getFeaturesForPlan(plan === 'free' ? 'free' : 'pro');
+}
+
 export async function getLicenseStatus(licenseOverride = null) {
     const license = licenseOverride || await getStoredLicense();
     if (!license) {
         return {
             active: false,
             plan: 'free',
-            features: Object.keys(FEATURES).filter(feature => FEATURES[feature] === 'free')
+            features: getFeaturesForPlan('free')
         };
     }
 
@@ -101,19 +105,22 @@ export async function getLicenseStatus(licenseOverride = null) {
             active: false,
             plan: 'free',
             error: error.message,
-            features: Object.keys(FEATURES).filter(feature => FEATURES[feature] === 'free')
+            features: getFeaturesForPlan('free')
         };
     }
 
+    const plan = license.payload.plan || 'pro';
     return {
         active: true,
-        plan: license.payload.plan || 'pro',
+        plan,
         licenseId: license.payload.licenseId || '',
         orderId: license.payload.orderId || '',
         emailHash: license.payload.emailHash || '',
         issuedAt: license.payload.issuedAt || '',
         activatedAt: license.activatedAt || '',
-        features: license.payload.features || Object.keys(FEATURES)
+        // Pro 是产品层级，不是一次性功能白名单。历史授权码即使只写入了
+        // selected_markdown_export，也自动享有后续新增的所有 Pro 功能。
+        features: resolveLicensedFeatures(plan, license.payload.features)
     };
 }
 

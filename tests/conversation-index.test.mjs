@@ -26,11 +26,16 @@ const payload = {
 
 const helpers = context.window.__AI_CHAT_EXPORT_TESTS__;
 const index = context.window.AI_CHAT_CONVERSATION_INDEX;
-assert.equal(index.version, '2026-07-13-chatgpt-dom-heading-cache');
+assert.equal(index.version, '2026-07-14-bounded-cache');
 assert.deepEqual(Array.from(helpers.currentBranchNodes(payload), node => node.id), [
   'root', 'user1', 'assistant1', 'user2', 'assistant-2'
 ]);
 assert.equal(helpers.contentToText({ parts: ['one', { text: 'two' }] }), 'one two');
+assert.equal(helpers.stripChatGptRolePrefix('你说：保留内容', 'user'), '保留内容');
+assert.equal(helpers.stripChatGptRolePrefix('ChatGPT说：回答内容', 'assistant'), '回答内容');
+assert.equal(helpers.stripChatGptRolePrefix('ChatGPT说这个结论仍需验证', 'assistant'), 'ChatGPT说这个结论仍需验证');
+assert.equal(helpers.stripChatGptRolePrefix('ChatGPT said this was uncertain', 'assistant'), 'ChatGPT said this was uncertain');
+assert.equal(helpers.stripChatGptRolePrefix('正文里的 ChatGPT说 不删除', 'assistant'), '正文里的 ChatGPT说 不删除');
 assert.equal(
   helpers.contentToMarkdown({ parts: ['intro\n\n# first heading\nbody', '## second heading\nmore'] }),
   'intro\n\n# first heading\nbody\n## second heading\nmore'

@@ -6,15 +6,18 @@
  * 下载管理器类
  */
 export class DownloadManager {
+  download(content, filename, { extension, mimeType }) {
+    const blob = new Blob([content], { type: mimeType });
+    this._downloadBlob(blob, `${filename}.${extension}`);
+  }
+
   /**
    * 下载Markdown文件
    * @param {string} content - 文件内容
    * @param {string} filename - 文件名（不带扩展名）
    */
   downloadMarkdown(content, filename) {
-    console.log('Downloading markdown file:', filename);
-    const blob = new Blob([content], { type: 'text/markdown' });
-    this._downloadBlob(blob, `${filename}.md`);
+    this.download(content, filename, { extension: 'md', mimeType: 'text/markdown;charset=utf-8' });
   }
 
   /**
@@ -23,9 +26,7 @@ export class DownloadManager {
    * @param {string} filename - 文件名（不带扩展名）
    */
   downloadText(content, filename) {
-    console.log('Downloading text file:', filename);
-    const blob = new Blob([content], { type: 'text/plain' });
-    this._downloadBlob(blob, `${filename}.txt`);
+    this.download(content, filename, { extension: 'txt', mimeType: 'text/plain;charset=utf-8' });
   }
 
   /**

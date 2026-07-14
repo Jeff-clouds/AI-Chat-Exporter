@@ -53,7 +53,7 @@
         <div class="panel-frame">
             <iframe id="panel-demo" title="AI Chat Export Pro Side Panel 示例"></iframe>
         </div>
-        <p>ChatGPT 问题显示 <code>Q1: 你说：…</code>；豆包显示 <code>Q1: …</code>。</p>
+        <p>ChatGPT 和豆包的问题标题都显示为简洁的 <code>Q1: …</code>，不包含页面辅助阅读的角色前缀。</p>
     <script>
         const platform = new URLSearchParams(location.search).get('platform') === 'doubao' ? 'doubao' : 'chatgpt';
         document.getElementById('panel-demo').src = `sidepanel.html?demo=1&platform=${platform}`;

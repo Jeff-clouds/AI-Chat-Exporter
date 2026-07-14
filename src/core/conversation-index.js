@@ -3,8 +3,16 @@
 
     const CHATGPT_API = /chatgpt\.com/;
     const DOUBAO = /doubao\.com/;
-    const INDEX_VERSION = '2026-07-13-chatgpt-dom-heading-cache';
+    const INDEX_VERSION = '2026-07-14-bounded-cache';
+    const CHATGPT_REQUEST_TIMEOUT_MS = 20000;
+    const MAX_CACHED_CONVERSATIONS = 2;
     const cleanText = value => String(value || '').replace(/\s+/g, ' ').trim();
+    const stripChatGptRolePrefix = (value, role) => {
+        const text = cleanText(value);
+        if (role === 'user') return text.replace(/^(?:你说|You said)\s*[:：]\s*/i, '');
+        if (role === 'assistant') return text.replace(/^ChatGPT\s*(?:说|said)\s*[:：]\s*/i, '');
+        return text;
+    };
 
     function currentConversationId() {
         const match = location.pathname.match(/\/c\/([^/?#]+)|\/chat\/([^/?#]+)/);
@@ -50,6 +58,10 @@
         return fallback || '';
     }
 
+    function doubaoElementFingerprint(element, role) {
+        return `${role}|${cleanText(element?.textContent)}|${element?.innerHTML?.length || 0}`;
+    }
+
     class ConversationIndex {
         constructor() {
             this.version = INDEX_VERSION;
@@ -63,36 +75,108 @@
             this.observer = null;
             this.scrollTarget = null;
             this.scrollListener = null;
-            this.lastDoubaoScan = 0;
-            window.addEventListener('message', event => {
+            this.doubaoScanTimer = null;
+            this.doubaoTrailingTimer = null;
+            this.lastDoubaoScanAt = 0;
+            this.doubaoFingerprints = new Map();
+            this.chatGptPayloadCache = new Map();
+            this.chatGptLoads = new Map();
+            this.pendingChatGptRequests = new Map();
+            this.connected = false;
+            this.handleWindowMessage = event => {
                 if (event.source !== window || event.origin !== location.origin) return;
                 const message = event.data;
-                if (message?.source !== 'ai-chat-export-pro' || message.type !== 'chatgpt-conversation') return;
-                this.importChatGptPayload(message.payload);
-            });
+                if (message?.source !== 'ai-chat-export-pro') return;
+                if (message.type === 'chatgpt-conversation' && message.payload) {
+                    const conversationId = message.conversationId || currentConversationId();
+                    this.cacheChatGptPayload(conversationId, message.payload);
+                    const isCurrentConversation = conversationId === currentConversationId();
+                    if (isCurrentConversation) this.importChatGptPayload(message.payload);
+                    this.finishChatGptRequest(message.requestId, null, message.payload);
+                    // 即使请求已超时，迟到的成功 payload 仍应刷新当前目录。
+                    if (isCurrentConversation && typeof window.dispatchEvent === 'function') {
+                        window.dispatchEvent(new CustomEvent('ai-chat-index-updated'));
+                    }
+                } else if (message.type === 'chatgpt-conversation-error') {
+                    this.finishChatGptRequest(message.requestId, new Error(message.error || 'ChatGPT API unavailable'));
+                }
+            };
+            this.connect();
+        }
+
+        cacheChatGptPayload(conversationId, payload) {
+            if (!conversationId) return;
+            this.chatGptPayloadCache.delete(conversationId);
+            this.chatGptPayloadCache.set(conversationId, payload);
+            while (this.chatGptPayloadCache.size > MAX_CACHED_CONVERSATIONS) {
+                this.chatGptPayloadCache.delete(this.chatGptPayloadCache.keys().next().value);
+            }
+        }
+
+        connect() {
+            if (this.connected) return;
+            window.addEventListener('message', this.handleWindowMessage);
+            this.connected = true;
+        }
+
+        finishChatGptRequest(requestId, error, payload) {
+            const pending = this.pendingChatGptRequests.get(requestId);
+            if (!pending) return;
+            clearTimeout(pending.timer);
+            this.pendingChatGptRequests.delete(requestId);
+            if (error) pending.reject(error);
+            else pending.resolve(payload);
         }
 
         resetForLocation() {
             const nextUrl = location.href;
             if (nextUrl === this.url) return;
-            this.disconnect();
+            this.disconnectObservers();
             this.url = nextUrl;
             this.platform = CHATGPT_API.test(nextUrl) ? 'CHATGPT' : (DOUBAO.test(nextUrl) ? 'DOUBAO' : '');
             this.records.clear();
             this.order = [];
             this.chatGptDomHeadings.clear();
+            this.doubaoFingerprints.clear();
             this.nextSequence = 0;
             this.title = document.title || '';
         }
 
-        disconnect() {
+        disconnectObservers() {
             if (this.observer) this.observer.disconnect();
             this.observer = null;
+            if (this.doubaoScanTimer) clearTimeout(this.doubaoScanTimer);
+            this.doubaoScanTimer = null;
+            if (this.doubaoTrailingTimer) clearTimeout(this.doubaoTrailingTimer);
+            this.doubaoTrailingTimer = null;
             if (this.scrollTarget && this.scrollListener) {
                 this.scrollTarget.removeEventListener('scroll', this.scrollListener);
             }
             this.scrollTarget = null;
             this.scrollListener = null;
+        }
+
+        disconnect() {
+            this.disconnectObservers();
+            window.postMessage({
+                source: 'ai-chat-exporter-index',
+                type: 'chatgpt-conversation-release'
+            }, location.origin);
+            if (this.connected) window.removeEventListener('message', this.handleWindowMessage);
+            this.connected = false;
+            this.pendingChatGptRequests.forEach(pending => {
+                clearTimeout(pending.timer);
+                pending.reject(new Error('Conversation index disconnected'));
+            });
+            this.pendingChatGptRequests.clear();
+            this.chatGptLoads.clear();
+            this.chatGptPayloadCache.clear();
+            this.records.clear();
+            this.order = [];
+            this.chatGptDomHeadings.clear();
+            this.doubaoFingerprints.clear();
+            this.nextSequence = 0;
+            this.title = '';
         }
 
         upsert(record) {
@@ -119,33 +203,59 @@
         }
 
         async refresh(options = {}) {
+            this.connect();
             this.resetForLocation();
+            const refreshUrl = location.href;
             if (this.platform === 'CHATGPT') {
-                const apiLoaded = await this.loadChatGptApi();
+                const apiLoaded = await this.loadChatGptApi(options);
+                // SPA 切换可能发生在 API 等待期间；旧请求只缓存，不能生成新会话的目录。
+                if (location.href !== refreshUrl) return this.refresh(options);
                 // API 提供完整消息顺序；DOM 提供 ChatGPT 实际渲染出的标题，两者必须并行缓存。
                 this.scanChatGptDom({ cacheMessages: !apiLoaded });
             } else if (this.platform === 'DOUBAO') {
                 this.scanDoubaoWindow();
-                this.observeDoubao();
+                if (options.observe !== false) this.observeDoubao();
             }
             return this.snapshot();
         }
 
-        async loadChatGptApi() {
+        async loadChatGptApi({ force = false } = {}) {
             const conversationId = currentConversationId();
             if (!conversationId) return false;
-            try {
-                const response = await fetch(`/backend-api/conversation/${encodeURIComponent(conversationId)}?offset=0&limit=100000`, {
-                    credentials: 'include'
-                });
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                this.importChatGptPayload(await response.json());
+            if (!force && this.chatGptPayloadCache.has(conversationId)) {
+                const payload = this.chatGptPayloadCache.get(conversationId);
+                this.cacheChatGptPayload(conversationId, payload);
+                this.importChatGptPayload(payload);
                 return this.order.length > 0;
-            } catch (error) {
-                console.warn('AI Chat Export Pro: ChatGPT API unavailable; using mounted DOM', error);
-                this.scanChatGptDom();
-                return false;
             }
+            if (this.chatGptLoads.has(conversationId)) return this.chatGptLoads.get(conversationId);
+
+            const requestId = `${conversationId}:${Date.now()}:${Math.random().toString(36).slice(2)}`;
+            const load = new Promise((resolve, reject) => {
+                const timer = setTimeout(() => {
+                    this.pendingChatGptRequests.delete(requestId);
+                    reject(new Error('ChatGPT conversation request timed out'));
+                }, CHATGPT_REQUEST_TIMEOUT_MS);
+                this.pendingChatGptRequests.set(requestId, { resolve, reject, timer });
+                window.postMessage({
+                    source: 'ai-chat-exporter-index',
+                    type: 'chatgpt-conversation-request',
+                    requestId,
+                    conversationId,
+                    force
+                }, location.origin);
+            }).then(payload => {
+                this.cacheChatGptPayload(conversationId, payload);
+                if (conversationId !== currentConversationId()) return false;
+                this.importChatGptPayload(payload);
+                return this.order.length > 0;
+            }).catch(error => {
+                console.warn('AI Chat Export Pro: ChatGPT API unavailable; using mounted DOM', error);
+                if (conversationId === currentConversationId()) this.scanChatGptDom();
+                return false;
+            }).finally(() => this.chatGptLoads.delete(conversationId));
+            this.chatGptLoads.set(conversationId, load);
+            return load;
         }
 
         importChatGptPayload(payload) {
@@ -174,6 +284,7 @@
         }
 
         scanChatGptDom({ cacheMessages = true } = {}) {
+            const existingTurns = new Set(this.getMessages().map(message => `${message.role}:${message.turnNumber}`));
             Array.from(document.querySelectorAll('[data-turn]')).forEach((element, index) => {
                 const role = element.getAttribute('data-turn');
                 const turnNumber = Number((element.getAttribute('data-testid') || '').match(/conversation-turn-(\d+)/)?.[1]) || index + 1;
@@ -187,17 +298,21 @@
                         .filter(heading => heading.text);
                     if (headings.length > 0) this.chatGptDomHeadings.set(turnNumber, headings);
                 }
-                if (!cacheMessages) return;
-                const text = cleanText(element.textContent);
+                const turnId = element.getAttribute('data-turn-id') || null;
+                const turnKey = `${role}:${turnNumber}`;
+                // API 记录保留原始 Markdown；但 API 缓存之后新挂载的 turn 仍需从 DOM 增量补入。
+                if (!cacheMessages && ((turnId && this.records.has(turnId)) || existingTurns.has(turnKey))) return;
+                const text = stripChatGptRolePrefix(element.textContent, role);
                 this.upsert({
-                    id: element.getAttribute('data-turn-id') || `chatgpt-turn-${index}`,
-                    turnId: element.getAttribute('data-turn-id') || null,
+                    id: turnId || `chatgpt-turn-${index}`,
+                    turnId,
                     turnNumber,
                     role,
                     text,
                     markdown: text,
                     offset: null
                 });
+                existingTurns.add(turnKey);
             });
         }
 
@@ -216,7 +331,12 @@
         scanDoubaoWindow() {
             const scroller = this.findDoubaoScroller();
             const scrollerRect = scroller?.getBoundingClientRect?.();
+            let changed = false;
             Array.from(document.querySelectorAll('[data-message-id]')).forEach((element, index) => {
+                const id = element.getAttribute('data-message-id') || `doubao-message-${index}`;
+                const role = this.isDoubaoUserMessage(element) ? 'user' : 'assistant';
+                const fingerprint = doubaoElementFingerprint(element, role);
+                if (this.doubaoFingerprints.get(id) === fingerprint) return;
                 const clone = element.cloneNode(true);
                 clone.querySelectorAll('button, svg, script, style, [class*="avatar"], [class*="action"], [class*="tool"], [class*="time"], [class*="think"], [class*="collapse"]').forEach(node => node.remove());
                 const text = cleanText(clone.textContent);
@@ -225,28 +345,57 @@
                 const offset = scroller && scrollerRect && elementRect
                     ? scroller.scrollTop + elementRect.top - scrollerRect.top
                     : null;
-                this.upsert({
-                    id: element.getAttribute('data-message-id') || `doubao-message-${index}`,
-                    role: this.isDoubaoUserMessage(element) ? 'user' : 'assistant',
+                changed = this.upsert({
+                    id,
+                    role,
                     text,
                     html: clone.innerHTML,
                     markdown: markdownFromHtml(clone.innerHTML, text),
                     offset,
                     windowIndex: index
-                });
+                }) || changed;
+                this.doubaoFingerprints.set(id, fingerprint);
             });
+            return changed;
+        }
+
+        scheduleDoubaoScan({ notify = false, delay = 350 } = {}) {
+            if (this.doubaoScanTimer) clearTimeout(this.doubaoScanTimer);
+            this.doubaoScanTimer = setTimeout(() => {
+                this.doubaoScanTimer = null;
+                const changed = this.scanDoubaoWindow();
+                if (changed && notify) window.dispatchEvent(new CustomEvent('ai-chat-index-updated'));
+            }, delay);
+        }
+
+        scanDoubaoThrottled({ notify = true, interval = 220 } = {}) {
+            const run = () => {
+                this.lastDoubaoScanAt = Date.now();
+                const changed = this.scanDoubaoWindow();
+                if (changed && notify) window.dispatchEvent(new CustomEvent('ai-chat-index-updated'));
+            };
+            const remaining = interval - (Date.now() - this.lastDoubaoScanAt);
+            if (remaining <= 0 || this.lastDoubaoScanAt === 0) {
+                if (this.doubaoTrailingTimer) clearTimeout(this.doubaoTrailingTimer);
+                this.doubaoTrailingTimer = null;
+                run();
+                return;
+            }
+            if (this.doubaoTrailingTimer) return;
+            this.doubaoTrailingTimer = setTimeout(() => {
+                this.doubaoTrailingTimer = null;
+                run();
+            }, remaining);
         }
 
         observeDoubao() {
             if (this.observer) return;
             const scroller = this.findDoubaoScroller() || document.body;
-            this.observer = new MutationObserver(() => this.scanDoubaoWindow());
+            this.observer = new MutationObserver(() => this.scheduleDoubaoScan({ notify: true, delay: 500 }));
             this.observer.observe(scroller, { childList: true, subtree: true, characterData: true });
             this.scrollTarget = scroller;
-            this.scrollListener = () => {
-                this.scanDoubaoWindow();
-                window.dispatchEvent(new CustomEvent('ai-chat-index-updated'));
-            };
+            // leading + trailing throttle：连续滚动时约每 220ms 捕获一次虚拟窗口，停止后再补最后一次。
+            this.scrollListener = () => this.scanDoubaoThrottled({ notify: true, interval: 220 });
             scroller.addEventListener('scroll', this.scrollListener, { passive: true });
         }
 
@@ -286,6 +435,14 @@
     if (!existingIndex || existingIndex.version !== INDEX_VERSION) {
         existingIndex?.disconnect?.();
         window.AI_CHAT_CONVERSATION_INDEX = new ConversationIndex();
+    } else {
+        existingIndex.connect?.();
     }
-    window.__AI_CHAT_EXPORT_TESTS__ = { currentBranchNodes, contentToMarkdown, contentToText };
+    window.__AI_CHAT_EXPORT_TESTS__ = {
+        currentBranchNodes,
+        contentToMarkdown,
+        contentToText,
+        stripChatGptRolePrefix,
+        doubaoElementFingerprint
+    };
 })();
