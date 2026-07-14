@@ -276,8 +276,9 @@
 
     function observeConversationRoot() {
         if (!started || mainObserver) return;
-        // 豆包的虚拟列表由 ConversationIndex 自己做按消息 ID 的增量观察，避免双 observer。
-        if (pipeline.platformId === 'DOUBAO') return;
+        // ChatGPT 侧栏只做打开时的轻量 DOM 快照；完整 API 仅由明确导出触发。
+        // 豆包虚拟列表由 ConversationIndex 自己做按消息 ID 的增量观察，避免双 observer。
+        if (pipeline.platformId === 'CHATGPT' || pipeline.platformId === 'DOUBAO') return;
         const root = findObservationRoot();
         if (!root) {
             observerRetryTimer = setTimeout(() => {

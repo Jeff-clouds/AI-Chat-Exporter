@@ -126,8 +126,16 @@ window.Pipeline = class Pipeline {
         if (this.platformId !== 'CHATGPT' && this.platformId !== 'DOUBAO') return [];
         const index = window.AI_CHAT_CONVERSATION_INDEX;
         if (!index) return [];
-        // 被动索引：目录刷新绝不驱动页面滚动；只读取当前已挂载或用户滚动后新增的消息。
-        await index.refresh();
+        // 侧栏对 ChatGPT 只做一次轻量 DOM 目录扫描。完整会话 API 仅在用户主动导出时调用，
+        // 不能因为打开侧栏就与 ChatGPT 页面自身加载竞争网络和主线程。
+        if (this.platformId === 'CHATGPT') {
+            if (typeof index.scanChatGptDom !== 'function') return [];
+            index.resetForLocation?.();
+            index.scanChatGptDom();
+        } else {
+            // 豆包被动索引：目录刷新绝不驱动页面滚动；只读取用户浏览时挂载的消息。
+            await index.refresh();
+        }
         const messages = index.getMessages();
         if (messages.length === 0) return [];
 

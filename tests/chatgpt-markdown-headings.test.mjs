@@ -37,7 +37,7 @@ assert.deepEqual(Array.from(headings, heading => ({ text: heading.text, level: h
 ]);
 
 context.window.AI_CHAT_CONVERSATION_INDEX = {
-  refresh: async () => {},
+  scanChatGptDom: () => {},
   getMessages: () => [
     { id: 'u1', role: 'user', text: '你说：问题', turnNumber: 1 },
     { id: 'a1', role: 'assistant', text: 'plain API response', markdown: 'plain API response', turnNumber: 2 }

@@ -19,12 +19,15 @@ assert.match(backgroundSource, /refresh\(\{ force: true, observe: false \}\)/);
 assert.match(backgroundSource, /if \(!retainedByPanel\) index\.disconnect\(\)/);
 assert.match(backgroundSource, /withTabExtractionLock\(tab\.id/);
 assert.match(backgroundSource, /tabExtractionLocks\.delete\(tabId\)/);
-assert.match(sidepanelSource, /chatgpt-api-bridge\.js/);
+assert.doesNotMatch(sidepanelSource, /chatgpt-api-bridge\.js/);
 assert.doesNotMatch(sidepanelSource, /backend-api\/conversation/);
 assert.match(sidepanelSource, /changeInfo\.status === 'complete'/);
 assert.match(sidepanelSource, /scheduleReloadOutlineRequest\(\)/);
 assert.match(indexSource, /CHATGPT_REQUEST_TIMEOUT_MS = 20000/);
 assert.match(indexSource, /ai-chat-index-updated/);
+const pipelineSource = fs.readFileSync(new URL('../src/core/pipeline.js', import.meta.url), 'utf8');
+assert.match(pipelineSource, /if \(this\.platformId === 'CHATGPT'\)[\s\S]*?index\.scanChatGptDom\(\)[\s\S]*?else \{[\s\S]*?await index\.refresh\(\);/);
+assert.match(contentSource, /pipeline\.platformId === 'CHATGPT' \|\| pipeline\.platformId === 'DOUBAO'/);
 
 // MAIN-world bridge：并发同 ID、连续同 ID 都只 fetch 一次；force、换 ID 才重取；失败进入冷却。
 {
