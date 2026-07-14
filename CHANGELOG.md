@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.8] - 2026-07-14
+
+### Changed
+
+- Rename the public extension product to **AI Chat Exporter**; Pro now refers only to the paid selected-export feature tier.
+- Align the public README, privacy policy, Chrome Web Store copy, and package filename with the unified Exporter brand.
+- Make the package script reliably read manifest versions that include whitespace around the JSON colon.
+
 ## [2.0.7] - 2026-07-14
 
 ### Changed

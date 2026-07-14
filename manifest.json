@@ -1,7 +1,7 @@
 {
   "manifest_version" : 3,
-  "name" : "AI Chat Export Pro",
-  "version" : "2.0.7",
+  "name" : "AI Chat Exporter",
+  "version" : "2.0.8",
   "description" : "AI 对话大纲导航与 Markdown 导出工具",
   "permissions" : [
     "sidePanel",
