@@ -18,11 +18,16 @@
     let currentReadingElement = null;
     let mainObserver = null;
     let routeWatcher = null;
+    let routeChangeHandler = null;
+    let restoreRouteHooks = null;
     let initialRefreshTimer = null;
     let outlineRefreshTimer = null;
     let readingDetectionTimer = null;
     let observerRetryTimer = null;
     let outlineExtraction = null;
+    let outlineRefreshPending = false;
+    let activeOutlineRequestToken = '';
+    let activeOutlineRequestUrl = '';
     let started = false;
     const activePanelPorts = new Set();
     const highlightTimers = new Set();
@@ -31,6 +36,10 @@
 
     function scheduleOutlineRefresh(delay = 1200) {
         if (!started) return;
+        if (outlineExtraction) {
+            outlineRefreshPending = true;
+            return;
+        }
         if (outlineRefreshTimer) clearTimeout(outlineRefreshTimer);
         outlineRefreshTimer = setTimeout(() => {
             outlineRefreshTimer = null;
@@ -41,13 +50,24 @@
     // 提取大纲并发送
     window.extractAndSendOutline = function() {
         if (!started) return Promise.resolve();
-        if (outlineExtraction) return outlineExtraction;
+        if (outlineExtraction) {
+            outlineRefreshPending = true;
+            return outlineExtraction;
+        }
+        outlineRefreshPending = false;
         outlineExtraction = (async () => {
+            const extractionUrl = window.location.href;
+            const extractionRequestToken = activeOutlineRequestToken;
+            const extractionRequestUrl = activeOutlineRequestUrl;
             const result = await pipeline.extractWithIndex();
-            if (!started) return;
+            // A ChatGPT SPA transition can happen while a previous extraction is running.
+            // Never let that older result repaint the newly selected conversation.
+            if (!started || window.location.href !== extractionUrl) return;
+            if (!extractionRequestToken || extractionRequestToken !== activeOutlineRequestToken) return;
+            if (extractionRequestUrl && extractionRequestUrl !== extractionUrl) return;
 
             // 避免重复发送相同的大纲（减少侧边栏无意义的刷新）
-            const outlineJson = JSON.stringify(result.outline.map(i => i.id || i.text));
+            const outlineJson = JSON.stringify(result.outline.map(i => [i.id || '', i.text, i.level, i.type]));
             if (outlineJson === lastOutlineJson && result.outline.length > 0) {
                 return;
             }
@@ -57,7 +77,8 @@
             chrome.runtime.sendMessage({
                 type: 'outline',
                 outline: result.outline,
-                diagnostics: result.diagnostics
+                diagnostics: result.diagnostics,
+                requestToken: extractionRequestToken
             });
 
             // 初始化阅读位置检测
@@ -68,6 +89,10 @@
             }, 500);
         })().finally(() => {
             outlineExtraction = null;
+            if (started && outlineRefreshPending) {
+                outlineRefreshPending = false;
+                scheduleOutlineRefresh(60);
+            }
         });
         return outlineExtraction;
     }
@@ -167,6 +192,9 @@
                 scrollToOutlineTarget(message);
                 break;
             case 'getOutline':
+                if (!message.requestToken || (message.url && message.url !== window.location.href)) return;
+                activeOutlineRequestToken = message.requestToken;
+                activeOutlineRequestUrl = message.url || window.location.href;
                 extractAndSendOutline();
                 break;
             case 'toggle_outline':
@@ -283,8 +311,7 @@
 
     function observeConversationRoot() {
         if (!started || mainObserver) return;
-        // ChatGPT 侧栏只做打开时的轻量 DOM 快照；完整 API 仅由明确导出触发。
-        // 豆包虚拟列表由 ConversationIndex 自己做按消息 ID 的增量观察，避免双 observer。
+        // ChatGPT / 豆包由 ConversationIndex 做会话容器级的有界增量观察，避免双 observer。
         if (pipeline.platformId === 'CHATGPT' || pipeline.platformId === 'DOUBAO') return;
         const root = findObservationRoot();
         if (!root) {
@@ -315,7 +342,7 @@
         // 只观察会话容器；流式输出合并为停止变化约 1.4 秒后的一次刷新。
         observeConversationRoot();
 
-        // 豆包虚拟列表在用户滚动后可能复用节点而不新增子节点；只做静默目录刷新。
+        // ChatGPT / 豆包虚拟列表在用户滚动后会复用节点；索引只在内容确实变化时发事件。
         window.addEventListener('ai-chat-index-updated', refreshOutlineFromIndex);
 
         initializeRouteWatcher();
@@ -323,11 +350,44 @@
 
     function initializeRouteWatcher() {
         let lastUrl = window.location.href;
-        routeWatcher = setInterval(() => {
-            if (window.location.href === lastUrl) return;
+        routeChangeHandler = () => {
+            if (!started || window.location.href === lastUrl) return;
             lastUrl = window.location.href;
-            extractAndSendOutline();
-        }, 1500);
+            lastOutlineJson = '';
+            activeOutlineRequestToken = '';
+            activeOutlineRequestUrl = '';
+            chrome.runtime.sendMessage({ type: 'routeChanged', url: lastUrl });
+
+            // The in-flight extraction is URL-guarded; the pending latch guarantees one
+            // follow-up extraction for the newly selected route.
+            scheduleOutlineRefresh(0);
+        };
+
+        const patchHistoryMethod = method => {
+            const original = window.history?.[method];
+            if (typeof original !== 'function') return () => {};
+            const patched = function (...args) {
+                const result = original.apply(this, args);
+                queueMicrotask(routeChangeHandler);
+                return result;
+            };
+            window.history[method] = patched;
+            return () => {
+                if (window.history[method] === patched) window.history[method] = original;
+            };
+        };
+        const restorePushState = patchHistoryMethod('pushState');
+        const restoreReplaceState = patchHistoryMethod('replaceState');
+        window.addEventListener('popstate', routeChangeHandler);
+        restoreRouteHooks = () => {
+            restorePushState();
+            restoreReplaceState();
+            window.removeEventListener('popstate', routeChangeHandler);
+            restoreRouteHooks = null;
+        };
+        routeWatcher = setInterval(() => {
+            routeChangeHandler();
+        }, 300);
     }
 
 
@@ -381,6 +441,8 @@
         readingPositionObserver = null;
         if (routeWatcher) clearInterval(routeWatcher);
         routeWatcher = null;
+        restoreRouteHooks?.();
+        routeChangeHandler = null;
         if (initialRefreshTimer) clearTimeout(initialRefreshTimer);
         initialRefreshTimer = null;
         if (outlineRefreshTimer) clearTimeout(outlineRefreshTimer);
@@ -390,6 +452,9 @@
         if (observerRetryTimer) clearTimeout(observerRetryTimer);
         observerRetryTimer = null;
         outlineExtraction = null;
+        outlineRefreshPending = false;
+        activeOutlineRequestToken = '';
+        activeOutlineRequestUrl = '';
         highlightTimers.forEach(timer => clearTimeout(timer));
         highlightTimers.clear();
         window.AI_CHAT_CONVERSATION_INDEX?.disconnect?.();

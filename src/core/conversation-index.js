@@ -3,9 +3,11 @@
 
     const CHATGPT_API = /chatgpt\.com/;
     const DOUBAO = /doubao\.com/;
-    const INDEX_VERSION = '2026-07-14-bounded-cache';
+    const INDEX_VERSION = '2026-07-15-chatgpt-section-turns';
     const CHATGPT_REQUEST_TIMEOUT_MS = 20000;
+    const CHATGPT_CACHE_TTL_MS = 15000;
     const MAX_CACHED_CONVERSATIONS = 2;
+    const MAX_MOUNTED_CHATGPT_TURNS = 48;
     const cleanText = value => String(value || '').replace(/\s+/g, ' ').trim();
     const stripChatGptRolePrefix = (value, role) => {
         const text = cleanText(value);
@@ -13,6 +15,40 @@
         if (role === 'assistant') return text.replace(/^ChatGPT\s*(?:说|said)\s*[:：]\s*/i, '');
         return text;
     };
+
+    function stableTextFingerprint(value) {
+        const text = cleanText(value);
+        let hash = 2166136261;
+        for (let index = 0; index < text.length; index++) {
+            hash ^= text.charCodeAt(index);
+            hash = Math.imul(hash, 16777619);
+        }
+        return `${(hash >>> 0).toString(36)}:${text.length}`;
+    }
+
+    function chatGptTurnContainer(element) {
+        return element?.closest?.('[data-testid^="conversation-turn-"]') || element || null;
+    }
+
+    function chatGptElementIds(element) {
+        if (!element?.getAttribute) return [];
+        const container = chatGptTurnContainer(element);
+        return Array.from(new Set([
+            element.getAttribute('data-message-id'),
+            element.getAttribute('data-turn-id'),
+            container?.getAttribute?.('data-message-id'),
+            container?.getAttribute?.('data-turn-id')
+        ].filter(Boolean)));
+    }
+
+    function chatGptTurnIdentity(element) {
+        if (!element?.getAttribute) return '';
+        const turnId = chatGptElementIds(element)[0];
+        if (turnId) return `id:${turnId}`;
+        const role = element.getAttribute('data-turn') || element.getAttribute('data-message-author-role') || '';
+        const text = cleanText(element.textContent);
+        return role && text ? `content:${role}:${stableTextFingerprint(text)}` : '';
+    }
 
     function currentConversationId() {
         const match = location.pathname.match(/\/c\/([^/?#]+)|\/chat\/([^/?#]+)/);
@@ -75,11 +111,26 @@
             this.observer = null;
             this.scrollTarget = null;
             this.scrollListener = null;
+            this.scrollCapture = false;
+            this.chatGptScanTimer = null;
+            this.chatGptTrailingTimer = null;
+            this.chatGptObserverRetryTimer = null;
+            this.chatGptEmptyFallbackTimer = null;
+            this.chatGptEmptyBaselineIdentities = null;
+            this.chatGptEmptyRetryCount = 0;
+            this.chatGptDomRouteTrusted = false;
+            this.lastChatGptScanAt = 0;
             this.doubaoScanTimer = null;
             this.doubaoTrailingTimer = null;
             this.lastDoubaoScanAt = 0;
             this.doubaoFingerprints = new Map();
             this.chatGptPayloadCache = new Map();
+            this.chatGptPayloadTimes = new Map();
+            this.lastChatGptTurnIdentities = new Set();
+            this.excludedChatGptTurnIdentities = new Set();
+            this.chatGptCanonicalTurnIds = new Set();
+            this.chatGptRouteAwaitingApiConfirmation = false;
+            this.routeGeneration = 0;
             this.chatGptLoads = new Map();
             this.pendingChatGptRequests = new Map();
             this.connected = false;
@@ -89,15 +140,30 @@
                 if (message?.source !== 'ai-chat-export-pro') return;
                 if (message.type === 'chatgpt-conversation' && message.payload) {
                     const conversationId = message.conversationId || currentConversationId();
+                    if (message.requestId) {
+                        const pending = this.pendingChatGptRequests.get(message.requestId);
+                        if (!pending || pending.conversationId !== conversationId) return;
+                        if (pending.routeGeneration !== this.routeGeneration || pending.url !== location.href) {
+                            this.finishChatGptRequest(message.requestId, new Error('Stale conversation response'));
+                            return;
+                        }
+                        this.finishChatGptRequest(message.requestId, null, message.payload);
+                        return;
+                    }
+                    if (message.routeUrl && message.routeUrl !== location.href) return;
                     this.cacheChatGptPayload(conversationId, message.payload);
                     const isCurrentConversation = conversationId === currentConversationId();
-                    if (isCurrentConversation) this.importChatGptPayload(message.payload);
-                    this.finishChatGptRequest(message.requestId, null, message.payload);
-                    // 即使请求已超时，迟到的成功 payload 仍应刷新当前目录。
-                    if (isCurrentConversation && typeof window.dispatchEvent === 'function') {
+                    const imported = isCurrentConversation && this.importChatGptPayload(message.payload);
+                    if (imported && typeof window.dispatchEvent === 'function') {
                         window.dispatchEvent(new CustomEvent('ai-chat-index-updated'));
                     }
                 } else if (message.type === 'chatgpt-conversation-error') {
+                    const pending = this.pendingChatGptRequests.get(message.requestId);
+                    if (!pending || pending.conversationId !== message.conversationId) return;
+                    if (pending.routeGeneration !== this.routeGeneration || pending.url !== location.href) {
+                        this.finishChatGptRequest(message.requestId, new Error('Stale conversation response'));
+                        return;
+                    }
                     this.finishChatGptRequest(message.requestId, new Error(message.error || 'ChatGPT API unavailable'));
                 }
             };
@@ -108,8 +174,12 @@
             if (!conversationId) return;
             this.chatGptPayloadCache.delete(conversationId);
             this.chatGptPayloadCache.set(conversationId, payload);
+            this.chatGptPayloadTimes.delete(conversationId);
+            this.chatGptPayloadTimes.set(conversationId, Date.now());
             while (this.chatGptPayloadCache.size > MAX_CACHED_CONVERSATIONS) {
-                this.chatGptPayloadCache.delete(this.chatGptPayloadCache.keys().next().value);
+                const oldest = this.chatGptPayloadCache.keys().next().value;
+                this.chatGptPayloadCache.delete(oldest);
+                this.chatGptPayloadTimes.delete(oldest);
             }
         }
 
@@ -131,33 +201,77 @@
         resetForLocation() {
             const nextUrl = location.href;
             if (nextUrl === this.url) return;
+            const previousUrl = this.url;
+            const previousPlatform = this.platform;
+            const nextPlatform = CHATGPT_API.test(nextUrl) ? 'CHATGPT' : (DOUBAO.test(nextUrl) ? 'DOUBAO' : '');
             this.disconnectObservers();
+            this.routeGeneration++;
+            this.pendingChatGptRequests.forEach((pending, requestId) => {
+                if (pending.routeGeneration === this.routeGeneration) return;
+                clearTimeout(pending.timer);
+                this.pendingChatGptRequests.delete(requestId);
+                pending.reject(new Error('Conversation route changed'));
+            });
             this.url = nextUrl;
-            this.platform = CHATGPT_API.test(nextUrl) ? 'CHATGPT' : (DOUBAO.test(nextUrl) ? 'DOUBAO' : '');
+            this.platform = nextPlatform;
+            // ChatGPT updates the URL before replacing the old conversation DOM. Preserve
+            // the previous mounted identities and reject them under the new route.
+            if (previousUrl && previousUrl !== nextUrl && previousPlatform === 'CHATGPT' && nextPlatform === 'CHATGPT') {
+                const previousIdentities = this.lastChatGptTurnIdentities.size > 0
+                    ? this.lastChatGptTurnIdentities
+                    : new Set(this.getMessages().map(message => message.turnId || message.id).filter(Boolean).map(id => `id:${id}`));
+                this.excludedChatGptTurnIdentities = new Set(previousIdentities);
+                this.chatGptRouteAwaitingApiConfirmation = true;
+            } else if (nextPlatform !== 'CHATGPT') {
+                this.excludedChatGptTurnIdentities.clear();
+                this.lastChatGptTurnIdentities.clear();
+                this.chatGptRouteAwaitingApiConfirmation = false;
+            }
+            this.chatGptCanonicalTurnIds.clear();
+            this.chatGptEmptyBaselineIdentities = null;
+            this.chatGptEmptyRetryCount = 0;
+            this.chatGptDomRouteTrusted = false;
             this.records.clear();
             this.order = [];
             this.chatGptDomHeadings.clear();
             this.doubaoFingerprints.clear();
             this.nextSequence = 0;
+            this.lastChatGptScanAt = 0;
             this.title = document.title || '';
         }
 
         disconnectObservers() {
             if (this.observer) this.observer.disconnect();
             this.observer = null;
+            if (this.chatGptScanTimer) clearTimeout(this.chatGptScanTimer);
+            this.chatGptScanTimer = null;
+            if (this.chatGptTrailingTimer) clearTimeout(this.chatGptTrailingTimer);
+            this.chatGptTrailingTimer = null;
+            if (this.chatGptObserverRetryTimer) clearTimeout(this.chatGptObserverRetryTimer);
+            this.chatGptObserverRetryTimer = null;
+            if (this.chatGptEmptyFallbackTimer) clearTimeout(this.chatGptEmptyFallbackTimer);
+            this.chatGptEmptyFallbackTimer = null;
             if (this.doubaoScanTimer) clearTimeout(this.doubaoScanTimer);
             this.doubaoScanTimer = null;
             if (this.doubaoTrailingTimer) clearTimeout(this.doubaoTrailingTimer);
             this.doubaoTrailingTimer = null;
             if (this.scrollTarget && this.scrollListener) {
-                this.scrollTarget.removeEventListener('scroll', this.scrollListener);
+                this.scrollTarget.removeEventListener('scroll', this.scrollListener, this.scrollCapture);
             }
             this.scrollTarget = null;
             this.scrollListener = null;
+            this.scrollCapture = false;
         }
 
         disconnect() {
             this.disconnectObservers();
+            this.routeGeneration++;
+            const retainedIdentities = new Set(this.lastChatGptTurnIdentities);
+            this.getMessages().forEach(message => {
+                const id = message.turnId || message.id;
+                if (id) retainedIdentities.add(`id:${id}`);
+            });
+            this.lastChatGptTurnIdentities = retainedIdentities;
             window.postMessage({
                 source: 'ai-chat-exporter-index',
                 type: 'chatgpt-conversation-release'
@@ -171,6 +285,8 @@
             this.pendingChatGptRequests.clear();
             this.chatGptLoads.clear();
             this.chatGptPayloadCache.clear();
+            this.chatGptPayloadTimes.clear();
+            this.chatGptCanonicalTurnIds.clear();
             this.records.clear();
             this.order = [];
             this.chatGptDomHeadings.clear();
@@ -207,10 +323,24 @@
             this.resetForLocation();
             const refreshUrl = location.href;
             if (this.platform === 'CHATGPT') {
-                await this.loadChatGptApi(options);
+                // Render mounted turns immediately, then upgrade from the API without blocking the panel.
+                // The observer is scoped to the conversation root and each scan is bounded.
+                this.scanChatGptDom({ cacheMessages: true });
+                if (options.observe !== false) this.observeChatGpt();
+                const apiLoad = this.loadChatGptApi(options);
+                if (options.awaitApi === false) {
+                    // The side panel must not wait for a slow internal endpoint. When API
+                    // data arrives later, notify the existing panel to replace DOM records.
+                    apiLoad.then(apiLoaded => {
+                        if (!apiLoaded || location.href !== refreshUrl || typeof window.dispatchEvent !== 'function') return;
+                        window.dispatchEvent(new CustomEvent('ai-chat-index-updated'));
+                    });
+                } else {
+                    await apiLoad;
+                }
                 // SPA 切换可能发生在 API 等待期间；旧请求只缓存，不能生成新会话的目录。
                 if (location.href !== refreshUrl) return this.refresh(options);
-                // ChatGPT 的真实长对话 DOM 查询可能阻塞页面；侧栏只使用 API 当前分支数据。
+                // API 成功后会用完整当前分支替换临时 DOM 消息；DOM 标题缓存继续保留。
             } else if (this.platform === 'DOUBAO') {
                 this.scanDoubaoWindow();
                 if (options.observe !== false) this.observeDoubao();
@@ -221,13 +351,19 @@
         async loadChatGptApi({ force = false } = {}) {
             const conversationId = currentConversationId();
             if (!conversationId) return false;
+            const routeGeneration = this.routeGeneration;
+            const requestUrl = location.href;
             if (!force && this.chatGptPayloadCache.has(conversationId)) {
                 const payload = this.chatGptPayloadCache.get(conversationId);
-                this.cacheChatGptPayload(conversationId, payload);
+                const cachedAt = this.chatGptPayloadTimes.get(conversationId) || 0;
+                // Touch the LRU order without pretending stale data was freshly fetched.
+                this.chatGptPayloadCache.delete(conversationId);
+                this.chatGptPayloadCache.set(conversationId, payload);
                 this.importChatGptPayload(payload);
-                return this.order.length > 0;
+                if (Date.now() - cachedAt < CHATGPT_CACHE_TTL_MS) return this.order.length > 0;
             }
-            if (this.chatGptLoads.has(conversationId)) return this.chatGptLoads.get(conversationId);
+            const loadKey = `${routeGeneration}:${conversationId}`;
+            if (this.chatGptLoads.has(loadKey)) return this.chatGptLoads.get(loadKey);
 
             const requestId = `${conversationId}:${Date.now()}:${Math.random().toString(36).slice(2)}`;
             const load = new Promise((resolve, reject) => {
@@ -235,7 +371,14 @@
                     this.pendingChatGptRequests.delete(requestId);
                     reject(new Error('ChatGPT conversation request timed out'));
                 }, CHATGPT_REQUEST_TIMEOUT_MS);
-                this.pendingChatGptRequests.set(requestId, { resolve, reject, timer });
+                this.pendingChatGptRequests.set(requestId, {
+                    resolve,
+                    reject,
+                    timer,
+                    conversationId,
+                    routeGeneration,
+                    url: requestUrl
+                });
                 window.postMessage({
                     source: 'ai-chat-exporter-index',
                     type: 'chatgpt-conversation-request',
@@ -244,28 +387,43 @@
                     force
                 }, location.origin);
             }).then(payload => {
+                if (routeGeneration !== this.routeGeneration || requestUrl !== location.href) return false;
                 this.cacheChatGptPayload(conversationId, payload);
                 if (conversationId !== currentConversationId()) return false;
                 this.importChatGptPayload(payload);
                 return this.order.length > 0;
             }).catch(error => {
-                console.warn('AI Chat Export Pro: ChatGPT API unavailable; outline remains empty to avoid scanning the page DOM', error);
+                const expectedCancellation = error?.message === 'Conversation route changed'
+                    || error?.message === 'Stale conversation response'
+                    || error?.message === 'Conversation index disconnected';
+                if (!expectedCancellation) {
+                    console.warn('AI Chat Export Pro: ChatGPT API unavailable; retaining bounded mounted DOM outline', error);
+                }
+                if (routeGeneration === this.routeGeneration && requestUrl === location.href && conversationId === currentConversationId()) {
+                    this.chatGptRouteAwaitingApiConfirmation = false;
+                    const changed = this.scanChatGptDom({ cacheMessages: true });
+                    if (changed && typeof window.dispatchEvent === 'function') {
+                        window.dispatchEvent(new CustomEvent('ai-chat-index-updated'));
+                    }
+                }
                 return false;
-            }).finally(() => this.chatGptLoads.delete(conversationId));
-            this.chatGptLoads.set(conversationId, load);
+            }).finally(() => this.chatGptLoads.delete(loadKey));
+            this.chatGptLoads.set(loadKey, load);
             return load;
         }
 
         importChatGptPayload(payload) {
             if (!payload?.mapping) return false;
             let turnNumber = 0;
+            const apiRecords = [];
             currentBranchNodes(payload).forEach(node => {
                 const role = node?.message?.author?.role;
                 if (role !== 'user' && role !== 'assistant') return;
                 turnNumber++;
                 const markdown = contentToMarkdown(node.message.content);
                 const text = cleanText(markdown);
-                this.upsert({
+                if (!text) return;
+                apiRecords.push({
                     id: node.message.id || node.id,
                     turnId: node.message.id || node.id,
                     // mapping 会包含无消息的 root 节点；只为真实 user/assistant 递增，才能和 conversation-turn-N 对齐。
@@ -277,15 +435,142 @@
                     offset: null
                 });
             });
+            if (apiRecords.length === 0) {
+                // An empty response does not prove that the currently mounted DOM belongs
+                // to the new URL. With no previous identities to exclude, record the
+                // transition window and wait for its identities to change before trusting it.
+                if (this.chatGptRouteAwaitingApiConfirmation && this.excludedChatGptTurnIdentities.size === 0) {
+                    this.chatGptEmptyBaselineIdentities = new Set(
+                        this.getMountedChatGptTurns().map(chatGptTurnIdentity).filter(Boolean)
+                    );
+                    this.chatGptEmptyRetryCount++;
+                    this.scheduleChatGptEmptyFallback();
+                    return false;
+                }
+                this.chatGptRouteAwaitingApiConfirmation = false;
+                const changed = this.scanChatGptDom({ cacheMessages: true });
+                return changed || this.order.length > 0;
+            }
+            if (this.chatGptEmptyFallbackTimer) clearTimeout(this.chatGptEmptyFallbackTimer);
+            this.chatGptEmptyFallbackTimer = null;
+            this.chatGptEmptyBaselineIdentities = null;
+            this.chatGptEmptyRetryCount = 0;
+            if (this.chatGptRouteAwaitingApiConfirmation) {
+                // First confirmed payload for a new route is authoritative. Drop any DOM
+                // message fallback captured during the URL/React transition before importing it.
+                // The heading cache is already route-reset and identity-keyed, so retaining
+                // it preserves headings from B nodes that mounted before B's API completed.
+                this.records.clear();
+                this.order = [];
+                this.nextSequence = 0;
+                this.chatGptRouteAwaitingApiConfirmation = false;
+            }
+            this.chatGptCanonicalTurnIds = new Set(apiRecords.map(record => record.id));
+            const acceptedDomIdentities = Array.from(this.lastChatGptTurnIdentities)
+                .filter(identity => !this.excludedChatGptTurnIdentities.has(identity));
+            this.lastChatGptTurnIdentities = new Set([
+                ...apiRecords.map(record => `id:${record.id}`),
+                ...acceptedDomIdentities
+            ]);
+            // API records are canonical where available, but mounted DOM-only turns may be newer
+            // than a cached payload. Merge instead of clearing so scrolling/new output is never erased.
+            const apiIds = new Set(apiRecords.map(record => record.id));
+            for (const [id, record] of this.records) {
+                if (record.source === 'api' && !apiIds.has(id)) {
+                    this.records.delete(id);
+                    this.order = this.order.filter(recordId => recordId !== id);
+                }
+            }
+            apiRecords.forEach(record => this.upsert({ ...record, source: 'api' }));
             this.title = cleanText(payload.title) || this.title;
             return this.order.length > 0;
         }
 
+        getMountedChatGptTurns() {
+            const root = document.querySelector('main') || document.querySelector('[role="main"]');
+            if (!root?.querySelectorAll) return [];
+            let mountedTurns = Array.from(root.querySelectorAll('[data-turn]'));
+            if (mountedTurns.length === 0) {
+                // ChatGPT now renders conversation turns as SECTION elements. Role and
+                // API message IDs live on descendant message nodes, and one assistant
+                // SECTION can contain both a progress message and the final answer.
+                mountedTurns = Array.from(root.querySelectorAll('[data-message-author-role]'));
+            }
+            return mountedTurns.slice(-MAX_MOUNTED_CHATGPT_TURNS);
+        }
+
+        scheduleChatGptEmptyFallback() {
+            if (this.chatGptEmptyFallbackTimer) clearTimeout(this.chatGptEmptyFallbackTimer);
+            this.chatGptEmptyFallbackTimer = null;
+            // Time alone is not route evidence. After three empty API responses keep
+            // the index gated until mounted identities change or a non-empty payload arrives.
+            if (this.chatGptEmptyRetryCount >= 3) return;
+            const retryUrl = location.href;
+            const retryGeneration = this.routeGeneration;
+            this.chatGptEmptyFallbackTimer = setTimeout(() => {
+                this.chatGptEmptyFallbackTimer = null;
+                if (location.href !== retryUrl || this.routeGeneration !== retryGeneration) return;
+                this.loadChatGptApi({ force: true }).then(loaded => {
+                    if (loaded && location.href === retryUrl && this.routeGeneration === retryGeneration) {
+                        window.dispatchEvent(new CustomEvent('ai-chat-index-updated'));
+                    }
+                });
+            }, 350);
+        }
+
         scanChatGptDom({ cacheMessages = true } = {}) {
+            let changed = false;
             const existingTurns = new Set(this.getMessages().map(message => `${message.role}:${message.turnNumber}`));
-            Array.from(document.querySelectorAll('[data-turn]')).forEach((element, index) => {
-                const role = element.getAttribute('data-turn');
-                const turnNumber = Number((element.getAttribute('data-testid') || '').match(/conversation-turn-(\d+)/)?.[1]) || index + 1;
+            let mountedTurns = this.getMountedChatGptTurns();
+            if (this.excludedChatGptTurnIdentities.size > 0) {
+                mountedTurns = mountedTurns.filter(element => {
+                    const identity = chatGptTurnIdentity(element);
+                    return !identity || !this.excludedChatGptTurnIdentities.has(identity);
+                });
+            }
+            if (this.chatGptCanonicalTurnIds.size > 0) {
+                const firstCanonicalIndex = mountedTurns.findIndex(element => {
+                    return chatGptElementIds(element).some(id => this.chatGptCanonicalTurnIds.has(id));
+                });
+                // With no previous-route identities to filter, a canonical B anchor is
+                // required before any mounted DOM can be attributed to B. Discard nodes
+                // before the first anchor; they may be A remnants during React replacement.
+                if (firstCanonicalIndex < 0
+                    && this.excludedChatGptTurnIdentities.size === 0
+                    && !this.chatGptDomRouteTrusted) return false;
+                if (firstCanonicalIndex >= 0) {
+                    mountedTurns = mountedTurns.slice(firstCanonicalIndex);
+                    this.chatGptDomRouteTrusted = true;
+                }
+            }
+            if (this.chatGptRouteAwaitingApiConfirmation && this.excludedChatGptTurnIdentities.size === 0) {
+                const currentIdentities = new Set(mountedTurns.map(chatGptTurnIdentity).filter(Boolean));
+                const baseline = this.chatGptEmptyBaselineIdentities;
+                const identitiesChanged = baseline instanceof Set
+                    && (currentIdentities.size !== baseline.size
+                        || Array.from(currentIdentities).some(identity => !baseline.has(identity)));
+                if (!identitiesChanged) return false;
+                this.chatGptRouteAwaitingApiConfirmation = false;
+                this.chatGptEmptyBaselineIdentities = null;
+                this.chatGptEmptyRetryCount = 0;
+                this.chatGptDomRouteTrusted = true;
+                if (this.chatGptEmptyFallbackTimer) clearTimeout(this.chatGptEmptyFallbackTimer);
+                this.chatGptEmptyFallbackTimer = null;
+            }
+            if (mountedTurns.length === 0) return false;
+            if (this.excludedChatGptTurnIdentities.size > 0) this.chatGptDomRouteTrusted = true;
+            const currentIdentities = mountedTurns.map(chatGptTurnIdentity).filter(Boolean);
+            if (currentIdentities.length > 0) this.lastChatGptTurnIdentities = new Set(currentIdentities);
+            mountedTurns.forEach((element, index) => {
+                const role = element.getAttribute('data-turn') || element.getAttribute('data-message-author-role');
+                if (role !== 'user' && role !== 'assistant') return;
+                const container = chatGptTurnContainer(element);
+                const messageId = element.getAttribute('data-message-id') || null;
+                const containerTurnId = container?.getAttribute?.('data-turn-id') || null;
+                const turnId = messageId || element.getAttribute('data-turn-id') || containerTurnId;
+                const indexedTurnNumber = turnId ? this.records.get(turnId)?.turnNumber : null;
+                const turnTestId = element.getAttribute('data-testid') || container?.getAttribute?.('data-testid') || '';
+                const turnNumber = Number(turnTestId.match(/conversation-turn-(\d+)/)?.[1]) || indexedTurnNumber || index + 1;
                 if (role === 'assistant') {
                     const headings = Array.from(element.querySelectorAll('h1,h2,h3,h4,h5,h6'))
                         .map((heading, headingIndex) => ({
@@ -294,28 +579,107 @@
                             headingIndex
                         }))
                         .filter(heading => heading.text);
-                    if (headings.length > 0) this.chatGptDomHeadings.set(turnNumber, headings);
+                    if (headings.length > 0) {
+                        const nextKey = headings.map(heading => `${heading.level}:${heading.text}`).join('|');
+                        const headingKeys = Array.from(new Set([
+                            messageId,
+                            containerTurnId,
+                            `turn:${turnNumber}`
+                        ].filter(Boolean)));
+                        headingKeys.forEach(headingKey => {
+                            const previous = this.chatGptDomHeadings.get(headingKey) || [];
+                            const previousKey = previous.map(heading => `${heading.level}:${heading.text}`).join('|');
+                            if (previousKey !== nextKey) {
+                                this.chatGptDomHeadings.set(headingKey, headings);
+                                changed = true;
+                            }
+                        });
+                    } else if (messageId && this.chatGptDomHeadings.delete(messageId)) {
+                        // Do not clear the shared SECTION/turn fallback: a sibling final
+                        // answer in the same SECTION may own those headings.
+                        changed = true;
+                    }
                 }
-                const turnId = element.getAttribute('data-turn-id') || null;
                 const turnKey = `${role}:${turnNumber}`;
                 // API 记录保留原始 Markdown；但 API 缓存之后新挂载的 turn 仍需从 DOM 增量补入。
                 if (!cacheMessages && ((turnId && this.records.has(turnId)) || existingTurns.has(turnKey))) return;
                 const text = stripChatGptRolePrefix(element.textContent, role);
-                this.upsert({
-                    id: turnId || `chatgpt-turn-${index}`,
+                const fallbackId = `chatgpt-${role}-turn-${turnNumber}-${text.slice(0, 80)}`;
+                const recordId = messageId || turnId || fallbackId;
+                // Never flatten and overwrite richer API Markdown for the same stable message.
+                if (this.records.get(recordId)?.source === 'api') return;
+                changed = this.upsert({
+                    id: recordId,
                     turnId,
                     turnNumber,
                     role,
                     text,
                     markdown: text,
-                    offset: null
-                });
+                    offset: null,
+                    source: 'dom'
+                }) || changed;
                 existingTurns.add(turnKey);
             });
+            return changed;
         }
 
-        getChatGptDomHeadings(turnNumber) {
-            return (this.chatGptDomHeadings.get(turnNumber) || []).map(heading => ({ ...heading }));
+        scheduleChatGptScan({ notify = true, delay = 240 } = {}) {
+            if (this.chatGptScanTimer) clearTimeout(this.chatGptScanTimer);
+            this.chatGptScanTimer = setTimeout(() => {
+                this.chatGptScanTimer = null;
+                const changed = this.scanChatGptDom({ cacheMessages: true });
+                if (changed && notify) window.dispatchEvent(new CustomEvent('ai-chat-index-updated'));
+            }, delay);
+        }
+
+        scanChatGptThrottled({ notify = true, interval = 220 } = {}) {
+            const run = () => {
+                this.lastChatGptScanAt = Date.now();
+                const changed = this.scanChatGptDom({ cacheMessages: true });
+                if (changed && notify) window.dispatchEvent(new CustomEvent('ai-chat-index-updated'));
+            };
+            const remaining = interval - (Date.now() - this.lastChatGptScanAt);
+            if (remaining <= 0 || this.lastChatGptScanAt === 0) {
+                if (this.chatGptTrailingTimer) clearTimeout(this.chatGptTrailingTimer);
+                this.chatGptTrailingTimer = null;
+                run();
+                return;
+            }
+            if (this.chatGptTrailingTimer) return;
+            this.chatGptTrailingTimer = setTimeout(() => {
+                this.chatGptTrailingTimer = null;
+                run();
+            }, remaining);
+        }
+
+        observeChatGpt() {
+            if (this.observer || this.platform !== 'CHATGPT') return;
+            const root = document.querySelector('main') || document.querySelector('[role="main"]');
+            if (!root) {
+                if (!this.chatGptObserverRetryTimer) {
+                    this.chatGptObserverRetryTimer = setTimeout(() => {
+                        this.chatGptObserverRetryTimer = null;
+                        this.observeChatGpt();
+                    }, 500);
+                }
+                return;
+            }
+            this.observer = new MutationObserver(() => this.scheduleChatGptScan({ notify: true, delay: 240 }));
+            this.observer.observe(root, { childList: true, subtree: true, characterData: true });
+            // Capture scroll from ChatGPT's nested virtual scroller without guessing its class name.
+            this.scrollTarget = window;
+            this.scrollCapture = true;
+            this.scrollListener = () => this.scanChatGptThrottled({ notify: true, interval: 220 });
+            window.addEventListener('scroll', this.scrollListener, { passive: true, capture: true });
+        }
+
+        getChatGptDomHeadings(turnNumber, messageId = '') {
+            // A supplied message ID is authoritative. Falling through to the same
+            // numeric turn from another route can resurrect the previous chat's title.
+            const headings = messageId
+                ? (this.chatGptDomHeadings.get(messageId) || [])
+                : (this.chatGptDomHeadings.get(`turn:${turnNumber}`) || []);
+            return headings.map(heading => ({ ...heading }));
         }
 
         findDoubaoScroller() {
@@ -441,6 +805,8 @@
         contentToMarkdown,
         contentToText,
         stripChatGptRolePrefix,
+        stableTextFingerprint,
+        chatGptTurnIdentity,
         doubaoElementFingerprint
     };
 })();

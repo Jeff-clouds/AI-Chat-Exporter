@@ -30,6 +30,19 @@
     "service_worker" : "src/core/background.js",
     "type" : "module"
   },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://*.chatgpt.com/*"
+      ],
+      "js": [
+        "src/core/chatgpt-api-bridge.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    }
+  ],
   "icons" : {
     "16" : "public/assets/icon16.png",
     "48" : "public/assets/icon48.png",

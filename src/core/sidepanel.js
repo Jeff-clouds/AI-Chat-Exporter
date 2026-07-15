@@ -3,6 +3,7 @@ let currentTabId = null;
 let currentTabUrl = '';
 let activeContentPort = null;
 let outlineRequestSerial = 0;
+let currentOutlineRequestToken = '';
 let tabReloadTimer = null;
 
 // 全局状态：是否所有目录都已收起
@@ -19,6 +20,60 @@ const DEMO_PLATFORM = /(?:^|[?&])platform=doubao(?:&|$)/.test((window.location &
 const HAS_CHROME_API = typeof chrome !== 'undefined' && Boolean(chrome.runtime && chrome.tabs && chrome.scripting);
 const HAS_LOCAL_STORAGE_API = typeof chrome !== 'undefined' && Boolean(chrome.storage?.local);
 const WELCOME_DISMISSED_KEY = 'aiChatExporterWelcomeDismissed';
+const browserLanguage = typeof navigator === 'undefined' ? 'en' : (navigator.languages?.[0] || navigator.language || 'en');
+const UI_LANGUAGE = browserLanguage.toLowerCase().startsWith('zh') ? 'zh' : 'en';
+const UI_COPY = {
+    zh: {
+        welcomeTipAria: '首次使用提示', welcomeTitle: '从这里开始', welcomeBody: '点击目录可快速定位；底部可免费导出完整对话。',
+        openHelp: '打开使用帮助', closeWelcome: '关闭首次使用提示', learnPro: '了解 Pro', activatePro: '激活 Pro',
+        exportFormat: '导出格式', markdownFree: 'Markdown · 免费', htmlPro: 'HTML · Pro', jsonPro: 'JSON · Pro', txtPro: 'TXT · Pro',
+        collapseAll: '收起所有', expandAll: '展开所有', exportFull: '导出完整对话', exportSelected: '导出已选对话', exporting: '导出中…',
+        helpTitle: '使用帮助', closeHelp: '关闭帮助', quickStartTitle: '快速使用', quickStartBody: '点击目录跳转到对应内容；底部“导出完整对话”可免费保存当前对话为 Markdown。',
+        longChatTitle: '长对话加载', chatgptLoadingHelp: 'ChatGPT 会优先读取完整会话；暂时无法读取时，使用当前已加载的内容。', doubaoLoadingHelp: '豆包不会被扩展自动滚动。继续浏览原对话，目录会随滚动逐步补全。',
+        freeProTitle: '免费版与 Pro', freeProBody: '大纲、定位和完整 Markdown 导出免费。Pro 可勾选重要问题组，并支持 HTML、JSON、TXT 格式。',
+        privacyTitle: '隐私', privacyBody: '对话内容在浏览器本地处理，不上传到开发者服务器。', activateLicense: '激活授权码',
+        loadingChatgpt: '正在读取完整会话…', loadingDoubao: '正在读取当前内容；目录会随滚动补全', loadingOutline: '正在生成对话目录…',
+        readyDoubao: '目录已生成；继续滚动原对话可补全更多内容', readyChatgpt: '目录已生成；长对话会优先读取完整会话', readyOutline: '目录已生成', analyzing: '正在分析页面内容…',
+        unsupportedPage: '当前页面不是支持的 AI 对话页面', injectFailed: '无法注入页面分析脚本，请刷新当前页面后重试',
+        currentSite: '当前网站：{site}', demoSite: '示例页面：{site} 长对话大纲', demoReady: '示例数据：可直接点击、收起目录或切换部分导出',
+        demoPurchase: '示例页面不会打开购买链接', proActive: 'Pro 已激活', activating: '激活中…', activationPrompt: '请输入 Pro 授权码', activationFailed: '激活失败：{error}', unknownError: '未知错误',
+        partialExport: '部分导出', exitSelection: '退出选择模式', extracting: '正在提取当前对话并生成 {format}', exportingSelected: '正在将选中的问题组导出为 {format}',
+        demoFullExport: '示例：将导出 4 组对话', demoSelectedExport: '示例：将导出 {count} 组已选对话', exportFailed: '导出失败：{error}',
+        exportedFull: '已导出 {format}：{count} 组对话', exportedSelected: '已导出 {format}：{count} 组选中对话', selectBeforeExport: '请先勾选要导出的对话',
+        demoLocated: '示例：已定位「{item}」', noOutline: '当前页面未找到可用的大纲内容，请打开你的对话', selectQuestion: '选择此问题组用于局部导出'
+    },
+    en: {
+        welcomeTipAria: 'First-use tip', welcomeTitle: 'Start here', welcomeBody: 'Click an outline item to jump to it. Export the full conversation for free below.',
+        openHelp: 'Open help', closeWelcome: 'Dismiss first-use tip', learnPro: 'Learn about Pro', activatePro: 'Activate Pro',
+        exportFormat: 'Export format', markdownFree: 'Markdown · Free', htmlPro: 'HTML · Pro', jsonPro: 'JSON · Pro', txtPro: 'TXT · Pro',
+        collapseAll: 'Collapse all', expandAll: 'Expand all', exportFull: 'Export full chat', exportSelected: 'Export selected chats', exporting: 'Exporting…',
+        helpTitle: 'Help', closeHelp: 'Close help', quickStartTitle: 'Quick start', quickStartBody: 'Click an outline item to jump to it. “Export full chat” saves the current conversation as Markdown for free.',
+        longChatTitle: 'Long chats', chatgptLoadingHelp: 'ChatGPT first tries to read the complete conversation; when it is unavailable, the extension uses the content already loaded.', doubaoLoadingHelp: 'The extension never scrolls Doubao automatically. Keep browsing the original chat and the outline will fill in as you scroll.',
+        freeProTitle: 'Free and Pro', freeProBody: 'Outlines, navigation, and full Markdown exports are free. Pro lets you select question groups and export HTML, JSON, or TXT.',
+        privacyTitle: 'Privacy', privacyBody: 'Conversation content is processed locally in your browser and is not uploaded to our servers.', activateLicense: 'Activate license',
+        loadingChatgpt: 'Reading the complete conversation…', loadingDoubao: 'Reading the current content; the outline fills in as you scroll', loadingOutline: 'Building conversation outline…',
+        readyDoubao: 'Outline ready; keep scrolling the chat to add more content', readyChatgpt: 'Outline ready; long chats use the complete conversation when available', readyOutline: 'Outline ready', analyzing: 'Analyzing page content…',
+        unsupportedPage: 'This page is not a supported AI chat', injectFailed: 'Could not analyze this page. Refresh the tab and try again.',
+        currentSite: 'Current site: {site}', demoSite: 'Example: {site} long-chat outline', demoReady: 'Example data: click items, collapse the outline, or switch to partial export',
+        demoPurchase: 'The example page does not open the purchase link', proActive: 'Pro is active', activating: 'Activating…', activationPrompt: 'Enter your Pro license code', activationFailed: 'Activation failed: {error}', unknownError: 'Unknown error',
+        partialExport: 'Partial export', exitSelection: 'Exit selection', extracting: 'Extracting the current chat as {format}', exportingSelected: 'Exporting selected question groups as {format}',
+        demoFullExport: 'Example: 4 question groups will be exported', demoSelectedExport: 'Example: {count} selected question groups will be exported', exportFailed: 'Export failed: {error}',
+        exportedFull: 'Exported {format}: {count} question groups', exportedSelected: 'Exported {format}: {count} selected question groups', selectBeforeExport: 'Select at least one chat to export',
+        demoLocated: 'Example: jumped to “{item}”', noOutline: 'No usable outline was found. Open one of your chats and try again.', selectQuestion: 'Select this question group for partial export'
+    }
+};
+function t(key, values = {}) {
+    return (UI_COPY[UI_LANGUAGE][key] || UI_COPY.en[key] || key).replace(/\{(\w+)\}/g, (_, name) => String(values[name] ?? ''));
+}
+function applyStaticTranslations() {
+    document.documentElement.lang = UI_LANGUAGE === 'zh' ? 'zh-CN' : 'en';
+    document.querySelectorAll('[data-i18n]').forEach(node => { node.textContent = t(node.dataset.i18n); });
+    document.querySelectorAll('[data-i18n-aria-label]').forEach(node => { node.setAttribute('aria-label', t(node.dataset.i18nAriaLabel)); });
+}
+function setSiteInfo(text) {
+    const siteInfo = document.getElementById('site-info-text');
+    if (siteInfo) siteInfo.textContent = text;
+}
 const demoQuestion = (index, text) => `问题 ${index}: ${text}`;
 
 // 供 sidepanel-example.html 和 sidepanel.html?demo=1 使用，不读取当前标签页。
@@ -64,22 +119,22 @@ function isSupportedUrl(url = '') {
 
 function setOutlineLoadStatus(url = '') {
     if (url.includes('chatgpt.com')) {
-        setExportStatus('正在读取完整会话...', 'neutral');
+        setExportStatus(t('loadingChatgpt'), 'neutral');
     } else if (url.includes('doubao.com')) {
-        setExportStatus('正在读取当前内容；目录会随滚动补全', 'neutral');
+        setExportStatus(t('loadingDoubao'), 'neutral');
     } else {
-        setExportStatus('正在生成对话目录...', 'neutral');
+        setExportStatus(t('loadingOutline'), 'neutral');
     }
 }
 
 function setOutlineReadyStatus(url = '') {
     if (exportInProgress) return;
     if (url.includes('doubao.com')) {
-        setExportStatus('目录已生成；继续滚动原对话可补全更多内容', 'neutral');
+        setExportStatus(t('readyDoubao'), 'neutral');
     } else if (url.includes('chatgpt.com')) {
-        setExportStatus('目录已生成；长对话会优先读取完整会话', 'neutral');
+        setExportStatus(t('readyChatgpt'), 'neutral');
     } else {
-        setExportStatus('目录已生成', 'neutral');
+        setExportStatus(t('readyOutline'), 'neutral');
     }
 }
 
@@ -134,7 +189,7 @@ function clearOutlineForRequest() {
     collapsedQuestionKeys.clear();
     allCollapsed = false;
     const outlineContainer = document.getElementById('outline');
-    if (outlineContainer) outlineContainer.innerHTML = '<div class="loading-state"><p>正在分析页面内容...</p></div>';
+    if (outlineContainer) outlineContainer.innerHTML = `<div class="loading-state"><p>${t('analyzing')}</p></div>`;
     updateToggleAllButton();
     updatePanelState();
     return outlineContainer;
@@ -146,8 +201,10 @@ function requestCurrentTabOutline() {
     if (tabReloadTimer) clearTimeout(tabReloadTimer);
     tabReloadTimer = null;
     const requestSerial = ++outlineRequestSerial;
+    const requestToken = `${Date.now()}:${requestSerial}:${Math.random().toString(36).slice(2)}`;
+    currentOutlineRequestToken = requestToken;
     chrome.tabs.query({active: true, currentWindow: true}, async (tabs) => {
-        if (tabs[0] && requestSerial === outlineRequestSerial) {
+        if (tabs[0] && requestSerial === outlineRequestSerial && requestToken === currentOutlineRequestToken) {
             disconnectActiveContentPort();
             currentTabId = tabs[0].id;
             currentTabUrl = tabs[0].url || '';
@@ -157,14 +214,18 @@ function requestCurrentTabOutline() {
             try {
                 if (isSupportedUrl(tabs[0].url)) {
                     await injectCurrentContentScripts(currentTabId, tabs[0].url || '');
-                    if (requestSerial !== outlineRequestSerial) return;
+                    if (requestSerial !== outlineRequestSerial || requestToken !== currentOutlineRequestToken) return;
                     connectContentLifecycle(currentTabId);
-                    await chrome.tabs.sendMessage(currentTabId, {type: 'getOutline'});
+                    await chrome.tabs.sendMessage(currentTabId, {
+                        type: 'getOutline',
+                        requestToken,
+                        url: currentTabUrl
+                    });
                 } else {
-                    showErrorMessage(outlineContainer, '当前页面不是支持的 AI 对话页面');
+                    showErrorMessage(outlineContainer, t('unsupportedPage'));
                 }
             } catch (err) {
-                showErrorMessage(outlineContainer, '无法注入页面分析脚本，请刷新当前页面后重试', {
+                showErrorMessage(outlineContainer, t('injectFailed'), {
                     error: err.message
                 });
             }
@@ -174,17 +235,17 @@ function requestCurrentTabOutline() {
 
 // 侧边栏加载时请求大纲
 window.addEventListener('load', () => {
+    applyStaticTranslations();
     // 初始化一键操作按钮
     initializeToggleAllButton();
     initializePanelActionControls();
     initializeHelpControls();
     initializeWelcomeTip();
     if (DEMO_MODE) {
-        const siteInfo = document.getElementById('site-info');
-        if (siteInfo) siteInfo.textContent = `示例页面：${DEMO_PLATFORM === 'chatgpt' ? 'ChatGPT' : '豆包'} 长对话大纲`;
+        setSiteInfo(t('demoSite', { site: DEMO_PLATFORM === 'chatgpt' ? 'ChatGPT' : '豆包' }));
         renderLicenseStatus({ active: true, plan: 'demo' });
         displayOutline(DEMO_OUTLINE);
-        setExportStatus('示例数据：可直接点击、收起目录或切换部分导出', 'success');
+        setExportStatus(t('demoReady'), 'success');
         return;
     }
     requestCurrentTabOutline();
@@ -206,32 +267,50 @@ if (HAS_CHROME_API) {
 if (HAS_CHROME_API && chrome.runtime.onMessage?.addListener) chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // 只处理当前激活标签页返回的消息
     if (sender.tab && sender.tab.id !== currentTabId) return;
+    if (message.type === 'routeChanged') {
+        if (!message.url || !sender.tab || sender.tab.id !== currentTabId) return;
+        // Immediately invalidate the previous route so a late outline cannot flash
+        // after the user has already selected another ChatGPT conversation.
+        // sender.tab.url can lag behind pushState. Only adopt it when both surfaces
+        // agree; either way, invalidate the old token and re-query the active tab.
+        if (!sender.tab.url || message.url === sender.tab.url) currentTabUrl = message.url;
+        outlineRequestSerial++;
+        currentOutlineRequestToken = '';
+        clearOutlineForRequest();
+        setOutlineLoadStatus(currentTabUrl);
+        // Cancelling an injection without scheduling its replacement can strand the panel
+        // with no lifecycle port. Always rebuild against the settled active route.
+        scheduleReloadOutlineRequest();
+        return;
+    }
     if (message.type === 'outline') {
-        const outlineUrl = message.diagnostics?.url || sender.tab?.url || '';
-        if (currentTabUrl && outlineUrl && outlineUrl !== currentTabUrl) return;
+        const outlineUrl = message.diagnostics?.url || '';
+        if (!message.requestToken || message.requestToken !== currentOutlineRequestToken) return;
+        if (!outlineUrl || (currentTabUrl && outlineUrl !== currentTabUrl)) return;
 
         displayOutline(message.outline, message.diagnostics);
         // 显示网站类型
         const url = sender.tab && sender.tab.url ? sender.tab.url : '';
-        const siteInfo = document.getElementById('site-info');
-        if (siteInfo) {
+        if (document.getElementById('site-info-text')) {
+            let site = '';
             if (url.includes('deepseek.com')) {
-                siteInfo.textContent = '当前网站: DeepSeek Chat';
+                site = 'DeepSeek Chat';
             } else if (url.includes('yuanbao.tencent.com')) {
-                siteInfo.textContent = '当前网站: 元宝 AI';
+                site = '元宝 AI';
             } else if (url.includes('chatgpt.com')) {
-                siteInfo.textContent = '当前网站: ChatGPT';
+                site = 'ChatGPT';
             } else if (url.includes('gemini.google.com')) {
-                siteInfo.textContent = '当前网站: Google Gemini';
+                site = 'Google Gemini';
             } else if (url.includes('grok.com')) {
-                siteInfo.textContent = '当前网站: Grok';
+                site = 'Grok';
             } else if (url.includes('doubao.com')) {
-                siteInfo.textContent = '当前网站: 豆包 AI';
+                site = '豆包 AI';
             } else if (url.includes('kimi.com') || url.includes('kimi.moonshot.cn')) {
-                siteInfo.textContent = '当前网站: Kimi 智能助手';
+                site = 'Kimi';
             } else {
-                siteInfo.textContent = '当前网站: 普通网页';
+                site = UI_LANGUAGE === 'zh' ? '普通网页' : 'Web page';
             }
+            setSiteInfo(t('currentSite', { site }));
         }
         setOutlineReadyStatus(url);
     } else if (message.type === 'updateReadingPosition') {
@@ -340,7 +419,7 @@ function initializePanelActionControls() {
 
 function openPurchasePage() {
     if (DEMO_MODE || !HAS_CHROME_API) {
-        setExportStatus('示例页面不会打开购买链接', 'neutral');
+        setExportStatus(t('demoPurchase'), 'neutral');
         return;
     }
     chrome.tabs.create({ url: PURCHASE_URL });
@@ -378,7 +457,7 @@ function initializeHelpControls() {
     activateButton?.addEventListener('click', () => {
         closeHelp();
         if (licenseStatusState.active) {
-            setExportStatus('Pro 已激活', 'success');
+            setExportStatus(t('proActive'), 'success');
             return;
         }
         activateProLicense(proActionButton || activateButton);
@@ -441,38 +520,36 @@ function renderLicenseStatus(status = {}) {
 }
 
 function activateProLicense(triggerButton) {
-    const code = window.prompt('请输入 Pro 授权码');
+    const code = window.prompt(t('activationPrompt'));
     if (!code) return;
 
     triggerButton.disabled = true;
-    triggerButton.textContent = '激活中...';
+    triggerButton.textContent = t('activating');
     chrome.runtime.sendMessage({ action: 'activateLicense', code }, (response) => {
         triggerButton.disabled = false;
 
         if (chrome.runtime.lastError) {
-            setExportStatus(`激活失败：${chrome.runtime.lastError.message}`, 'error');
+            setExportStatus(t('activationFailed', { error: chrome.runtime.lastError.message }), 'error');
             refreshLicenseStatus();
             return;
         }
 
         if (!response || !response.success) {
-            setExportStatus(`激活失败：${response?.error || '未知错误'}`, 'error');
+            setExportStatus(t('activationFailed', { error: response?.error || t('unknownError') }), 'error');
             refreshLicenseStatus();
             return;
         }
 
-        setExportStatus('Pro 已激活', 'success');
+        setExportStatus(t('proActive'), 'success');
         renderLicenseStatus(response.status);
     });
 }
 
 function updatePanelState() {
-    const proLabel = document.getElementById('pro-mode-label');
     const purchaseButton = document.getElementById('pro-purchase-action');
     const proActionButton = document.getElementById('pro-mode-action');
     const bottomExportButton = document.getElementById('bottom-export-btn');
     const formatSelect = document.getElementById('export-format');
-    const formatHint = document.getElementById('export-format-hint');
     const selectedCount = selectedQuestionIndexes.size;
     const isPro = Boolean(licenseStatusState.active);
 
@@ -483,14 +560,6 @@ function updatePanelState() {
         if (!isPro && formatSelect.value !== 'markdown') formatSelect.value = 'markdown';
         formatSelect.disabled = exportInProgress;
     }
-    if (formatHint) {
-        formatHint.textContent = isPro ? 'Pro 已解锁全部格式' : '更多格式为 Pro 功能';
-    }
-
-    if (proLabel) {
-        proLabel.textContent = isPro ? 'Pro · 可选择重要问答导出' : 'Pro · 只导出重要问答';
-    }
-
     if (purchaseButton) {
         purchaseButton.hidden = isPro;
         purchaseButton.disabled = exportInProgress;
@@ -498,27 +567,27 @@ function updatePanelState() {
 
     if (proActionButton) {
         proActionButton.disabled = exportInProgress;
-        proActionButton.classList.remove('activate', 'partial', 'exit');
+        proActionButton.classList.remove('activate', 'partial', 'exit', 'full-row');
         if (!isPro) {
-            proActionButton.textContent = '激活 Pro';
+            proActionButton.textContent = t('activatePro');
             proActionButton.classList.add('activate');
         } else if (selectionMode) {
-            proActionButton.textContent = '退出选择模式';
-            proActionButton.classList.add('exit');
+            proActionButton.textContent = t('exitSelection');
+            proActionButton.classList.add('exit', 'full-row');
         } else {
-            proActionButton.textContent = '部分导出';
-            proActionButton.classList.add('partial');
+            proActionButton.textContent = t('partialExport');
+            proActionButton.classList.add('partial', 'full-row');
         }
     }
 
     if (bottomExportButton) {
         if (exportInProgress) {
             bottomExportButton.disabled = true;
-            bottomExportButton.textContent = '导出中...';
+            bottomExportButton.textContent = t('exporting');
             return;
         }
 
-        bottomExportButton.textContent = selectionMode ? '导出已选对话' : '导出完整对话';
+        bottomExportButton.textContent = selectionMode ? t('exportSelected') : t('exportFull');
         bottomExportButton.disabled = selectionMode && selectedCount === 0;
     }
 }
@@ -540,12 +609,12 @@ function exportFullChat() {
     updatePanelState();
     const format = getExportFormat();
     const formatLabel = getExportFormatLabel();
-    setExportStatus(`正在提取当前对话并生成 ${formatLabel}`);
+    setExportStatus(t('extracting', { format: formatLabel }));
 
     if (DEMO_MODE) {
         exportInProgress = false;
         updatePanelState();
-        setExportStatus('示例：将导出 4 组对话', 'success');
+        setExportStatus(t('demoFullExport'), 'success');
         return;
     }
 
@@ -554,17 +623,16 @@ function exportFullChat() {
         updatePanelState();
 
         if (chrome.runtime.lastError) {
-            setExportStatus(`导出失败：${chrome.runtime.lastError.message}`, 'error');
+            setExportStatus(t('exportFailed', { error: chrome.runtime.lastError.message }), 'error');
             return;
         }
 
         if (!response || !response.success) {
-            setExportStatus(`导出失败：${response?.error || '未知错误'}`, 'error');
+            setExportStatus(t('exportFailed', { error: response?.error || t('unknownError') }), 'error');
             return;
         }
 
-        const sourceLabel = response.passiveIndex ? '已索引消息中的' : '';
-        setExportStatus(`已导出 ${response.formatLabel || formatLabel}：${sourceLabel}${response.rangeLabel || '问题 1 到问题 ' + (response.count || 0)}，共 ${response.count || 0} 组对话`, 'success');
+        setExportStatus(t('exportedFull', { format: response.formatLabel || formatLabel, count: response.count || 0 }), 'success');
     });
 }
 
@@ -573,7 +641,7 @@ function exportSelectedChat() {
 
     const questionIndexes = Array.from(selectedQuestionIndexes).sort((a, b) => a - b);
     if (questionIndexes.length === 0) {
-        setExportStatus('请先勾选要导出的对话', 'error');
+        setExportStatus(t('selectBeforeExport'), 'error');
         updatePanelState();
         return;
     }
@@ -582,12 +650,12 @@ function exportSelectedChat() {
     updatePanelState();
     const format = getExportFormat();
     const formatLabel = getExportFormatLabel();
-    setExportStatus(`正在将选中的问题组导出为 ${formatLabel}`);
+    setExportStatus(t('exportingSelected', { format: formatLabel }));
 
     if (DEMO_MODE) {
         exportInProgress = false;
         updatePanelState();
-        setExportStatus(`示例：将导出 ${questionIndexes.length} 组已选对话`, 'success');
+        setExportStatus(t('demoSelectedExport', { count: questionIndexes.length }), 'success');
         return;
     }
 
@@ -596,17 +664,16 @@ function exportSelectedChat() {
         updatePanelState();
 
         if (chrome.runtime.lastError) {
-            setExportStatus(`导出失败：${chrome.runtime.lastError.message}`, 'error');
+            setExportStatus(t('exportFailed', { error: chrome.runtime.lastError.message }), 'error');
             return;
         }
 
         if (!response || !response.success) {
-            setExportStatus(`导出失败：${response?.error || '未知错误'}`, 'error');
+            setExportStatus(t('exportFailed', { error: response?.error || t('unknownError') }), 'error');
             return;
         }
 
-        const sourceLabel = response.passiveIndex ? '已索引消息中的 ' : '';
-        setExportStatus(`已导出 ${response.formatLabel || formatLabel}：${sourceLabel}${response.count || 0} 组选中对话，${response.rangeLabel || '问题范围未知'}`, 'success');
+        setExportStatus(t('exportedSelected', { format: response.formatLabel || formatLabel, count: response.count || 0 }), 'success');
     });
 }
 
@@ -621,7 +688,7 @@ function scrollToOutlineItem(item) {
         document.querySelectorAll('.outline-item').forEach(node => node.classList.remove('current-reading'));
         const target = document.querySelector(`.outline-item[data-element-id="${item.id}"]`);
         if (target) target.classList.add('current-reading');
-        setExportStatus(`示例：已定位「${item.text}」`, 'neutral');
+        setExportStatus(t('demoLocated', { item: item.text }), 'neutral');
         return;
     }
 
@@ -643,7 +710,7 @@ function displayOutline(outlineData, diagnostics) {
     if (!outlineData || outlineData.length === 0) {
         selectedQuestionIndexes.clear();
         updatePanelState();
-        showErrorMessage(outlineContainer, '当前页面未找到可用的大纲内容，请打开你的对话', diagnostics);
+        showErrorMessage(outlineContainer, t('noOutline'), diagnostics);
         return;
     }
 
@@ -763,7 +830,7 @@ function renderQuestionGroup(question, answers, container) {
     checkbox.type = 'checkbox';
     checkbox.className = `selection-checkbox${selectionMode ? '' : ' hidden'}`;
     checkbox.checked = questionIndex !== null && selectedQuestionIndexes.has(questionIndex);
-    checkbox.setAttribute('aria-label', '选择此问题组用于局部导出');
+    checkbox.setAttribute('aria-label', t('selectQuestion'));
     checkbox.addEventListener('click', (e) => {
         e.stopPropagation();
         if (questionIndex === null) return;
@@ -897,11 +964,11 @@ function updateToggleAllButton() {
     if (allCollapsed) {
         toggleAllBtn.classList.add('collapsed');
         if (icon) icon.textContent = '▶';
-        if (text) text.textContent = '展开所有';
+        if (text) text.textContent = t('expandAll');
     } else {
         toggleAllBtn.classList.remove('collapsed');
         if (icon) icon.textContent = '▼';
-        if (text) text.textContent = '收起所有';
+        if (text) text.textContent = t('collapseAll');
     }
 }
 

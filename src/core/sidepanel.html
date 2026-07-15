@@ -55,7 +55,8 @@
         }
 
         body {
-            font-family: 'Söhne', 'Segoe UI', 'Apple Color Emoji', 'Noto Sans', Helvetica, Arial, sans-serif;
+            /* Keep CJK and Latin glyphs in one coordinated system font stack. */
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Segoe UI", Arial, sans-serif;
             margin: 0;
             padding: 16px;
             padding-bottom: 84px;
@@ -64,19 +65,10 @@
             transition: background-color 0.3s ease, color 0.3s ease;
         }
 
-        #panel-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            margin-bottom: 10px;
-        }
-
-        #panel-title {
-            color: var(--text-primary);
-            font-size: 14px;
-            font-weight: 700;
-            line-height: 1.2;
+        button,
+        select,
+        input {
+            font-family: inherit;
         }
 
         #help-button,
@@ -108,6 +100,10 @@
         }
 
         #site-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
             padding: 10px 14px;
             margin-bottom: 10px;
             background-color: var(--bg-secondary);
@@ -115,6 +111,13 @@
             font-size: 13px;
             color: var(--text-secondary);
             border: 1px solid var(--border-color);
+        }
+
+        #site-info-text {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         #welcome-tip {
@@ -154,42 +157,36 @@
 
         #pro-action-row {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) auto auto;
-            gap: 12px;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
             align-items: center;
-            margin-bottom: 16px;
-        }
-
-        #pro-mode-label {
-            color: var(--text-secondary);
-            font-size: 13px;
-            font-weight: 500;
-            line-height: 1.35;
-            min-width: 0;
+            margin-bottom: 12px;
         }
 
         #export-format-row {
             display: flex;
             align-items: center;
             gap: 8px;
-            margin: -4px 0 14px;
+            margin: 0 0 14px;
             color: var(--text-secondary);
             font-size: 12px;
         }
 
+        #export-format-row label {
+            flex: 0 0 auto;
+            white-space: nowrap;
+        }
+
         #export-format {
-            min-width: 118px;
+            min-width: 0;
+            width: 100%;
+            flex: 1 1 auto;
             padding: 7px 28px 7px 9px;
             border: 1px solid var(--border-color);
             border-radius: 7px;
             background: var(--bg-secondary);
             color: var(--text-primary);
             font: inherit;
-        }
-
-        #export-format-hint {
-            min-width: 0;
-            color: var(--text-tertiary);
         }
 
         #help-drawer[hidden],
@@ -309,8 +306,13 @@
         }
 
         .pro-action-button {
-            min-width: 86px;
+            min-width: 0;
+            width: 100%;
             white-space: nowrap;
+        }
+
+        .pro-action-button.full-row {
+            grid-column: 1 / -1;
         }
 
         .pro-action-button:hover,
@@ -489,7 +491,6 @@
             font-weight: 400;
             font-size: 13px;
             padding: 12px 12px;
-            font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
             letter-spacing: 0;
             word-spacing: 0;
             text-autospace: no-autospace;
@@ -499,8 +500,6 @@
             min-width: 0;
             line-height: inherit;
             word-break: break-word;
-            /* 不使用全局 Söhne：它没有中文字符，会与回退中文字体混排并造成基线不齐。 */
-            font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
             letter-spacing: 0;
             word-spacing: 0;
             text-autospace: no-autospace;
@@ -739,68 +738,65 @@
     </style>
 </head>
 <body>
-    <header id="panel-header">
-        <div id="panel-title">AI Chat Exporter</div>
-        <button id="help-button" type="button" aria-label="打开使用帮助" aria-controls="help-drawer" aria-expanded="false">?</button>
-    </header>
-    <div id="site-info"></div>
-    <section id="welcome-tip" hidden aria-label="首次使用提示">
-        <strong>从这里开始</strong>
-        点击目录可快速定位；底部可免费导出完整对话。
-        <button id="welcome-dismiss" type="button" aria-label="关闭首次使用提示">×</button>
+    <div id="site-info">
+        <span id="site-info-text"></span>
+        <button id="help-button" type="button" aria-label="打开使用帮助" data-i18n-aria-label="openHelp" aria-controls="help-drawer" aria-expanded="false">?</button>
+    </div>
+    <section id="welcome-tip" hidden aria-label="首次使用提示" data-i18n-aria-label="welcomeTipAria">
+        <strong data-i18n="welcomeTitle">从这里开始</strong>
+        <span data-i18n="welcomeBody">点击目录可快速定位；底部可免费导出完整对话。</span>
+        <button id="welcome-dismiss" type="button" aria-label="关闭首次使用提示" data-i18n-aria-label="closeWelcome">×</button>
     </section>
     <div id="pro-action-row">
-        <div id="pro-mode-label">Pro · 只导出重要问答</div>
-        <button id="pro-purchase-action" class="pro-action-button purchase">了解 Pro</button>
-        <button id="pro-mode-action" class="pro-action-button activate">激活 Pro</button>
+        <button id="pro-purchase-action" class="pro-action-button purchase" data-i18n="learnPro">了解 Pro</button>
+        <button id="pro-mode-action" class="pro-action-button activate" data-i18n="activatePro">激活 Pro</button>
     </div>
     <div id="export-format-row">
-        <label for="export-format">导出格式</label>
-        <select id="export-format" aria-describedby="export-format-hint">
-            <option value="markdown">Markdown · 免费</option>
-            <option value="html" data-pro-format>HTML · Pro</option>
-            <option value="json" data-pro-format>JSON · Pro</option>
-            <option value="txt" data-pro-format>TXT · Pro</option>
+        <label for="export-format" data-i18n="exportFormat">导出格式</label>
+        <select id="export-format">
+            <option value="markdown" data-i18n="markdownFree">Markdown · 免费</option>
+            <option value="html" data-pro-format data-i18n="htmlPro">HTML · Pro</option>
+            <option value="json" data-pro-format data-i18n="jsonPro">JSON · Pro</option>
+            <option value="txt" data-pro-format data-i18n="txtPro">TXT · Pro</option>
         </select>
-        <span id="export-format-hint">更多格式为 Pro 功能</span>
     </div>
     <div id="export-status" aria-live="polite"></div>
     <div id="outline"></div>
     <div id="bottom-actions">
         <button id="toggle-all-btn">
             <span class="icon">▼</span>
-            <span class="text">收起所有</span>
+            <span class="text" data-i18n="collapseAll">收起所有</span>
         </button>
-        <button id="bottom-export-btn" class="primary-action">导出完整对话</button>
+        <button id="bottom-export-btn" class="primary-action" data-i18n="exportFull">导出完整对话</button>
     </div>
     <div id="help-drawer" hidden>
         <section id="help-panel" role="dialog" aria-modal="true" aria-labelledby="help-title">
             <header class="help-panel-header">
-                <h2 id="help-title">使用帮助</h2>
-                <button id="help-close-button" type="button" aria-label="关闭帮助">×</button>
+                <h2 id="help-title" data-i18n="helpTitle">使用帮助</h2>
+                <button id="help-close-button" type="button" aria-label="关闭帮助" data-i18n-aria-label="closeHelp">×</button>
             </header>
             <section class="help-section">
-                <h3>快速使用</h3>
-                <p>点击目录跳转到对应内容；底部“导出完整对话”可免费保存当前对话为 Markdown。</p>
+                <h3 data-i18n="quickStartTitle">快速使用</h3>
+                <p data-i18n="quickStartBody">点击目录跳转到对应内容；底部“导出完整对话”可免费保存当前对话为 Markdown。</p>
             </section>
             <section class="help-section">
-                <h3>长对话加载</h3>
+                <h3 data-i18n="longChatTitle">长对话加载</h3>
                 <ul>
-                    <li>ChatGPT 会优先读取完整会话；暂时无法读取时，使用当前已加载的内容。</li>
-                    <li>豆包不会被扩展自动滚动。继续浏览原对话，目录会随滚动逐步补全。</li>
+                    <li data-i18n="chatgptLoadingHelp">ChatGPT 会优先读取完整会话；暂时无法读取时，使用当前已加载的内容。</li>
+                    <li data-i18n="doubaoLoadingHelp">豆包不会被扩展自动滚动。继续浏览原对话，目录会随滚动逐步补全。</li>
                 </ul>
             </section>
             <section class="help-section">
-                <h3>免费版与 Pro</h3>
-                <p>大纲、定位和完整 Markdown 导出免费。Pro 可勾选重要问题组，并支持 HTML、JSON、TXT 格式。</p>
+                <h3 data-i18n="freeProTitle">免费版与 Pro</h3>
+                <p data-i18n="freeProBody">大纲、定位和完整 Markdown 导出免费。Pro 可勾选重要问题组，并支持 HTML、JSON、TXT 格式。</p>
             </section>
             <section class="help-section">
-                <h3>隐私</h3>
-                <p>对话内容在浏览器本地处理，不上传到开发者服务器。</p>
+                <h3 data-i18n="privacyTitle">隐私</h3>
+                <p data-i18n="privacyBody">对话内容在浏览器本地处理，不上传到开发者服务器。</p>
             </section>
             <div class="help-actions">
-                <button id="help-purchase-action" type="button">了解 Pro</button>
-                <button id="help-activate-action" type="button">激活授权码</button>
+                <button id="help-purchase-action" type="button" data-i18n="learnPro">了解 Pro</button>
+                <button id="help-activate-action" type="button" data-i18n="activateLicense">激活授权码</button>
             </div>
         </section>
     </div>

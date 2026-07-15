@@ -129,10 +129,10 @@ window.Pipeline = class Pipeline {
         if (this.platformId !== 'CHATGPT' && this.platformId !== 'DOUBAO') return [];
         const index = window.AI_CHAT_CONVERSATION_INDEX;
         if (!index) return [];
-        // ChatGPT 仅在侧栏打开时读取一次完整会话；没有持续 observer，也不会随 DOM 变化反复请求。
-        // bridge 会合并同会话并发请求，并只传递当前分支的精简消息给隔离上下文。
+        // ChatGPT 只在侧栏生命周期内观察会话容器；滚动只做有界 DOM 增量扫描，
+        // bridge 合并 API 请求并以精简当前分支异步升级目录。
         if (this.platformId === 'CHATGPT') {
-            await index.refresh({ observe: false });
+            await index.refresh({ observe: true, awaitApi: false });
         } else {
             // 豆包被动索引：目录刷新绝不驱动页面滚动；只读取用户浏览时挂载的消息。
             await index.refresh();
@@ -143,9 +143,11 @@ window.Pipeline = class Pipeline {
         const outline = [];
         let questionIndex = 0;
         let pendingQuestion = null;
+        let pendingAnswerKeys = new Set();
         messages.forEach(message => {
             if (message.role === 'user') {
                 pendingQuestion = message;
+                pendingAnswerKeys = new Set();
                 const questionId = `cn-q-${this._safeId(message.id)}`;
                 const questionText = this._stripChatGptRolePrefix(message.text, 'user');
                 const text = questionText.length > 50 ? `${questionText.slice(0, 50)}...` : questionText;
@@ -166,10 +168,13 @@ window.Pipeline = class Pipeline {
             if (message.role !== 'assistant' || !pendingQuestion) return;
             const markdownHeadings = this._indexedHeadings(message).map((heading, headingIndex) => ({ ...heading, headingIndex }));
             const domHeadings = this.platformId === 'CHATGPT'
-                ? index.getChatGptDomHeadings(message.turnNumber)
+                ? index.getChatGptDomHeadings(message.turnNumber, message.id)
                 : [];
             const headings = this._mergeIndexedHeadings(domHeadings, markdownHeadings);
             headings.forEach((heading, headingIndex) => {
+                const answerKey = `${heading.level}:${this._stripChatGptRolePrefix(heading.text, 'assistant')}`;
+                if (pendingAnswerKeys.has(answerKey)) return;
+                pendingAnswerKeys.add(answerKey);
                 outline.push({
                     text: heading.text,
                     level: heading.level,
@@ -184,7 +189,10 @@ window.Pipeline = class Pipeline {
                     }
                 });
             });
-            pendingQuestion = null;
+            // A current ChatGPT assistant turn can contain a progress/commentary
+            // message followed by the final answer. Keep the question active until
+            // the next user message so the first heading-less assistant record does
+            // not consume the answer slot.
         });
         return outline;
     }

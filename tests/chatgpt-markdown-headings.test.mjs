@@ -39,10 +39,11 @@ assert.deepEqual(Array.from(headings, heading => ({ text: heading.text, level: h
 context.window.AI_CHAT_CONVERSATION_INDEX = {
   refresh: async () => {},
   getMessages: () => [
-    { id: 'u1', role: 'user', text: '你说：问题', turnNumber: 1 },
-    { id: 'a1', role: 'assistant', text: 'plain API response', markdown: 'plain API response', turnNumber: 2 }
+    { id: 'u1', role: 'user', text: '你说：问题', turnNumber: 31 },
+    { id: 'a-progress', role: 'assistant', text: '正在查找资料', markdown: '正在查找资料', turnNumber: 32 },
+    { id: 'a-final', role: 'assistant', text: 'plain API response', markdown: 'plain API response', turnNumber: 32 }
   ],
-  getChatGptDomHeadings: turnNumber => turnNumber === 2
+  getChatGptDomHeadings: (_turnNumber, messageId) => messageId === 'a-final'
     ? [{ text: 'DOM 中的一级标题', level: 'h1', headingIndex: 0 }, { text: 'DOM 中的二级标题', level: 'h2', headingIndex: 1 }]
     : []
 };

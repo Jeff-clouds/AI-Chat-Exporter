@@ -86,8 +86,8 @@ assert.match(backgroundSource, /handleExportSelectedChat\(request\.questionIndex
 
 const sidepanelSource = fs.readFileSync(new URL('../src/core/sidepanel.js', import.meta.url), 'utf8');
 const sidepanelHtml = fs.readFileSync(new URL('../src/core/sidepanel.html', import.meta.url), 'utf8');
-assert.match(sidepanelHtml, /option value="markdown">Markdown · 免费/);
-assert.match(sidepanelHtml, /option value="html" data-pro-format>HTML · Pro/);
+assert.match(sidepanelHtml, /option value="markdown"[^>]*>Markdown · 免费/);
+assert.match(sidepanelHtml, /option value="html"[^>]*data-pro-format[^>]*>HTML · Pro/);
 assert.match(sidepanelSource, /option\.disabled = !isPro/);
 assert.match(sidepanelSource, /action: 'exportFullChat', format/);
 assert.match(sidepanelSource, /action: 'exportSelectedChat', questionIndexes, format/);
