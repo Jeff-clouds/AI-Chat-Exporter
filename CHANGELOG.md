@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.3] - 2026-07-15
+
+### Fixed
+
+- Bind every ChatGPT outline request and response to the active tab URL and a unique request token so a late result from the previous conversation cannot overwrite the current outline.
+- Detect ChatGPT single-page navigation through `pushState`, `replaceState`, `popstate`, and a lightweight fallback watcher; clear stale outline state immediately and queue one follow-up refresh when extraction is already running.
+- Load the compact ChatGPT conversation bridge at `document_start`, isolate requests by route generation, and keep the API branch index synchronized with the mounted conversation headings.
+- Preserve heading ownership by stable message IDs while retaining bounded DOM fallback data for the currently mounted ChatGPT turns.
+
+### Changed
+
+- Use a shared incremental conversation index for outline navigation and exports instead of repeatedly scanning the entire rendered conversation.
+- Add Chinese and English side-panel copy selected from the browser language, including clearer long-chat loading and export states.
+- Add route-isolation, performance-regression, Markdown-heading, export-format, conversation-index, and side-panel contract coverage.
+
 ## [2.1.2] - 2026-07-14
 
 ### Fixed
