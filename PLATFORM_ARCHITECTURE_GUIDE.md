@@ -1,6 +1,6 @@
 # AI Chat Exporter 寄生平台架构与开发前置指南
 
-> 状态：七个平台首期架构卡完成；ChatGPT、豆包有深度架构，其他五个平台以 DOM 合约与验证边界为主
+> 状态：七个平台首期架构卡完成；宿主事实与当前实现分层记录
 > 代码基线：v2.1.3 / commit 8d69d53
 > 最近核验：2026-07-16
 > 适用范围：平台适配、目录、跳转、导出、性能、路由、缓存和侧边栏生命周期相关改动
@@ -9,7 +9,7 @@
 
 AI Chat Exporter 不是拥有页面和数据的独立产品，而是寄生在第三方 AI Web App 上的浏览器扩展。宿主平台可以随时改变路由、DOM、网络请求、虚拟列表、流式渲染和安全策略。插件代码正确，不代表它符合当前平台现实。
 
-任何涉及 ChatGPT 或豆包的开发，开始前必须回答：
+任何平台相关开发，开始前必须回答：
 
 1. 当前会话的唯一身份是什么？
 2. 当前 DOM 是完整会话，还是虚拟列表的一个挂载窗口？
@@ -23,10 +23,10 @@ AI Chat Exporter 不是拥有页面和数据的独立产品，而是寄生在第
 
 ### 不可破坏的七条原则
 
-- DOM 是视图窗口，不是会话数据库。
+- 对已确认存在虚拟化或局部挂载的平台，当前 DOM 只能视为可见窗口；未经长会话滚动验证，不得把 DOM 当作完整会话数据源。
 - route identity 是数据隔离边界，不是 UI 细节。
 - 稳定 message ID 优先于 turn 序号，turn 序号优先于文本和索引。
-- ChatGPT 的完整文本与页面标题来自不同数据面，必须有控制地合并。
+- 在已审计 ChatGPT 样本中，运行时会话响应与当前渲染 DOM 提供的信息维度不同；若同时使用，必须按会话和消息身份校验后合并。
 - 豆包不得为了“完整”而自动滚动用户页面；完整性必须诚实标注。
 - Direct DOM 平台的 fallback 非空不等于适配成功，必须验证节点角色和问答边界。
 - 侧边栏未使用时，不应持续给宿主页面制造观察、扫描或网络负担。
@@ -35,10 +35,15 @@ AI Chat Exporter 不是拥有页面和数据的独立产品，而是寄生在第
 
 平台内部 Web App 架构通常没有官方文档。文档必须区分证据，防止把推断写成事实。
 
+本文件同时包含两类内容，但两者不得互相替代：
+
+- 宿主平台事实：只能来自不依赖本仓库配置的现场观察、平台公开资料或可交叉验证的数据行为。
+- 当前实现事实：描述本项目现在如何读取、归组、缓存和降级，只能用于发现实现差距，不能反推宿主必然如此。
+
 | 等级 | 含义 | 可以支持什么结论 |
 |---|---|---|
 | A | Chrome / 平台官方文档 | 扩展执行世界、注入时机、公开分享等稳定边界 |
-| B | 本项目真实登录态标签现场审计 | 当前 DOM、路由、挂载窗口、选择器和实际行为 |
+| B | 不依赖仓库配置的真实登录态标签现场审计 | 特定日期与样本下的 DOM、路由、挂载窗口和可观察行为；不能外推为长期稳定合约 |
 | C | 独立开源实现或历史审计交叉佐证 | 选择器候选、内部端点候选、漂移趋势 |
 | D | 从代码或短页面推断 | 只能写“待现场验证”，不能写成平台事实 |
 
@@ -47,6 +52,8 @@ AI Chat Exporter 不是拥有页面和数据的独立产品，而是寄生在第
 ~~~text
 结论：
 证据等级：
+审计模式：宿主盲审 / 实现探针
+是否读取本仓库配置：是 / 否
 验证日期：
 验证 URL 类型：普通会话 / 项目会话 / 分享页
 长会话规模：
@@ -56,7 +63,21 @@ AI Chat Exporter 不是拥有页面和数据的独立产品，而是寄生在第
 
 公共模型 API 不等于网页历史会话 API。OpenAI、火山引擎等开发者 API 的能力不能直接证明 ChatGPT 或豆包网页内部如何存储和加载历史。
 
-## 2. 全局系统架构
+### 1.1 强制盲审顺序
+
+平台审计必须按以下顺序执行，禁止拿现有 selector 寻找支持它的证据：
+
+1. 不读取本仓库平台配置，先记录 URL、可见轮次、滚动容器和页面状态。
+2. 从宿主自身的语义、层级和交互行为识别 user / assistant / thinking / tool 边界。
+3. 通过流式、滚动和切会话观察，确定节点是复用、追加还是回收。
+4. 固化“宿主模型”及其证据等级。
+5. 最后才加载当前 selector 与实现，比较命中、遗漏、误判和重复。
+
+如果审计从当前 selector 开始，所得结果只能写成“实现探针结果”，不得升级成宿主平台事实。
+
+## 2. 本插件与宿主平台的交互边界
+
+本节描述本插件的当前或目标架构，不代表第三方平台内部架构。
 
 ### 2.1 执行世界与模块边界
 
@@ -104,7 +125,7 @@ Chrome 官方边界：
 
 | 数据面 | 优势 | 缺点 | 正确用途 |
 |---|---|---|---|
-| 宿主会话数据 | 完整文本、顺序、分支关系 | 内部接口高漂移，可能失败或超时 | ChatGPT 当前分支主数据 |
+| 已捕获的宿主会话响应 | 特定 ChatGPT 样本中包含当前分支文本、顺序和映射关系 | 非公开、高漂移，可能失败或超时 | 经 route 与 conversationId 校验后的当前分支候选数据 |
 | 当前挂载 DOM | 真实 HTML、标题、可定位节点、最新流式内容 | 虚拟化后不完整，路由切换时可能残留旧节点 | 标题、跳转、增量补充 |
 | 扩展本地索引 | 跨挂载窗口保留稳定记录 | 必须正确隔离会话和生命周期 | 目录、导出、去重、顺序 |
 
@@ -120,7 +141,7 @@ Chrome 官方边界：
 滚动到底 -> 读取当前 DOM -> 假设得到完整会话
 ~~~
 
-## 3. 统一身份与状态模型
+## 3. 由宿主约束推导的身份与状态模型
 
 ### 3.1 路由隔离键
 
@@ -143,7 +164,7 @@ requestToken
 | ConversationIndex | conversationId、routeGeneration、pending URL |
 | ChatGPT MAIN bridge | conversationId、routeEpoch、requestRouteUrl |
 
-只检查其中一个不够。React pushState 后，sender.tab.url、location.href、旧 DOM 和旧请求可能短时间不同步。
+只检查其中一个不够。SPA 路由切换后，标签页 URL、页面 location、过渡 DOM 和异步响应可能短时间不同步。
 
 实现状态必须单独核对：ChatGPT 已有 conversationId 与 generation/epoch；豆包 v2.1.3 仍按完整 `location.href` 隔离，尚未规范化为 `/chat/{id}` 会话键。表中的字段是跨平台目标约束，不代表每个平台已经全部实现。
 
@@ -175,18 +196,18 @@ sequence        本地首次观察顺序
 
 ## 4. ChatGPT 平台架构卡
 
-### 4.1 已证实的平台现实
+### 4.1 带日期和样本范围的平台现场事实
 
 | 项目 | 当前结论 | 证据 |
 |---|---|---|
 | 会话路由 | 普通会话含 /c/{conversationId}；项目/GPT 页面也可在嵌套路径中提取 /c/{id} | 真实标签 + currentConversationId |
-| 完整分支数据 | 登录态页面会请求 /backend-api/conversation/{id}，响应含 mapping 与 current_node | 本项目运行时与第三方实现交叉佐证 |
+| 非公开运行时响应 | 在已审计样本中观察到 `/backend-api/conversation/{id}` 响应含 mapping 与 current_node | B+C：项目运行时与第三方实现交叉佐证；不构成稳定接口承诺 |
 | 长会话 DOM | 只挂载一个 turn 窗口，不代表全会话 | 2026-07-16 真实 Chrome |
 | turn 容器 | SECTION[data-testid=conversation-turn-N][data-turn] | 2026-07-16 真实 Chrome |
 | 稳定消息 ID | data-message-id 位于 turn 内部消息节点，不一定在 SECTION 上 | 2026-07-16 真实 Chrome |
-| 一个回答 turn | 可能含进度 / commentary 与最终回答多个 message-id | 真实 Chrome + 当前代码注释 |
-| 标题 | 最可靠的是当前挂载回答 DOM 的 H1-H6；API Markdown 可作为补充 | 本项目回归与现场 |
-| 流式 | 同一 assistant turn 会持续变更，不能把每次 mutation 当新回答 | 平台行为 + observer 设计 |
+| 一个回答 turn | 一个 SECTION 在该样本中可包含多个 message-id | 2026-07-16 真实 Chrome |
+| 标题 | 当前挂载回答 DOM 中可直接观察到 H1-H6；其他标题来源的覆盖范围需分别验证 | 2026-07-16 真实 Chrome + 实现审计 |
+| 流式 | 当前实现假设同一 assistant turn 会持续变更 | D：本轮未完成独立流式现场记录 |
 
 2026-07-16 现场样本：
 
@@ -206,6 +227,8 @@ data-message-id：7
 2. assistant SECTION 数量与 message-id 数量不相等，一个回答区域可能包含多个消息记录。
 
 ### 4.2 ChatGPT 数据流
+
+以下是基于当前现场证据形成的适配方案，不是 ChatGPT 官方数据契约。
 
 ~~~mermaid
 sequenceDiagram
@@ -248,7 +271,7 @@ DOM 负责：
 - 同一稳定 message ID 下，API Markdown 不得被扁平 DOM text 覆盖。
 - DOM heading 优先用于页面目录，API Markdown heading 用于补全。
 - 用 level + normalized text 去重。
-- API 记录是 canonical，但不能删除 API 缓存之后新挂载的 DOM-only turn。
+- 当响应的 conversationId、route 和 current branch 均校验一致时，可将其作为当前分支文本的优先来源；不可据此推断接口长期稳定或包含全部历史分支，也不能删除响应之后新挂载的 DOM-only turn。
 - turnNumber 只用于顺序和 fallback；跨会话绝不能只按 turnNumber 复用标题。
 
 ### 4.4 ChatGPT 状态机
@@ -317,13 +340,13 @@ RouteReset 必须：
 
 ## 5. 豆包平台架构卡
 
-### 5.1 已证实的平台现实
+### 5.1 现场事实、历史证据与当前实现边界
 
 | 项目 | 当前结论 | 证据 |
 |---|---|---|
 | 会话路由 | /chat/{numericConversationId} | 固定审计链接与真实页面 |
-| 虚拟列表 | 页面使用虚拟滚动，滚动会挂载和回收消息窗口 | 2026-06 登录态审计与本项目历史 |
-| 候选稳定身份 | data-message-id 是当前最有价值的候选消息身份，但不自动证明节点角色 | 登录态审计与当前代码 |
+| 虚拟列表 | 2026-06 历史样本观察到虚拟滚动和挂载窗口变化 | B：历史登录态样本；不作为 2026-07 当前 DOM 合约 |
+| 候选消息身份 | 历史样本与实现探针均观察到 data-message-id；不自动证明节点角色或长期稳定 | B+D：历史现场 + 当前实现探针 |
 | 被动索引主路径 | 扫描所有 data-message-id，再用后代用户气泡 class 判断 user；未命中即暂按 assistant | conversation-index.js；存在 system/tool/card 误分类风险 |
 | DOM fallback | send-msg-bubble、flow-markdown-body、conversation-page-message-host 等 | selector 配置与历史审计；不是主索引的扫描边界 |
 | 完整会话 API | 尚无可重复、安全依赖的证据 | 待现场 Network/runtime 复验 |
@@ -332,7 +355,7 @@ RouteReset 必须：
 
 历史现场证据：
 
-- 2026-06-19：登录态测试通过，但出现 4 个问题节点、2 个回答节点，只提取出 2 组会话。这已经说明按 question/answer 数量配对不可靠。
+- 2026-06-19：登录态测试出现 4 个问题候选、2 个回答候选，只提取出 2 组会话。该样本说明候选数量与最终轮次不一致，不能仅凭 selector 数量或数组位置证明配对正确。
 - 2026-06-25：选择器审计通过。
 - 2026-07-16：Chrome 对测试会话的页面读取连续超时。
 - 2026-07-16：Codex 内置浏览器成功打开登录态 `/chat/33289229921282?channel=google_sem`，标题为“主对话 - 豆包”；截图确认回答正文已经渲染，人工向上滚动可看到同一回答的更早段落。
@@ -340,7 +363,9 @@ RouteReset 必须：
 
 因此，本次可以确认“真实会话已加载、回答可滚动”，但不能把历史 selector 重新升级为 2026-07-16 的现场 DOM 合约。结构化读取超时是“重页面自动化验证边界”，不是“豆包 DOM 已失效”或“某个 selector 已失效”的证据。
 
-### 5.2 豆包数据流
+### 5.2 基于豆包现场约束的当前适配数据流
+
+本节的 observer、节流、fingerprint、缓存和按需注入均属于当前实现，不是豆包宿主机制。
 
 ~~~mermaid
 flowchart LR
@@ -460,7 +485,7 @@ role 分类与嵌套 / 重复 message-id
 fallback 是否携带覆盖范围标记
 ~~~
 
-## 6. 其他五个平台的共享 DOM 架构
+## 6. 其他五个平台的当前 DOM 适配方式与共同验证边界
 
 DeepSeek、元宝、Gemini、Grok、Kimi 在 v2.1.3 都不进入 ConversationIndex，也没有已接入的平台历史数据源。当前实现是“侧栏打开后按需注入，直接读取当时挂载的 DOM”。
 
@@ -503,24 +528,24 @@ flowchart LR
 
 | 项目 | 当前结论 | 证据等级 |
 |---|---|---|
-| 观察到的路由 | `/a/chat/s/{uuid}` | B：2026-06 固定登录态链接；不是官方承诺 |
+| 观察到的路由 | `/a/chat/s/{uuid}` | B：2026-07-16 用户打开的真实标签；不是官方承诺 |
 | 当前目录路径 | flat DOM：hash class question / answer，thinking 标题过滤 | D：代码事实 |
 | 当前导出路径 | 数组索引配对；另读 `.ds-markdown`、thinking、search、code block | D：代码事实 |
 | 历史短会话 | 3 question、3 answer、6 thinking、34 heading；导出模拟 3 轮通过 | B：2026-06-25 私有审计 |
-| 2026-07-16 Chrome | 用户打开的真实会话含 3 轮；`.ds-message=6`、answer=3、thinking=3、final assistant markdown=3 | B：真实登录态现场 |
-| 虚拟列表 | 回答与问题位于 `.ds-virtual-list-visible-items`；本样本 3 轮均已挂载 | B：现场；不证明更长会话完整 |
+| 2026-07-16 实现探针 | `.ds-message=6`、当前 answer selector=3、thinking=3、final assistant markdown=3；当前 question 并集=13 | B：真实登录态页面上的实现探针；不是独立轮次审计 |
+| 虚拟列表候选 | 页面存在 `.ds-virtual-list-visible-items`，但本轮未在脱离仓库 selector 的条件下完成滚动回收审计 | B：结构存在；回收行为未知 |
 
 主要风险：
 
-- 当前 question selector 已确认过度匹配：`._9663006=3`，但并集中的 `._72b6158=10` 个额外 UI 节点，最终 question 总数为 13，而真实 answer 只有 3。
-- answer hash selector 当前命中 3 个轮次容器；每个容器包含 1 个 thinking、2 个 `.ds-markdown`，其中 `.ds-assistant-message-main-content` 是最终回答语义 class。
+- 当前 question selector 的两个分支分别命中 `._9663006=3`、`._72b6158=10`，并集为 13；第二组节点的真实角色尚未经过独立盲审，因此只能确认“候选数异常”，不能直接写成“10 个 UI 误命中”。
+- 当前 answer hash selector 命中 3 个候选容器；每个候选容器包含 1 个 thinking、2 个 `.ds-markdown`，其中一个带 `.ds-assistant-message-main-content`，只能视为最终正文候选。这些是当前页面结构和实现探针结果，不单独证明完整轮次模型。
 - question、answer、title、search 仍大量依赖构建 hash class，漂移风险最高。
 - `deepseek.ai` 被代码声明支持，但当前没有对应现场证据。
 - 目录按 DOM 区间归组，导出按数组索引归组；额外工具卡、隐藏节点或未完成回答会造成不一致。
 - `removeThinking` 只解决目录标题过滤，不证明 thinking、搜索正文与最终回答不会重复或遗漏。
 - selector 失效后的宽泛 fallback 可能比“空目录”更危险，因为它会产生看似正常但角色错误的结果。
 
-修复优先级：移除或收紧 `._72b6158`，以真实问题轮次边界替代宽泛 hash 并集；增加“3 个真实问题不得产生 13 个目录问题”的 fixture。
+后续顺序：先做不加载仓库配置的轮次盲审，确认真实 user 容器；再决定移除、收紧或保留 `._72b6158`。回归应断言盲审轮次与实现结果一致，而不是预设真实问题数为 3。
 
 必须验收：正常回答、深度思考、联网搜索、代码块；冷打开；A -> B -> A；重复相同问题；流式标题变化；thinking 不进目录且不重复进入正文；长会话首 / 中 / 末；目录与完整/局部导出逐轮对照。
 
@@ -534,24 +559,24 @@ flowchart LR
 | 当前目录路径 | flat DOM：human / AI bubble；过滤 deepsearch / legacy reasoner thinking | D：代码事实 |
 | 当前导出路径 | 数组索引配对；读取 `.hyc-common-markdown` 并清理引用 / 卡片节点 | D：代码事实 |
 | 历史短会话 | 3 question、3 answer、3 thinking、3 heading；导出模拟 3 轮通过 | B：2026-06-25 私有审计 |
-| 2026-07-16 Chrome | 16 human、16 AI、16 legacy reasoner thinking、32 markdown；主问答 selector 全部准确命中 | B：真实登录态现场 |
-| 当前挂载范围 | `.agent-chat__list__content` 有 34 个直接子节点，16 轮问答全部在 DOM | B：本样本；不外推更长会话 |
+| 2026-07-16 实现探针 | 当前 selector 分别命中 16 个 human 与 16 个 AI 候选，legacy reasoner thinking=16、markdown=32 | B+D：真实页面上的实现探针；未逐轮独立人工核对 |
+| 当前挂载范围 | `.agent-chat__list__content` 有 34 个直接子节点；可确认节点当前挂载，不能仅凭 class 命名宣布 16 轮全部正确配对 | B：本样本；不外推更长会话 |
 
 主要风险：
 
 - 代码没有提取 agentId 或 conversationUuid，仍用完整 URL 做隔离。
 - 2026-05 的代码注释称 reasoner 已废弃，但本次 16 轮现场全部仍使用 `.hyc-component-reasoner__think`，`deepsearch-cot` 为 0；新旧 selector 必须继续并存。
-- 每个回答现场都有 2 个 `.hyc-common-markdown`：16 个位于 thinking 内，16 个位于最终正文。当前导出先把 thinking 写入 `answer.thinking`，随后又对整个 answerBlock 收集全部 markdown，因为元宝没有启用 `removeThinkingBeforeContent`，会把 thinking 再混入 `answer.content`。
+- 页面上 16 个 markdown 位于 thinking 候选内部，另 16 个位于其外部。结合当前导出代码，可以推导当前实现存在 thinking 同时进入 `answer.thinking` 与 `answer.content` 的重复风险；这是实现审计结论，不是宿主平台缺陷。
 - `[class*="card-box"]` 等 cleanup 过宽，可能误删有效卡片正文或引用。
 - header 可能只显示 bot 名，导出强制使用首问作标题；目录与导出标题来源不同。
 
-修复优先级：元宝导出必须在提取正文前移除 thinking，或只选择 reasoner text / 最终正文 markdown；增加 16 轮样本中 thinking 不得重复进入 content 的回归。
+后续顺序：先独立确认 AI item 内 thinking 与最终正文的语义边界，再让正文提取排除 thinking，并增加两者内容不重叠的回归。
 
 必须验收：普通回答、深度搜索、旧 reasoner 兼容、引用 / 卡片、代码块；同 agent 和跨 agent 的 A -> B -> A；流式未完成回答；thinking 与正文去重；cleanup 不误删；导出标题取首问；长会话与逐轮配对。
 
 ## 9. Gemini 平台架构卡
 
-### 9.1 2026-07-16 Chrome 现场结论
+### 9.1 2026-07-16 Chrome 现场观察与实现探针
 
 目标会话 `/app/404aea77190bc75f` 在真实登录态 Chrome 中成功打开，标题为“OpenClaw API 中转服务推荐 - Google Gemini”。现场计数：
 
@@ -569,7 +594,7 @@ MESSAGE-CONTENT = 2
 .markdown.markdown-main-panel = 2
 ~~~
 
-结论：v2.1.3 的 Gemini question / answer / conversation selector 已明确失效。这不是待确认风险，而是当前真实页面回归。页面采用 Angular custom elements；目录与导出都需要更新到新 DOM，并重新定义一轮问答的容器边界。
+结论：v2.1.3 的 Gemini question / answer / conversation selector 在该真实会话样本中全部为 0，无法覆盖当前样本页面。当前样本出现 `USER-QUERY`、`MODEL-RESPONSE` 等 custom-element 形式节点；具体框架和改版时间未验证。目录与导出需要重新审计轮次边界。
 
 ### 9.2 当前实现与风险
 
@@ -582,7 +607,7 @@ MESSAGE-CONTENT = 2
 | 稳定消息 ID | 本次未发现可直接采用的 message-id / turn-id；仍待属性审计 |
 | 历史审计 | 2026-06-25：2 container、6 question 候选、2 answer、16 heading、2 markdown；当时导出 2 轮通过 |
 
-历史数量已经提示旧 `.user-query-container` 可能产生重复候选：2 个 conversation 却命中 6 个 question。即使 selector 尚未失效，nested mode 只取第一个 question / answer 也会掩盖多草稿、重新生成或嵌套重复问题。
+历史数量表明旧 `.user-query-container` 曾产生重复候选：2 个 conversation 却命中 6 个 question。重复来源可能是嵌套结构、草稿、重新生成或其他容器，当前证据不能确定原因。
 
 必须验收：
 
@@ -594,7 +619,7 @@ MESSAGE-CONTENT = 2
 - 目录组数与导出组数一致。
 - Markdown、代码、表格、引用、公式，以及 Trusted Types / TrustedHTML；2026-06-14 曾出现 DOMParser / TrustedHTML 导出失败，6 月 25 日短 fixture 才恢复通过。
 
-优先级：五个平台中 Gemini 为 P0，因为已有真实 Chrome 证据证明当前 selector 全部为 0。
+优先级：五个平台中 Gemini 为 P0，因为真实 Chrome 样本已确认当前旧 selector 全部为 0；修复范围仍须以新版轮次盲审为准。
 
 ## 10. Grok 平台架构卡
 
@@ -602,7 +627,7 @@ MESSAGE-CONTENT = 2
 
 | 项目 | 当前结论 | 证据等级 |
 |---|---|---|
-| 观察到的路由 | `/c/{uuid}`，可能带 `rid` query | B：固定测试链接 |
+| 观察到的路由 | `/c/{uuid}`，样本 URL 可能带 `rid` query；`rid` 语义未验证 | B：2026-07-16 用户手动进入真实会话后观察到 |
 | 当前代码假设 | `[data-testid=user-message]` / `[data-testid=assistant-message]` / `.response-content-markdown` | D：代码事实 |
 | 历史短会话 | 1 question、1 answer、10 heading；导出模拟 1 轮通过 | B：2026-06-25 私有审计 |
 | 2026-07-16 Chrome | 用户手动打开后已进入真实 `/c/{uuid}` 会话；Playwright、精确 locator、CDP 三种结构读取均超时 | B：页面可达与验证边界 |
@@ -620,7 +645,7 @@ MESSAGE-CONTENT = 2
 
 ## 11. Kimi 平台架构卡
 
-### 11.1 2026-07-16 Chrome 现场结论
+### 11.1 2026-07-16 Chrome 现场观察与实现探针
 
 固定会话成功打开，路由为 `/chat/{uuid}?chat_enter_method=history`，标题为“美元债券为何下跌，与金价有什么关联性 - Kimi”。现场：
 
@@ -633,7 +658,7 @@ MESSAGE-CONTENT = 2
 回答内 heading = 10
 ~~~
 
-这证明当前主选择器仍可命中该单轮会话，也证明一个回答可以包含多个 markdown segment。正确边界是回答 segment，不是每一个 markdown-container。
+在该单轮样本中，当前主选择器命中了一个回答 segment，同一 segment 内存在两个 markdown-container。answer segment 因而比单个 markdown-container 更接近轮次边界候选；是否适用于搜索进度、流式回答和多草稿仍需用独立样本验证。
 
 ### 11.2 当前实现与风险
 
@@ -782,7 +807,7 @@ flowchart TD
 |---|---|
 | 症状 | A 切到 B 后，A 的目录短暂或持续出现在 B |
 | 错误假设 | URL 变化后旧异步任务自然失效 |
-| 根因 | React 路由、sender.tab.url、旧 DOM、API 返回和侧栏请求不同步 |
+| 根因 | SPA 路由、sender.tab.url、旧 DOM、异步响应和侧栏请求不同步 |
 | 架构修复 | tabId + URL + conversationId + generation/epoch + requestToken 多层校验 |
 | 防回归 | A -> B -> A 快速切换并故意延迟 A 响应 |
 
@@ -822,7 +847,7 @@ flowchart TD
 |---|---|
 | 症状 | 目标会话可以正常打开，但插件旧 question / answer / conversation selector 均不命中 |
 | 错误假设 | 6 月 25 日 fixture 通过，所以当前仍兼容 |
-| 根因 | Gemini 从旧 class 容器迁移到 Angular custom elements |
+| 当前边界 | 当前样本已不再命中旧 class 容器，同时出现新的 custom-element 节点；具体改版时间、迁移过程和框架原因未验证 |
 | 当前事实 | `USER-QUERY` 与 `MODEL-RESPONSE` 各 2 个；旧三个 selector 均为 0 |
 | 防回归 | 每次发布至少用真实登录态固定会话检查 selector 计数，不以历史报告代替当前现场 |
 
@@ -832,43 +857,45 @@ flowchart TD
 |---|---|
 | 症状 | 1 个问题可能命中多个 markdown-container，宽泛 selector 会把一个回答拆成多条 |
 | 错误假设 | 每个 markdown 容器就是一个 assistant 回答 |
-| 根因 | 回答 segment 内包含进度 / 引导段和最终正文等多个 Markdown 分段 |
+| 当前边界 | 同一 answer segment 内存在两个 markdown-container；两者的产品语义和导出取舍仍需逐段审计 |
 | 当前事实 | 1 user、1 answer segment、2 markdown-container、10 heading |
 | 防回归 | 先以 answer segment 确定轮次，再在 segment 内选择正文；目录和导出必须使用同一轮次边界 |
 
-### 案例 I：DeepSeek 为兼容旧结构追加 selector，反而把 UI 当成问题
+### 案例 I：DeepSeek selector 候选数量异常，但不能跳过盲审直接定性
 
 | 项目 | 内容 |
 |---|---|
-| 症状 | 真实 3 轮对话，question selector 返回 13 个节点 |
-| 根因 | `._9663006` 正确命中 3 个问题，兼容项 `._72b6158` 又命中 10 个非问题 UI 节点 |
-| 教训 | selector 并集中的每一项都必须单独记录命中数和角色，不能只看并集非空 |
-| 防回归 | 固定真实轮次数；断言每个 selector 分支的角色和最终去重数量 |
+| 症状 | answer 候选为 3，question selector 返回 13 个节点 |
+| 已知 | 两个 question 分支分别命中 3 和 10；第二分支角色尚未独立确认 |
+| 教训 | 数量异常能证明需要审计，不能单凭现有 answer selector 反推出“真实就是 3 轮” |
+| 防回归 | 先盲审真实轮次，再断言每个 selector 分支的角色和最终去重数量 |
 
 ### 案例 J：元宝 thinking 被提取两次
 
 | 项目 | 内容 |
 |---|---|
-| 症状 | 每轮 thinking 既进入 `answer.thinking`，又作为第一个 markdown 混入 `answer.content` |
-| 现场结构 | 16 轮回答，每轮 1 个 thinking markdown + 1 个最终正文 markdown |
+| 症状 | 当前实现可能让 thinking 既进入 `answer.thinking`，又混入 `answer.content` |
+| 现场结构 | thinking 候选内外分别各有 16 个 markdown；逐轮语义仍应盲审 |
 | 根因 | 元宝启用 `hasThinking`，但未启用 `removeThinkingBeforeContent`，正文提取遍历 answer 内全部 markdown |
 | 防回归 | thinking 与 content 分别断言；正文提取前移除 thinking 或精确选择最终正文容器 |
 
 ## 16. 漂移台账
 
+本台账同时记录现场直接观察和由当前实现推导出的影响；凡不是独立宿主盲审得到的结论，必须在“证据”或“结论”中明确标为实现探针或实现风险。
+
 | 日期 | 平台 | 证据 | 结论 | 后续 |
 |---|---|---|---|---|
-| 2026-06-19 | 豆包 | 登录态审计 | question=4、answer=2、提取=2，证明数组配对不可靠 | 使用 message-id 索引 |
+| 2026-06-19 | 豆包 | 登录态历史审计 | question=4、answer=2、提取=2；候选数量与提取轮次不一致，不能仅凭数组位置证明配对正确 | 使用 message-id 候选身份并继续验证角色与稳定性 |
 | 2026-06-25 | ChatGPT / 豆包 | 本机 manual audit | 当时选择器通过 | 不能替代长会话虚拟化验证 |
 | 2026-07-16 | ChatGPT | 真实 Chrome 长会话 | 仅挂载 turn 30-34；5 turn、7 message-id、30 heading | 保持 hybrid index |
 | 2026-07-16 | ChatGPT | 真实 Chrome | MAIN bridge global 未出现 | 可能是当前标签未加载 v2.1.3 bridge；升级后需刷新验证 |
 | 2026-07-16 | 豆包 | Chrome | 页面可导航，但读取关键 DOM 连续超时 | 下次优先轻量 CDP / 手工 DevTools |
 | 2026-07-16 | 豆包 | Codex 内置浏览器 | 登录态会话与回答正文可见，人工滚动有效；snapshot、evaluate、CDP 读取均超时 | 确认页面可用，不把历史 selector 当成本次现场 DOM 合约 |
-| 2026-07-16 | DeepSeek | 用户打开的真实 Chrome 会话 | 3 轮、6 ds-message、3 answer；question 并集误命中 13，其中兼容项额外命中 10 个 UI 节点 | P0 收紧 question selector 并增加分支计数回归 |
-| 2026-07-16 | 腾讯元宝 | 用户打开的真实 Chrome 会话 | 16Q / 16A 准确；16 legacy thinking、32 markdown，thinking 会重复进入 content | P0 修正文档导出边界并保留 legacy reasoner |
-| 2026-07-16 | Gemini | 真实登录态 Chrome | 旧 conversation / question / answer selector 全为 0；新 custom elements 各命中 2 轮 | P0 更新 Gemini DOM 合约与测试 |
+| 2026-07-16 | DeepSeek | 真实 Chrome 实现探针 | ds-message=6、answer 候选=3、question 并集=13；第二分支角色未盲审 | 先盲审轮次，再调整 selector；不得预设真实轮数 |
+| 2026-07-16 | 腾讯元宝 | 真实 Chrome 实现探针 | human / AI 角色命名节点各 16；thinking 内外 markdown 各 16，当前实现有重复风险 | 先确认语义边界，再修正文提取 |
+| 2026-07-16 | Gemini | 真实登录态 Chrome | 在该样本中旧 conversation / question / answer selector 全为 0；新 custom elements 各命中 2 个候选节点 | P0 盲审新版轮次边界后更新 Gemini DOM 合约与测试 |
 | 2026-07-16 | Grok | 用户打开的真实 Chrome 会话 | 已通过 Cloudflare 进入真实会话；三种结构读取方式均超时 | 确认页面可达；后续用手工 DevTools 或更小页面审计 selector |
-| 2026-07-16 | Kimi | 真实登录态 Chrome | 1Q、1 answer segment、2 markdown、10 heading；主 segment selector 有效 | 增加多轮 / 多 segment 回归，约束 fallback 去重 |
+| 2026-07-16 | Kimi | 单轮真实样本 + 实现探针 | 1Q、1 answer segment、2 markdown、10 heading；主 segment selector 在该样本中命中 | 增加多轮 / 多 segment 回归，约束 fallback 去重 |
 
 每次平台变化追加一行，不覆盖历史。旧结论保留日期，避免“最新一次看起来正常”抹掉回归线索。
 
@@ -920,9 +947,9 @@ flowchart TD
 |---|---|---|
 | ChatGPT | runtime + DOM hybrid 深度架构 | 冷首次打开仍需发布后现场证明 |
 | 豆包 | 被动虚拟索引深度架构 | 结构化自动化读取不稳定，coverage 未实现 |
-| DeepSeek | 当前 Chrome 三轮证据 + 风险卡 | question selector 已确认 3 轮误命中 13 个；需 P0 收紧，长会话完整性仍未知 |
-| 腾讯元宝 | 当前 Chrome 16 轮证据 + 风险卡 | 主问答 selector 有效；thinking 重复进入 content 需 P0 修复 |
-| Gemini | 当前 Chrome 漂移证据 + 风险卡 | v2.1.3 selector 已失效，需 P0 修复 |
+| DeepSeek | 当前 Chrome 实现探针 + 风险卡 | question / answer 候选数异常；真实轮次与虚拟回收仍需盲审 |
+| 腾讯元宝 | 当前 Chrome 实现探针 + 风险卡 | 角色命名节点和 thinking 分层已观察；逐轮语义与长会话仍需盲审 |
+| Gemini | 当前 Chrome 漂移证据 + 风险卡 | v2.1.3 旧 selector 在当前样本中无法命中；需 P0 盲审新边界并修复 |
 | Grok | 真实会话可达 + 重页面验证边界 | 已通过 Cloudflare，但结构读取超时，核心 selector 仍待手工 DevTools 计数 |
 | Kimi | 当前 Chrome 单轮证据 + 风险卡 | 多轮、流式、多 segment 与长会话未验证 |
 
