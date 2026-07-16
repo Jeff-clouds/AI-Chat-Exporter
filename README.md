@@ -107,7 +107,7 @@ git clone https://github.com/Jeff-clouds/AI-Chat-Exporter.git
 
 欢迎提交 [Issue](https://github.com/Jeff-clouds/AI-Chat-Exporter/issues) 或 Pull Request。
 
-修改平台适配、目录、导出、路由或缓存前，必须先阅读 [寄生平台架构与开发前置指南](PLATFORM_ARCHITECTURE_GUIDE.md)。
+修改平台适配、目录、导出、路由或缓存前，先阅读 [寄生平台架构简明地图](PLATFORM_HOST_ARCHITECTURE_SUMMARY.md)，再进入 [开发前置指南](PLATFORM_ARCHITECTURE_GUIDE.md)。
 
 主要目录：
 
