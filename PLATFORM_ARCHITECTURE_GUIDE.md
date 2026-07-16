@@ -1,6 +1,6 @@
 # AI Chat Exporter 寄生平台架构与开发前置指南
 
-> 状态：首期完成，聚焦 ChatGPT 与豆包
+> 状态：七个平台首期架构卡完成；ChatGPT、豆包有深度架构，其他五个平台以 DOM 合约与验证边界为主
 > 代码基线：v2.1.3 / commit 8d69d53
 > 最近核验：2026-07-16
 > 适用范围：平台适配、目录、跳转、导出、性能、路由、缓存和侧边栏生命周期相关改动
@@ -21,13 +21,14 @@ AI Chat Exporter 不是拥有页面和数据的独立产品，而是寄生在第
 
 如果任何一项答不清楚，先做平台审计，不要直接加选择器或定时器。
 
-### 不可破坏的六条原则
+### 不可破坏的七条原则
 
 - DOM 是视图窗口，不是会话数据库。
 - route identity 是数据隔离边界，不是 UI 细节。
 - 稳定 message ID 优先于 turn 序号，turn 序号优先于文本和索引。
 - ChatGPT 的完整文本与页面标题来自不同数据面，必须有控制地合并。
 - 豆包不得为了“完整”而自动滚动用户页面；完整性必须诚实标注。
+- Direct DOM 平台的 fallback 非空不等于适配成功，必须验证节点角色和问答边界。
 - 侧边栏未使用时，不应持续给宿主页面制造观察、扫描或网络负担。
 
 ## 1. 证据等级与事实写法
@@ -459,9 +460,190 @@ role 分类与嵌套 / 重复 message-id
 fallback 是否携带覆盖范围标记
 ~~~
 
-## 6. 共享生命周期与性能预算
+## 6. 其他五个平台的共享 DOM 架构
 
-### 6.1 侧栏是观察生命周期的所有者
+DeepSeek、元宝、Gemini、Grok、Kimi 在 v2.1.3 都不进入 ConversationIndex，也没有已接入的平台历史数据源。当前实现是“侧栏打开后按需注入，直接读取当时挂载的 DOM”。
+
+~~~mermaid
+flowchart LR
+    Panel["Side Panel 打开"]
+    Inject["chrome.scripting 按需注入"]
+    Selectors["SelectorManager<br/>平台 selector + 宽泛 fallback"]
+    DOM["当前挂载 DOM"]
+    Outline["Pipeline<br/>区间 / nested 目录归组"]
+    Export["extractUnifiedData<br/>数组索引导出归组"]
+
+    Panel --> Inject
+    Inject --> Selectors
+    DOM --> Selectors
+    Selectors --> Outline
+    Selectors --> Export
+~~~
+
+共享事实与限制：
+
+- 当前隔离依赖 tabId、完整 URL、requestToken；没有平台 conversationId parser，也没有平台 route epoch。
+- SPA watcher 能观察 pushState、replaceState、popstate 和 URL 轮询，但通用 MutationObserver 绑定的根节点被 SPA 替换后不会自动重绑。
+- 目录 flat mode 按问题之间的 DOM 区间吸收回答标题；通用导出多数按 `questions[i] + answers[i]` 配对，两者不是同一归组算法。
+- 主 selector MISS 后会进入跨平台语义 / data / heuristic fallback。返回非空只证明“抓到了节点”，不证明角色正确。
+- 问题和标题没有平台稳定 ID 时退化为文本 hash；重复问题会冲突，流式标题文字变化会改变 identity。
+- 只读取当前挂载 DOM，没有 coverage / completeness 元数据。长会话是否虚拟化必须逐平台现场验证。
+- 三份配置 `src/config/selectors.js`、`src/config/selectors.json`、`src/export/config/selectors.js` 必须同步；目录与导出配置可能独立漂移。
+
+共同禁止：
+
+- 不得把 class selector 写成宿主稳定 API。
+- 不得因为 question 与 answer 数量相等就声明配对正确。
+- 不得因为 fallback 产生目录就声明平台适配正常。
+- 不得把短会话 fixture 通过外推为长会话完整、流式稳定或路由无串话。
+
+## 7. DeepSeek 平台架构卡
+
+### 7.1 证据与当前实现
+
+| 项目 | 当前结论 | 证据等级 |
+|---|---|---|
+| 观察到的路由 | `/a/chat/s/{uuid}` | B：2026-06 固定登录态链接；不是官方承诺 |
+| 当前目录路径 | flat DOM：hash class question / answer，thinking 标题过滤 | D：代码事实 |
+| 当前导出路径 | 数组索引配对；另读 `.ds-markdown`、thinking、search、code block | D：代码事实 |
+| 历史短会话 | 3 question、3 answer、6 thinking、34 heading；导出模拟 3 轮通过 | B：2026-06-25 私有审计 |
+| 2026-07-16 Chrome | 固定会话链接导航超时，未取得当前 DOM | B：验证边界 |
+| 长会话 / 虚拟化 | 未证实 | 待真实长会话 |
+
+主要风险：
+
+- question、answer、title、search 大量依赖构建 hash class，漂移风险最高。
+- `deepseek.ai` 被代码声明支持，但当前没有对应现场证据。
+- 目录按 DOM 区间归组，导出按数组索引归组；额外工具卡、隐藏节点或未完成回答会造成不一致。
+- `removeThinking` 只解决目录标题过滤，不证明 thinking、搜索正文与最终回答不会重复或遗漏。
+- selector 失效后的宽泛 fallback 可能比“空目录”更危险，因为它会产生看似正常但角色错误的结果。
+
+必须验收：正常回答、深度思考、联网搜索、代码块；冷打开；A -> B -> A；重复相同问题；流式标题变化；thinking 不进目录且不重复进入正文；长会话首 / 中 / 末；目录与完整/局部导出逐轮对照。
+
+## 8. 腾讯元宝平台架构卡
+
+### 8.1 证据与当前实现
+
+| 项目 | 当前结论 | 证据等级 |
+|---|---|---|
+| 观察到的路由 | `/chat/{agentId}/{conversationUuid}` | B：2026-06 固定登录态链接 |
+| 当前目录路径 | flat DOM：human / AI bubble；过滤 deepsearch / legacy reasoner thinking | D：代码事实 |
+| 当前导出路径 | 数组索引配对；读取 `.hyc-common-markdown` 并清理引用 / 卡片节点 | D：代码事实 |
+| 历史短会话 | 3 question、3 answer、3 thinking、3 heading；导出模拟 3 轮通过 | B：2026-06-25 私有审计 |
+| 2026-07-16 Chrome | 固定会话链接导航超时，未取得当前 DOM | B：验证边界 |
+| 长会话 / 虚拟化 | 未证实 | 待真实长会话 |
+
+主要风险：
+
+- 代码没有提取 agentId 或 conversationUuid，仍用完整 URL 做隔离。
+- 2026-05 已发生 reasoner -> deepsearch 组件漂移，语义 class 也不能视为稳定契约。
+- thinking 内若也包含 `.hyc-common-markdown`，可能与正文重复；必须现场验证，不能从配置推定。
+- `[class*="card-box"]` 等 cleanup 过宽，可能误删有效卡片正文或引用。
+- header 可能只显示 bot 名，导出强制使用首问作标题；目录与导出标题来源不同。
+
+必须验收：普通回答、深度搜索、旧 reasoner 兼容、引用 / 卡片、代码块；同 agent 和跨 agent 的 A -> B -> A；流式未完成回答；thinking 与正文去重；cleanup 不误删；导出标题取首问；长会话与逐轮配对。
+
+## 9. Gemini 平台架构卡
+
+### 9.1 2026-07-16 Chrome 现场结论
+
+目标会话 `/app/404aea77190bc75f` 在真实登录态 Chrome 中成功打开，标题为“OpenClaw API 中转服务推荐 - Google Gemini”。现场计数：
+
+~~~text
+旧 selector：
+.conversation-container = 0
+.user-query-container = 0
+.response-container = 0
+
+当前节点：
+USER-QUERY = 2
+MODEL-RESPONSE = 2
+RESPONSE-CONTAINER = 2
+MESSAGE-CONTENT = 2
+.markdown.markdown-main-panel = 2
+~~~
+
+结论：v2.1.3 的 Gemini question / answer / conversation selector 已明确失效。这不是待确认风险，而是当前真实页面回归。页面采用 Angular custom elements；目录与导出都需要更新到新 DOM，并重新定义一轮问答的容器边界。
+
+### 9.2 当前实现与风险
+
+| 项目 | 当前状态 |
+|---|---|
+| 路由 | 观察到 `/app/{conversationId}`；代码未解析 ID |
+| v2.1.3 目录 | nested mode 假设 `.conversation-container` 内各有第一组 Q/A；现场为 0 |
+| v2.1.3 导出 | 同样只取旧 container 内第一个 Q/A；现场无法命中 |
+| 新候选锚点 | `USER-QUERY`、`MODEL-RESPONSE`、`RESPONSE-CONTAINER`、`MESSAGE-CONTENT` |
+| 稳定消息 ID | 本次未发现可直接采用的 message-id / turn-id；仍待属性审计 |
+| 历史审计 | 2026-06-25：2 container、6 question 候选、2 answer、16 heading、2 markdown；当时导出 2 轮通过 |
+
+历史数量已经提示旧 `.user-query-container` 可能产生重复候选：2 个 conversation 却命中 6 个 question。即使 selector 尚未失效，nested mode 只取第一个 question / answer 也会掩盖多草稿、重新生成或嵌套重复问题。
+
+必须验收：
+
+- 新版一轮容器与 user/model 配对边界。
+- 多草稿、重新生成、分支回答是导出当前草稿还是全部草稿。
+- 流式过程中 custom element 是否复用，标题 identity 是否稳定。
+- 长会话滚动前后 mounted 数量与节点回收。
+- SPA 切换后 observer 是否重绑。
+- 目录组数与导出组数一致。
+- Markdown、代码、表格、引用、公式，以及 Trusted Types / TrustedHTML；2026-06-14 曾出现 DOMParser / TrustedHTML 导出失败，6 月 25 日短 fixture 才恢复通过。
+
+优先级：五个平台中 Gemini 为 P0，因为已有真实 Chrome 证据证明当前 selector 全部为 0。
+
+## 10. Grok 平台架构卡
+
+### 10.1 证据与当前实现
+
+| 项目 | 当前结论 | 证据等级 |
+|---|---|---|
+| 观察到的路由 | `/c/{uuid}`，可能带 `rid` query | B：固定测试链接 |
+| 当前代码假设 | `[data-testid=user-message]` / `[data-testid=assistant-message]` / `.response-content-markdown` | D：代码事实 |
+| 历史短会话 | 1 question、1 answer、10 heading；导出模拟 1 轮通过 | B：2026-06-25 私有审计 |
+| 2026-07-16 Chrome | 跳转到 Cloudflare “Just a moment...” 挑战页 | B：当前验证边界 |
+| 长会话 / 虚拟化 | 未证实 | 待人工通过验证后的登录态长会话 |
+
+主要风险：
+
+- 目录按问题之间的 DOM 区间归组，导出按数组索引 zip；多 assistant、progress -> final、缺失节点会错配。
+- data-testid 可读性较好，但目录 identity 并不使用 data-testid，只找 message-id / turn-id / data-id，随后退化为文本 hash。
+- cleanup 会删除 button、svg、inline media 与 action 节点，可能误删公式、引用、附件或有效媒体。
+- `grok.x.ai` 仍出现在侧栏帮助入口，但 manifest 与平台识别只支持 `grok.com`，属于运营入口陈旧。
+- Cloudflare 阻断自动化时不得绕过挑战或把挑战页当宿主 DOM。
+
+必须验收：人工通过验证后的 route、冷打开、前进后退、A -> B -> A；连续 user、progress -> final、重新生成；流式 testid 是否复用；长会话节点回收；目录与导出逐轮对照；Markdown、公式、引用、附件和图片 cleanup。
+
+## 11. Kimi 平台架构卡
+
+### 11.1 2026-07-16 Chrome 现场结论
+
+固定会话成功打开，路由为 `/chat/{uuid}?chat_enter_method=history`，标题为“美元债券为何下跌，与金价有什么关联性 - Kimi”。现场：
+
+~~~text
+.chat-detail-main = 1
+.user-content = 1
+.segment-container = 2（用户段 + 回答段）
+.segment-container:has(.segment-content-box > .markdown-container) = 1
+.markdown-container = 2（同一回答内多个 Markdown 分段）
+回答内 heading = 10
+~~~
+
+这证明当前主选择器仍可命中该单轮会话，也证明一个回答可以包含多个 markdown segment。正确边界是回答 segment，不是每一个 markdown-container。
+
+### 11.2 当前实现与风险
+
+- 当前仍是 direct DOM，没有历史数据源、ConversationIndex 或稳定 message ID。
+- `.segment-container:has(...)` 主回答 selector 在本次单轮现场有效；`:last-of-type` markdownBlock 用于收敛最终正文，但必须验证它不会丢前置有效段落。
+- 宽泛 fallback `.chat-content-item... .markdown-container` 或 `[class*=assistant] .markdown-container` 在本次页面会命中 2 个嵌套 markdown，若按回答节点使用会重复。
+- 目录按 DOM 区间归组，导出按数组索引配对；多段 assistant / progress 容器仍可能不一致。
+- `.chat-detail-main` 同时承担滚动父容器和通用观察根假设；SPA 替换后需要验证 observer 重绑。
+- 代码支持所有 `*.moonshot.cn`，但侧栏站点名只特殊识别 `kimi.com` / `kimi.moonshot.cn`，其他子域可能显示为普通网页。
+- 2026-06-19 旧结构曾出现 1Q / 4A 候选但只导出 1 轮；2026-06-25 收紧后为 1Q / 1A。历史教训是先确定回答容器边界，再处理 markdown 分段。
+
+必须验收：多轮长会话；回答含搜索进度、多个 markdown segment、代码与引用；冷打开；A -> B -> A；流式 segment 更新；滚动根替换；目录与导出组数一致；`:last-of-type` 不丢前置正文；宽泛 fallback 不重复。
+
+## 12. 共享生命周期与性能预算
+
+### 12.1 侧栏是观察生命周期的所有者
 
 ~~~mermaid
 sequenceDiagram
@@ -486,18 +668,18 @@ sequenceDiagram
 - 观察器回调只触发节流扫描；扫描只有在索引实际变化时通知 UI。
 - 缓存必须有数量上限、TTL 或明确生命周期。
 
-### 6.2 性能门禁
+### 12.2 性能门禁
 
 任何声称“修复加载不全”的改动，都要同时证明：
 
 - 没有引入全页高频扫描。
 - 没有让侧栏等待内部 API 才首次渲染。
 - 没有在侧栏关闭后残留 observer、timer 或 port。
-- 没有恢复自动滚动。
+- 没有恢复为采集完整性而后台自动滚动。
 - 长会话滚动和流式输出时 CPU / 主线程没有明显抖动。
 - API 失败时页面仍可正常输入、滚动和生成回答。
 
-## 7. 开发决策树
+## 13. 开发决策树
 
 ~~~mermaid
 flowchart TD
@@ -505,15 +687,20 @@ flowchart TD
     Scope -->|"所有平台"| Shared["先查 sidepanel / content / background 共享状态"]
     Scope -->|"ChatGPT"| CG{"缺的是完整文本还是页面定位？"}
     Scope -->|"豆包"| DB{"缺的是未浏览历史还是已浏览窗口？"}
+    Scope -->|"其他五平台"| Direct{"主 selector 是否仍命中真实角色？"}
     CG -->|"完整文本"| Runtime["查 bridge / current branch / route isolation"]
     CG -->|"标题或定位"| Mounted["查 mounted DOM heading / message-id / turn anchor"]
     DB -->|"未浏览历史"| Honest["不能靠 DOM 保证；先找 runtime 证据，否则标注范围"]
     DB -->|"已浏览窗口"| Passive["查 data-message-id 被动缓存 / 指纹 / offset"]
+    Direct -->|"否"| Drift["先更新现场 DOM 合约，再同步三份配置"]
+    Direct -->|"是"| Pair["对照目录区间归组与导出数组归组"]
     Shared --> Verify["真实冷启动 + A/B 切换 + 清理验收"]
     Runtime --> Verify
     Mounted --> Verify
     Honest --> Verify
     Passive --> Verify
+    Drift --> Verify
+    Pair --> Verify
 ~~~
 
 代码落点：
@@ -528,9 +715,9 @@ flowchart TD
 | 导出注入、并发锁、完整性声明 | background.js |
 | DOM selector 漂移 | src/config/selectors.* 与 src/export/config/selectors.js |
 
-## 8. 强制开发流程
+## 14. 强制开发流程
 
-### 8.1 开工前
+### 14.1 开工前
 
 1. 阅读本文件对应平台章节。
 2. 确认目标代码基线、分支和未提交修改。
@@ -539,7 +726,7 @@ flowchart TD
 5. 判定问题属于平台数据面、共享生命周期还是 UI 状态。
 6. 为现状建立可重复的失败证据，再改代码。
 
-### 8.2 实现中
+### 14.2 实现中
 
 1. 平台现实变化先更新本文件，再调整 selector / index。
 2. 共享逻辑不得用平台特例污染所有平台。
@@ -548,7 +735,7 @@ flowchart TD
 5. 任何降级路径都写清楚完整性上限。
 6. 大改前先创建 checkpoint commit / branch，不再依赖会话记忆恢复。
 
-### 8.3 交付前
+### 14.3 交付前
 
 1. 语法、fixture 和回归测试。
 2. 真实冷打开，不使用已热缓存的二次打开。
@@ -559,7 +746,7 @@ flowchart TD
 7. 侧栏关闭后的资源清理。
 8. 记录本次 live evidence 日期、URL 类型和未验证项。
 
-## 9. 近期踩坑案例
+## 15. 近期踩坑案例
 
 案例只说明教训，不改变前文的平台事实。
 
@@ -623,7 +810,27 @@ flowchart TD
 | 修复 | 创建 codex/pre-architecture-fix-20260715，checkpoint 7e3d0ef，发布 v2.1.3 |
 | 新规则 | 每个架构阶段结束都必须 commit；高风险实验先建分支；不要把聊天轮次当版本 |
 
-## 10. 漂移台账
+### 案例 G：Gemini 选择器历史上通过，当前真实页面全部为 0
+
+| 项目 | 内容 |
+|---|---|
+| 症状 | 目标会话可以正常打开，但插件旧 question / answer / conversation selector 均不命中 |
+| 错误假设 | 6 月 25 日 fixture 通过，所以当前仍兼容 |
+| 根因 | Gemini 从旧 class 容器迁移到 Angular custom elements |
+| 当前事实 | `USER-QUERY` 与 `MODEL-RESPONSE` 各 2 个；旧三个 selector 均为 0 |
+| 防回归 | 每次发布至少用真实登录态固定会话检查 selector 计数，不以历史报告代替当前现场 |
+
+### 案例 H：Kimi 一个回答包含多个 Markdown 分段
+
+| 项目 | 内容 |
+|---|---|
+| 症状 | 1 个问题可能命中多个 markdown-container，宽泛 selector 会把一个回答拆成多条 |
+| 错误假设 | 每个 markdown 容器就是一个 assistant 回答 |
+| 根因 | 回答 segment 内包含进度 / 引导段和最终正文等多个 Markdown 分段 |
+| 当前事实 | 1 user、1 answer segment、2 markdown-container、10 heading |
+| 防回归 | 先以 answer segment 确定轮次，再在 segment 内选择正文；目录和导出必须使用同一轮次边界 |
+
+## 16. 漂移台账
 
 | 日期 | 平台 | 证据 | 结论 | 后续 |
 |---|---|---|---|---|
@@ -633,10 +840,15 @@ flowchart TD
 | 2026-07-16 | ChatGPT | 真实 Chrome | MAIN bridge global 未出现 | 可能是当前标签未加载 v2.1.3 bridge；升级后需刷新验证 |
 | 2026-07-16 | 豆包 | Chrome | 页面可导航，但读取关键 DOM 连续超时 | 下次优先轻量 CDP / 手工 DevTools |
 | 2026-07-16 | 豆包 | Codex 内置浏览器 | 登录态会话与回答正文可见，人工滚动有效；snapshot、evaluate、CDP 读取均超时 | 确认页面可用，不把历史 selector 当成本次现场 DOM 合约 |
+| 2026-07-16 | DeepSeek | 真实 Chrome | 固定会话链接导航未提交并超时 | 保留 6 月历史证据；不形成当前 DOM 结论 |
+| 2026-07-16 | 腾讯元宝 | 真实 Chrome | 固定会话链接导航未提交并超时 | 保留 6 月历史证据；不形成当前 DOM 结论 |
+| 2026-07-16 | Gemini | 真实登录态 Chrome | 旧 conversation / question / answer selector 全为 0；新 custom elements 各命中 2 轮 | P0 更新 Gemini DOM 合约与测试 |
+| 2026-07-16 | Grok | 真实 Chrome | Cloudflare “Just a moment...” 挑战页 | 人工通过后再审计；不得绕过或抓挑战页 |
+| 2026-07-16 | Kimi | 真实登录态 Chrome | 1Q、1 answer segment、2 markdown、10 heading；主 segment selector 有效 | 增加多轮 / 多 segment 回归，约束 fallback 去重 |
 
 每次平台变化追加一行，不覆盖历史。旧结论保留日期，避免“最新一次看起来正常”抹掉回归线索。
 
-## 11. 资料与本地证据
+## 17. 资料与本地证据
 
 官方边界：
 
@@ -655,8 +867,10 @@ flowchart TD
 - scripts/test-urls.json
 - scripts/reports/manual-audit-2026-06-19.json
 - scripts/reports/manual-audit-2026-06-25.json
+- scripts/reports/manual-export-sim-2026-06-14.json
+- scripts/reports/manual-export-sim-2026-06-25.json
 
-## 12. 一页式提交检查
+## 18. 一页式提交检查
 
 ~~~text
 [ ] 我确认了当前分支和代码基线
@@ -666,6 +880,8 @@ flowchart TD
 [ ] 我定义了稳定 ID 与 route identity
 [ ] 我没有为采集完整性而后台自动滚动豆包
 [ ] 我没有对 ChatGPT 做无界全页扫描
+[ ] 对 direct DOM 平台，我核对了主 selector 与 fallback 各自命中的节点
+[ ] 我对照了目录归组与导出归组，而不是只看 question / answer 数量
 [ ] 我验证了首次冷打开
 [ ] 我验证了 A -> B -> A
 [ ] 我验证了流式输出
@@ -674,18 +890,16 @@ flowchart TD
 [ ] 我为本阶段创建了 checkpoint commit / branch
 ~~~
 
-## 13. 后续扩展位
+## 19. 当前平台覆盖状态
 
-首期只把 ChatGPT 与豆包写深、写实。DeepSeek、元宝、Gemini、Grok、Kimi 后续按相同模板补充：
+| 平台 | 文档深度 | 当前最大缺口 |
+|---|---|---|
+| ChatGPT | runtime + DOM hybrid 深度架构 | 冷首次打开仍需发布后现场证明 |
+| 豆包 | 被动虚拟索引深度架构 | 结构化自动化读取不稳定，coverage 未实现 |
+| DeepSeek | DOM 合约与风险卡 | 2026-07-16 当前 DOM、长会话和虚拟化未验证 |
+| 腾讯元宝 | DOM 合约与风险卡 | 2026-07-16 当前 DOM、thinking / 卡片去重未验证 |
+| Gemini | 当前 Chrome 漂移证据 + 风险卡 | v2.1.3 selector 已失效，需 P0 修复 |
+| Grok | DOM 合约与 Cloudflare 边界 | 需人工通过验证后的真实长会话 |
+| Kimi | 当前 Chrome 单轮证据 + 风险卡 | 多轮、流式、多 segment 与长会话未验证 |
 
-1. 平台现实。
-2. 路由 identity。
-3. DOM / runtime 数据源。
-4. 虚拟化与流式模型。
-5. 稳定 ID。
-6. 数据流图。
-7. 允许 / 禁止。
-8. 冷启动、切换、长会话与清理验收。
-9. 漂移台账。
-
-在完成真实登录态长会话审计前，不把这些平台的选择器配置写成“平台架构事实”。
+后续每个平台都要继续补长会话、流式、A -> B -> A、目录 / 导出一致性和清理证据。没有现场证据的部分继续保留为 D 级代码假设。
