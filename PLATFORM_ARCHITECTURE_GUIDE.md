@@ -507,16 +507,20 @@ flowchart LR
 | 当前目录路径 | flat DOM：hash class question / answer，thinking 标题过滤 | D：代码事实 |
 | 当前导出路径 | 数组索引配对；另读 `.ds-markdown`、thinking、search、code block | D：代码事实 |
 | 历史短会话 | 3 question、3 answer、6 thinking、34 heading；导出模拟 3 轮通过 | B：2026-06-25 私有审计 |
-| 2026-07-16 Chrome | 固定会话链接导航超时，未取得当前 DOM | B：验证边界 |
-| 长会话 / 虚拟化 | 未证实 | 待真实长会话 |
+| 2026-07-16 Chrome | 用户打开的真实会话含 3 轮；`.ds-message=6`、answer=3、thinking=3、final assistant markdown=3 | B：真实登录态现场 |
+| 虚拟列表 | 回答与问题位于 `.ds-virtual-list-visible-items`；本样本 3 轮均已挂载 | B：现场；不证明更长会话完整 |
 
 主要风险：
 
-- question、answer、title、search 大量依赖构建 hash class，漂移风险最高。
+- 当前 question selector 已确认过度匹配：`._9663006=3`，但并集中的 `._72b6158=10` 个额外 UI 节点，最终 question 总数为 13，而真实 answer 只有 3。
+- answer hash selector 当前命中 3 个轮次容器；每个容器包含 1 个 thinking、2 个 `.ds-markdown`，其中 `.ds-assistant-message-main-content` 是最终回答语义 class。
+- question、answer、title、search 仍大量依赖构建 hash class，漂移风险最高。
 - `deepseek.ai` 被代码声明支持，但当前没有对应现场证据。
 - 目录按 DOM 区间归组，导出按数组索引归组；额外工具卡、隐藏节点或未完成回答会造成不一致。
 - `removeThinking` 只解决目录标题过滤，不证明 thinking、搜索正文与最终回答不会重复或遗漏。
 - selector 失效后的宽泛 fallback 可能比“空目录”更危险，因为它会产生看似正常但角色错误的结果。
+
+修复优先级：移除或收紧 `._72b6158`，以真实问题轮次边界替代宽泛 hash 并集；增加“3 个真实问题不得产生 13 个目录问题”的 fixture。
 
 必须验收：正常回答、深度思考、联网搜索、代码块；冷打开；A -> B -> A；重复相同问题；流式标题变化；thinking 不进目录且不重复进入正文；长会话首 / 中 / 末；目录与完整/局部导出逐轮对照。
 
@@ -530,16 +534,18 @@ flowchart LR
 | 当前目录路径 | flat DOM：human / AI bubble；过滤 deepsearch / legacy reasoner thinking | D：代码事实 |
 | 当前导出路径 | 数组索引配对；读取 `.hyc-common-markdown` 并清理引用 / 卡片节点 | D：代码事实 |
 | 历史短会话 | 3 question、3 answer、3 thinking、3 heading；导出模拟 3 轮通过 | B：2026-06-25 私有审计 |
-| 2026-07-16 Chrome | 固定会话链接导航超时，未取得当前 DOM | B：验证边界 |
-| 长会话 / 虚拟化 | 未证实 | 待真实长会话 |
+| 2026-07-16 Chrome | 16 human、16 AI、16 legacy reasoner thinking、32 markdown；主问答 selector 全部准确命中 | B：真实登录态现场 |
+| 当前挂载范围 | `.agent-chat__list__content` 有 34 个直接子节点，16 轮问答全部在 DOM | B：本样本；不外推更长会话 |
 
 主要风险：
 
 - 代码没有提取 agentId 或 conversationUuid，仍用完整 URL 做隔离。
-- 2026-05 已发生 reasoner -> deepsearch 组件漂移，语义 class 也不能视为稳定契约。
-- thinking 内若也包含 `.hyc-common-markdown`，可能与正文重复；必须现场验证，不能从配置推定。
+- 2026-05 的代码注释称 reasoner 已废弃，但本次 16 轮现场全部仍使用 `.hyc-component-reasoner__think`，`deepsearch-cot` 为 0；新旧 selector 必须继续并存。
+- 每个回答现场都有 2 个 `.hyc-common-markdown`：16 个位于 thinking 内，16 个位于最终正文。当前导出先把 thinking 写入 `answer.thinking`，随后又对整个 answerBlock 收集全部 markdown，因为元宝没有启用 `removeThinkingBeforeContent`，会把 thinking 再混入 `answer.content`。
 - `[class*="card-box"]` 等 cleanup 过宽，可能误删有效卡片正文或引用。
 - header 可能只显示 bot 名，导出强制使用首问作标题；目录与导出标题来源不同。
+
+修复优先级：元宝导出必须在提取正文前移除 thinking，或只选择 reasoner text / 最终正文 markdown；增加 16 轮样本中 thinking 不得重复进入 content 的回归。
 
 必须验收：普通回答、深度搜索、旧 reasoner 兼容、引用 / 卡片、代码块；同 agent 和跨 agent 的 A -> B -> A；流式未完成回答；thinking 与正文去重；cleanup 不误删；导出标题取首问；长会话与逐轮配对。
 
@@ -599,7 +605,7 @@ MESSAGE-CONTENT = 2
 | 观察到的路由 | `/c/{uuid}`，可能带 `rid` query | B：固定测试链接 |
 | 当前代码假设 | `[data-testid=user-message]` / `[data-testid=assistant-message]` / `.response-content-markdown` | D：代码事实 |
 | 历史短会话 | 1 question、1 answer、10 heading；导出模拟 1 轮通过 | B：2026-06-25 私有审计 |
-| 2026-07-16 Chrome | 跳转到 Cloudflare “Just a moment...” 挑战页 | B：当前验证边界 |
+| 2026-07-16 Chrome | 用户手动打开后已进入真实 `/c/{uuid}` 会话；Playwright、精确 locator、CDP 三种结构读取均超时 | B：页面可达与验证边界 |
 | 长会话 / 虚拟化 | 未证实 | 待人工通过验证后的登录态长会话 |
 
 主要风险：
@@ -608,7 +614,7 @@ MESSAGE-CONTENT = 2
 - data-testid 可读性较好，但目录 identity 并不使用 data-testid，只找 message-id / turn-id / data-id，随后退化为文本 hash。
 - cleanup 会删除 button、svg、inline media 与 action 节点，可能误删公式、引用、附件或有效媒体。
 - `grok.x.ai` 仍出现在侧栏帮助入口，但 manifest 与平台识别只支持 `grok.com`，属于运营入口陈旧。
-- Cloudflare 阻断自动化时不得绕过挑战或把挑战页当宿主 DOM。
+- Cloudflare 阻断自动化时不得绕过挑战或把挑战页当宿主 DOM；用户手动进入真实会话后，重页面读取超时仍不能解释为 selector 失效。
 
 必须验收：人工通过验证后的 route、冷打开、前进后退、A -> B -> A；连续 user、progress -> final、重新生成；流式 testid 是否复用；长会话节点回收；目录与导出逐轮对照；Markdown、公式、引用、附件和图片 cleanup。
 
@@ -830,6 +836,24 @@ flowchart TD
 | 当前事实 | 1 user、1 answer segment、2 markdown-container、10 heading |
 | 防回归 | 先以 answer segment 确定轮次，再在 segment 内选择正文；目录和导出必须使用同一轮次边界 |
 
+### 案例 I：DeepSeek 为兼容旧结构追加 selector，反而把 UI 当成问题
+
+| 项目 | 内容 |
+|---|---|
+| 症状 | 真实 3 轮对话，question selector 返回 13 个节点 |
+| 根因 | `._9663006` 正确命中 3 个问题，兼容项 `._72b6158` 又命中 10 个非问题 UI 节点 |
+| 教训 | selector 并集中的每一项都必须单独记录命中数和角色，不能只看并集非空 |
+| 防回归 | 固定真实轮次数；断言每个 selector 分支的角色和最终去重数量 |
+
+### 案例 J：元宝 thinking 被提取两次
+
+| 项目 | 内容 |
+|---|---|
+| 症状 | 每轮 thinking 既进入 `answer.thinking`，又作为第一个 markdown 混入 `answer.content` |
+| 现场结构 | 16 轮回答，每轮 1 个 thinking markdown + 1 个最终正文 markdown |
+| 根因 | 元宝启用 `hasThinking`，但未启用 `removeThinkingBeforeContent`，正文提取遍历 answer 内全部 markdown |
+| 防回归 | thinking 与 content 分别断言；正文提取前移除 thinking 或精确选择最终正文容器 |
+
 ## 16. 漂移台账
 
 | 日期 | 平台 | 证据 | 结论 | 后续 |
@@ -840,10 +864,10 @@ flowchart TD
 | 2026-07-16 | ChatGPT | 真实 Chrome | MAIN bridge global 未出现 | 可能是当前标签未加载 v2.1.3 bridge；升级后需刷新验证 |
 | 2026-07-16 | 豆包 | Chrome | 页面可导航，但读取关键 DOM 连续超时 | 下次优先轻量 CDP / 手工 DevTools |
 | 2026-07-16 | 豆包 | Codex 内置浏览器 | 登录态会话与回答正文可见，人工滚动有效；snapshot、evaluate、CDP 读取均超时 | 确认页面可用，不把历史 selector 当成本次现场 DOM 合约 |
-| 2026-07-16 | DeepSeek | 真实 Chrome | 固定会话链接导航未提交并超时 | 保留 6 月历史证据；不形成当前 DOM 结论 |
-| 2026-07-16 | 腾讯元宝 | 真实 Chrome | 固定会话链接导航未提交并超时 | 保留 6 月历史证据；不形成当前 DOM 结论 |
+| 2026-07-16 | DeepSeek | 用户打开的真实 Chrome 会话 | 3 轮、6 ds-message、3 answer；question 并集误命中 13，其中兼容项额外命中 10 个 UI 节点 | P0 收紧 question selector 并增加分支计数回归 |
+| 2026-07-16 | 腾讯元宝 | 用户打开的真实 Chrome 会话 | 16Q / 16A 准确；16 legacy thinking、32 markdown，thinking 会重复进入 content | P0 修正文档导出边界并保留 legacy reasoner |
 | 2026-07-16 | Gemini | 真实登录态 Chrome | 旧 conversation / question / answer selector 全为 0；新 custom elements 各命中 2 轮 | P0 更新 Gemini DOM 合约与测试 |
-| 2026-07-16 | Grok | 真实 Chrome | Cloudflare “Just a moment...” 挑战页 | 人工通过后再审计；不得绕过或抓挑战页 |
+| 2026-07-16 | Grok | 用户打开的真实 Chrome 会话 | 已通过 Cloudflare 进入真实会话；三种结构读取方式均超时 | 确认页面可达；后续用手工 DevTools 或更小页面审计 selector |
 | 2026-07-16 | Kimi | 真实登录态 Chrome | 1Q、1 answer segment、2 markdown、10 heading；主 segment selector 有效 | 增加多轮 / 多 segment 回归，约束 fallback 去重 |
 
 每次平台变化追加一行，不覆盖历史。旧结论保留日期，避免“最新一次看起来正常”抹掉回归线索。
@@ -896,10 +920,10 @@ flowchart TD
 |---|---|---|
 | ChatGPT | runtime + DOM hybrid 深度架构 | 冷首次打开仍需发布后现场证明 |
 | 豆包 | 被动虚拟索引深度架构 | 结构化自动化读取不稳定，coverage 未实现 |
-| DeepSeek | DOM 合约与风险卡 | 2026-07-16 当前 DOM、长会话和虚拟化未验证 |
-| 腾讯元宝 | DOM 合约与风险卡 | 2026-07-16 当前 DOM、thinking / 卡片去重未验证 |
+| DeepSeek | 当前 Chrome 三轮证据 + 风险卡 | question selector 已确认 3 轮误命中 13 个；需 P0 收紧，长会话完整性仍未知 |
+| 腾讯元宝 | 当前 Chrome 16 轮证据 + 风险卡 | 主问答 selector 有效；thinking 重复进入 content 需 P0 修复 |
 | Gemini | 当前 Chrome 漂移证据 + 风险卡 | v2.1.3 selector 已失效，需 P0 修复 |
-| Grok | DOM 合约与 Cloudflare 边界 | 需人工通过验证后的真实长会话 |
+| Grok | 真实会话可达 + 重页面验证边界 | 已通过 Cloudflare，但结构读取超时，核心 selector 仍待手工 DevTools 计数 |
 | Kimi | 当前 Chrome 单轮证据 + 风险卡 | 多轮、流式、多 segment 与长会话未验证 |
 
 后续每个平台都要继续补长会话、流式、A -> B -> A、目录 / 导出一致性和清理证据。没有现场证据的部分继续保留为 D 级代码假设。

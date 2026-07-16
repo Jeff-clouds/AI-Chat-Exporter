@@ -50,7 +50,7 @@ flowchart LR
 | Passive virtual index | 豆包 | 用户浏览时按 data-message-id 累计 |
 | Direct DOM pipeline | DeepSeek、元宝、Gemini、Grok、Kimi | 当前挂载 DOM 的 nested / flat selector 提取；无完整历史索引 |
 
-2026-07-16 真实 Chrome 已确认 Gemini 的 v2.1.3 旧 selector 全部为 0；当前页面改为 `USER-QUERY`、`MODEL-RESPONSE` 等 custom elements。该平台在修复并重新验收前不得视为当前可用。
+2026-07-16 真实 Chrome 已确认：Gemini 的 v2.1.3 旧 selector 全部为 0；DeepSeek 的 question selector 在 3 轮会话中误命中 13 个节点；元宝 16 轮主问答 selector 准确，但 thinking 会被导出路径重复纳入 content。详细证据与修复门禁见平台指南。
 
 ## 生命周期
 
