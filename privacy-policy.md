@@ -6,7 +6,7 @@
 
 本扩展程序仅在以下范围内处理数据：
 
-- 读取当前打开的 AI 对话页面内容，用于生成页面大纲和导出 Markdown 文件
+- 读取当前打开的 AI 对话页面内容，用于生成页面大纲并导出用户选择的本地文件格式（Markdown、HTML、JSON 或 TXT）
 - 在浏览器本地处理页面内容，不会向开发者服务器或第三方传输对话内容
 - 在本地保存 Pro 授权码状态，用于解锁付费功能
 - 不会记录或存储任何对话内容
@@ -21,7 +21,7 @@
 - `activeTab`: 用于访问当前标签页内容
 - `scripting`: 用于处理页面内容和生成大纲
 - `tabs`: 用于识别支持的网站
-- `downloads`: 用于保存导出的Markdown文件到用户本地设备
+- `downloads`: 用于保存用户主动导出的文件到本地设备
 - `notifications`: 用于通知用户导出过程的状态和提供反馈
 - `storage`: 用于在本地保存授权码激活状态
 - `host_permissions`: 用于识别和访问支持平台上的AI对话内容
@@ -30,13 +30,13 @@
 
 本扩展程序仅在以下网站运行：
 
-- DeepSeek Chat (`*.deepseek.com`)
+- DeepSeek Chat (`*.deepseek.com`, `*.deepseek.ai`)
 - 腾讯元宝AI (`*.yuanbao.tencent.com`)
 - ChatGPT (`*.chatgpt.com`)
 - Google Gemini (`*.gemini.google.com`)
 - Grok (`*.grok.com`)
 - 豆包 AI (`*.doubao.com`)
-- Kimi (`*.kimi.com`)
+- Kimi (`*.kimi.com`, `*.moonshot.cn`)
 
 ### 4. 数据安全
 
@@ -60,7 +60,7 @@
 
 This extension only processes data within the following scope:
 
-- Reads current AI chat page content to generate page outlines and export Markdown files
+- Reads current AI chat page content to generate page outlines and export files in a user-selected local format (Markdown, HTML, JSON, or TXT)
 - Processes page content locally in the browser
 - Stores Pro license activation status locally
 - Does not transmit conversation content to the developer's servers or third parties
@@ -76,22 +76,22 @@ The permissions requested by this extension are used for:
 - `activeTab`: Accessing current tab content
 - `scripting`: Processing page content and generating outlines
 - `tabs`: Identifying supported websites
-- `downloads`: Saving exported Markdown files to the user's local device
+- `downloads`: Saving user-initiated exported files to the user's local device
 - `notifications`: Informing users about the status of their export process and providing feedback when the export is complete
 - `storage`: Saving local license activation status
-- `host_permissions`: Identifying and accessing AI chat content on supported platforms (DeepSeek and YuanBao AI) for exporting conversations
+- `host_permissions`: Identifying and accessing AI chat content on the supported platforms listed below, solely for user-visible outline and export features
 
 ### 3. Supported Websites
 
 This extension only operates on:
 
-- DeepSeek Chat (`*.deepseek.com`)
+- DeepSeek Chat (`*.deepseek.com`, `*.deepseek.ai`)
 - Tencent Yuanbao AI (`*.yuanbao.tencent.com`)
 - ChatGPT (`*.chatgpt.com`)
 - Google Gemini (`*.gemini.google.com`)
 - Grok (`*.grok.com`)
 - 豆包 AI (`*.doubao.com`)
-- Kimi (`*.kimi.com`)
+- Kimi (`*.kimi.com`, `*.moonshot.cn`)
 
 ### 4. Data Security
 
