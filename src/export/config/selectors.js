@@ -21,7 +21,7 @@ const deepseekConfig = {
     title: '.f8d1e4c0.the-header > div > div:first-child',
     question: '._9663006, ._72b6158',
     answer: '._4f9bf79._43c05b5',
-    thinking: '.ds-think-content, ._74c0879',
+    thinking: '.ds-think-content',
     search: '.a6d716f5.db5991dd',
     markdownBlock: '.ds-markdown',
     codeBlock: '.md-code-block',
@@ -88,9 +88,9 @@ const chatgptConfig = {
   selectors: {
     conversation: null, // ChatGPT 的 turn 容器按角色拆开，不适合作为成对问答容器
     title: null,
-    turn: '[data-turn]',
-    question: '[data-turn="user"]',
-    answer: '[data-turn="assistant"]',
+    turn: '[data-testid^="conversation-turn-"]',
+    question: '[data-message-author-role="user"]',
+    answer: '[data-message-author-role="assistant"]',
     thinking: null,
     markdownBlock: '.markdown.prose, .markdown'
   },
@@ -111,11 +111,11 @@ const doubaoConfig = {
   selectors: {
     conversation: null,
     title: 'div.group\\/title',
-    turn: '[data-message-id], [class*="inner-item-"], [class*="top-item-"]',
+    turn: 'div[data-message-id].relative.grid, div[class*="send-msg-bubble"], div[class*="conversation-page-message-host"]',
     question: 'div[class*="send-msg-bubble"], div[class*="bg-g-send-msg-bubble-bg"]',
-    answer: '[data-message-id], .md-box-root, .flow-markdown-body, div[class*="conversation-page-message-host"]',
+    answer: 'div[data-message-id].relative.grid, div[class*="conversation-page-message-host"]',
     thinking: null,
-    markdownBlock: '[data-message-id], .md-box-root, .flow-markdown-body, div[class*="conversation-page-message-host"]',
+    markdownBlock: '.md-box-root, .flow-markdown-body',
     search: '', // 豆包暂无搜索结果独立区块
     cleanupSelectors: [
       'div[class*="send-msg-bubble"]', // 去掉嵌在回答宿主中的提问气泡
@@ -145,8 +145,8 @@ const geminiConfig = {
   selectors: {
     conversation: '.conversation-container',
     title: null,
-    question: '.user-query-container',
-    answer: '.response-container',
+    question: 'user-query',
+    answer: 'model-response',
     thinking: null,
     markdownBlock: '.markdown'
   },

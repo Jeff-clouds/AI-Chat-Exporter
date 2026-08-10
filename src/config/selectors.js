@@ -20,7 +20,7 @@ class SelectorManager {
                     "title": ".f8d1e4c0.the-header > div > div:first-child",
                     "question": "._9663006, ._72b6158",
                     "answer": "._4f9bf79._43c05b5",
-                    "thinking": ".ds-think-content, ._74c0879",
+                    "thinking": ".ds-think-content",
                     "HEADINGS": [
                         "h1",
                         "h2",
@@ -66,8 +66,9 @@ class SelectorManager {
                 "selectors": {
                     "conversation": null,
                     "title": null,
-                    "question": "[data-turn=\"user\"]",
-                    "answer": "[data-turn=\"assistant\"]",
+                    "turn": "[data-testid^=\"conversation-turn-\"]",
+                    "question": "[data-message-author-role=\"user\"]",
+                    "answer": "[data-message-author-role=\"assistant\"]",
                     "thinking": null,
                     "HEADINGS": [
                         "h1",
@@ -92,7 +93,7 @@ class SelectorManager {
                     "conversation": null,
                     "title": "div.group\\/title",
                     "question": "div[class*=\"send-msg-bubble\"], div[class*=\"bg-g-send-msg-bubble-bg\"]",
-                    "answer": "[data-message-id], .md-box-root, .flow-markdown-body, div[class*=\"conversation-page-message-host\"]",
+                    "answer": "div[data-message-id].relative.grid, div[class*=\"conversation-page-message-host\"]",
                     "thinking": null,
                     "HEADINGS": [
                         "h1",
@@ -116,8 +117,8 @@ class SelectorManager {
                 "selectors": {
                     "conversation": ".conversation-container",
                     "title": null,
-                    "question": ".user-query-container",
-                    "answer": ".response-container",
+                    "question": "user-query",
+                    "answer": "model-response",
                     "thinking": null,
                     "markdownBlock": ".markdown",
                     "HEADINGS": [

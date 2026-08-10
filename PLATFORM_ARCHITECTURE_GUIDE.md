@@ -2,7 +2,7 @@
 
 > 状态：七个平台首期架构卡完成；宿主事实与当前实现分层记录
 > 代码基线：v2.1.3 / commit 8d69d53
-> 最近核验：2026-07-16
+> 最近核验：2026-08-10
 > 适用范围：平台适配、目录、跳转、导出、性能、路由、缓存和侧边栏生命周期相关改动
 
 ## 0. 先读这一页再改代码
@@ -203,7 +203,8 @@ sequence        本地首次观察顺序
 | 会话路由 | 普通会话含 /c/{conversationId}；项目/GPT 页面也可在嵌套路径中提取 /c/{id} | 真实标签 + currentConversationId |
 | 非公开运行时响应 | 在已审计样本中观察到 `/backend-api/conversation/{id}` 响应含 mapping 与 current_node | B+C：项目运行时与第三方实现交叉佐证；不构成稳定接口承诺 |
 | 长会话 DOM | 只挂载一个 turn 窗口，不代表全会话 | 2026-07-16 真实 Chrome |
-| turn 容器 | SECTION[data-testid=conversation-turn-N][data-turn] | 2026-07-16 真实 Chrome |
+| turn 容器 | 当前样本命中 `[data-testid^="conversation-turn-"]`；旧 `[data-turn]` 未命中 | 2026-08-10 真实 Chrome |
+| 消息角色 | 当前样本以 `data-message-author-role="user"` / `"assistant"` 区分 | 2026-08-10 真实 Chrome |
 | 稳定消息 ID | data-message-id 位于 turn 内部消息节点，不一定在 SECTION 上 | 2026-07-16 真实 Chrome |
 | 一个回答 turn | 一个 SECTION 在该样本中可包含多个 message-id | 2026-07-16 真实 Chrome |
 | 标题 | 当前挂载回答 DOM 中可直接观察到 H1-H6；其他标题来源的覆盖范围需分别验证 | 2026-07-16 真实 Chrome + 实现审计 |
@@ -225,6 +226,8 @@ data-message-id：7
 
 1. 30 以前的历史 turn 不在当前 DOM。
 2. assistant SECTION 数量与 message-id 数量不相等，一个回答区域可能包含多个消息记录。
+
+2026-08-10 漂移记录：固定登录态 GPT 会话已加载可读正文，旧 `[data-turn="user"]` 与 `[data-turn="assistant"]` 均未命中；`data-message-author-role` 的 user / assistant 节点及 conversation-turn 测试标记命中。该验证仅覆盖当前挂载窗口，不改变 API-first 完整会话边界，也不证明长会话、路由切换或流式验收已完成。
 
 ### 4.2 ChatGPT 数据流
 
