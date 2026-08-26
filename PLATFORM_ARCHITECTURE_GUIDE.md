@@ -357,7 +357,7 @@ RouteReset 必须：
 
 当前重要未决风险：
 
-- “第一次打开会话不出目录、第二次打开才出现”曾在真实使用中出现。v2.1.3 的单元测试和结构检查不能单独证明此问题已消失。任何后续修复必须用全新会话冷打开验证，不能只复用已缓存页面。
+- “第一次打开会话不出目录、第二次打开才出现”曾在真实使用中出现；2026-08-26 又在 A -> 新聊天 -> A 路径复现了宿主页有 turn、侧栏索引为 0 的相关故障。检查点 `a460d62` / `eec54f5` 目前只有代码复核和自动化回归，不能单独证明问题已消失。必须在重载审计扩展后验证全新会话冷打开及原始切换路径，不能只复用已缓存页面。
 
 ## 5. 豆包平台架构卡
 
@@ -918,6 +918,7 @@ flowchart TD
 | 2026-07-16 | Grok | 用户打开的真实 Chrome 会话 | 已通过 Cloudflare 进入真实会话；三种结构读取方式均超时 | 确认页面可达；后续用手工 DevTools 或更小页面审计 selector |
 | 2026-07-16 | Kimi | 单轮真实样本 + 实现探针 | 1Q、1 answer segment、2 markdown、10 heading；主 segment selector 在该样本中命中 | 增加多轮 / 多 segment 回归，约束 fallback 去重 |
 | 2026-08-26 | ChatGPT | 登录态内置浏览器宿主盲审；普通、项目和长页面样本 | `data-turn` 当前重新可见；切会话存在旧 DOM 暂留期；底部卸载 turn-1，单次定位 turn-2 后 turn-1 重新挂载 | 更新旧 selector 结论；目录跳转按 URL/token/message identity 校验，并仅做一次用户触发的邻近锚点实验；扩展 E2E 仍待复验 |
+| 2026-08-26 | ChatGPT + 审计扩展 | 登录态真实 Chrome；审计版 f420406 从项目长会话进入无 conversationId 的新聊天，再返回原会话 | 宿主页重新挂载 6–8 个 turn，但侧栏诊断仍为 conversations/questions/answers/headings 全 0，且错误显示“目录已生成”；当前代码复核确认 turn identity 缺少 route owner，同 tab 重注入还会断 port 并释放缓存 | 已建立 route-owner、同 tab lifecycle 复用与空目录状态回归；检查点 `a460d62` / `eec54f5` 仍须重载 unpacked 扩展后复跑原现场，未复验前不得写“已修复” |
 
 每次平台变化追加一行，不覆盖历史。旧结论保留日期，避免“最新一次看起来正常”抹掉回归线索。
 
