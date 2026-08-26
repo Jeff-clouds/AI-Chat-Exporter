@@ -281,6 +281,7 @@ function makeSectionMessage(role, number, sectionId, messageId, text, headings =
     // The side panel disconnects its old lifecycle before reinjecting on the new route.
     // This must retain A's mounted identities even though the record cache is cleared.
     index.disconnect();
+    assert.equal(index.lastChatGptTurnOwner, 'conversation:conversation-a', 'disconnect must retain the route owner with its identities');
     location.href = 'https://chatgpt.com/c/conversation-b';
     location.pathname = '/c/conversation-b';
     index.connect();
@@ -376,6 +377,55 @@ function makeSectionMessage(role, number, sectionId, messageId, text, headings =
     assert.equal(index.scanChatGptDom({ cacheMessages: true }), true, 'changed B identities may release the empty-payload route gate');
     assert.equal(index.chatGptRouteAwaitingApiConfirmation, false);
     assert.deepEqual(Array.from(index.getMessages(), message => message.id), ['b-u1', 'b-a1']);
+}
+
+// A route without a conversation ID owns no earlier conversation turns. Returning from
+// the new-chat shell to A must not reinterpret A's retained identities as shell residue.
+{
+    const location = {
+        href: 'https://chatgpt.com/c/owner-a',
+        pathname: '/c/owner-a',
+        origin: 'https://chatgpt.com'
+    };
+    const aTurns = [
+        makeTurn('user', 1, 'owner-a-u1', 'Owner A question'),
+        makeTurn('assistant', 2, 'owner-a-a1', 'Owner A answer', [makeHeading('h2', 'Owner A heading')])
+    ];
+    let turns = aTurns;
+    const root = { querySelectorAll(selector) { return selector === '[data-turn]' ? turns : []; } };
+    const window = {
+        addEventListener() {}, removeEventListener() {}, dispatchEvent() {}, postMessage() {}
+    };
+    const context = {
+        window, location,
+        document: {
+            title: 'Owner A',
+            querySelector(selector) { return selector === 'main' || selector === '[role="main"]' ? root : null; }
+        },
+        MutationObserver: class { disconnect() {} },
+        setTimeout, clearTimeout, CustomEvent: class {}, console
+    };
+    vm.runInNewContext(indexSource, context);
+    const index = window.AI_CHAT_CONVERSATION_INDEX;
+    index.resetForLocation();
+    assert.equal(index.scanChatGptDom({ cacheMessages: true }), true);
+    assert.equal(index.lastChatGptTurnOwner, 'conversation:owner-a');
+
+    location.href = 'https://chatgpt.com/';
+    location.pathname = '/';
+    index.resetForLocation();
+    assert.equal(index.scanChatGptDom({ cacheMessages: true }), false, 'A DOM still mounted under the new-chat URL must stay excluded');
+    turns = [];
+
+    location.href = 'https://chatgpt.com/c/owner-a';
+    location.pathname = '/c/owner-a';
+    index.resetForLocation();
+    assert.equal(index.excludedChatGptTurnIdentities.size, 0, 'owner mismatch must not turn older A identities into new-chat exclusions');
+    // This is the state reached by loadChatGptApi's bounded failure fallback.
+    index.chatGptRouteAwaitingApiConfirmation = false;
+    turns = aTurns;
+    assert.equal(index.scanChatGptDom({ cacheMessages: true }), true, 'A DOM must recover after the API fallback releases the route gate');
+    assert.deepEqual(Array.from(index.getMessages(), message => message.id), ['owner-a-u1', 'owner-a-a1']);
 }
 
 // A requested response is valid only for the exact route generation that created it.
@@ -526,6 +576,15 @@ function makeElement() {
     `, context);
 
     const bOutline = [{ text: 'B question', type: 'question', id: 'cn-q-b', metadata: { index: 1 } }];
+    vm.runInNewContext(`setExportStatus('正在读取完整会话…', 'neutral')`, context);
+    messageListener({
+        type: 'outline',
+        outline: [],
+        requestToken: 'request-b-new',
+        diagnostics: { url: 'https://chatgpt.com/c/conversation-b' }
+    }, { tab: { id: 1, url: 'https://chatgpt.com/c/conversation-b' } });
+    assert.equal(elements.get('export-status').textContent, '正在读取完整会话…', 'an empty outline must not claim that the directory is ready');
+
     messageListener({
         type: 'outline',
         outline: bOutline,

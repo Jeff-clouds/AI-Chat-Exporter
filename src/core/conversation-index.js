@@ -50,9 +50,20 @@
         return role && text ? `content:${role}:${stableTextFingerprint(text)}` : '';
     }
 
-    function currentConversationId() {
-        const match = location.pathname.match(/\/c\/([^/?#]+)|\/chat\/([^/?#]+)/);
+    function conversationIdFromUrl(rawUrl = '') {
+        const match = String(rawUrl).match(/\/c\/([^/?#]+)|\/chat\/([^/?#]+)/);
         return match ? (match[1] || match[2]) : '';
+    }
+
+    function currentConversationId() {
+        return conversationIdFromUrl(location.href);
+    }
+
+    function chatGptRouteKey(rawUrl = location.href) {
+        const conversationId = conversationIdFromUrl(rawUrl);
+        if (conversationId) return `conversation:${conversationId}`;
+        const path = String(rawUrl).replace(/^https?:\/\/[^/]+/i, '').split(/[?#]/)[0] || '/';
+        return `route:${path}`;
     }
 
     function contentToMarkdown(content) {
@@ -127,6 +138,7 @@
             this.chatGptPayloadCache = new Map();
             this.chatGptPayloadTimes = new Map();
             this.lastChatGptTurnIdentities = new Set();
+            this.lastChatGptTurnOwner = '';
             this.excludedChatGptTurnIdentities = new Set();
             this.chatGptCanonicalTurnIds = new Set();
             this.chatGptRouteAwaitingApiConfirmation = false;
@@ -217,14 +229,20 @@
             // ChatGPT updates the URL before replacing the old conversation DOM. Preserve
             // the previous mounted identities and reject them under the new route.
             if (previousUrl && previousUrl !== nextUrl && previousPlatform === 'CHATGPT' && nextPlatform === 'CHATGPT') {
-                const previousIdentities = this.lastChatGptTurnIdentities.size > 0
-                    ? this.lastChatGptTurnIdentities
-                    : new Set(this.getMessages().map(message => message.turnId || message.id).filter(Boolean).map(id => `id:${id}`));
+                const previousRouteKey = chatGptRouteKey(previousUrl);
+                const previousIdentities = this.lastChatGptTurnOwner === previousRouteKey
+                    ? new Set(this.lastChatGptTurnIdentities)
+                    : new Set();
+                this.getMessages().forEach(message => {
+                    const id = message.turnId || message.id;
+                    if (id) previousIdentities.add(`id:${id}`);
+                });
                 this.excludedChatGptTurnIdentities = new Set(previousIdentities);
                 this.chatGptRouteAwaitingApiConfirmation = true;
             } else if (nextPlatform !== 'CHATGPT') {
                 this.excludedChatGptTurnIdentities.clear();
                 this.lastChatGptTurnIdentities.clear();
+                this.lastChatGptTurnOwner = '';
                 this.chatGptRouteAwaitingApiConfirmation = false;
             }
             this.chatGptCanonicalTurnIds.clear();
@@ -266,12 +284,16 @@
         disconnect() {
             this.disconnectObservers();
             this.routeGeneration++;
-            const retainedIdentities = new Set(this.lastChatGptTurnIdentities);
+            const currentRouteKey = chatGptRouteKey();
+            const retainedIdentities = this.lastChatGptTurnOwner === currentRouteKey
+                ? new Set(this.lastChatGptTurnIdentities)
+                : new Set();
             this.getMessages().forEach(message => {
                 const id = message.turnId || message.id;
                 if (id) retainedIdentities.add(`id:${id}`);
             });
             this.lastChatGptTurnIdentities = retainedIdentities;
+            this.lastChatGptTurnOwner = retainedIdentities.size > 0 ? currentRouteKey : '';
             window.postMessage({
                 source: 'ai-chat-exporter-index',
                 type: 'chatgpt-conversation-release'
@@ -466,12 +488,16 @@
                 this.chatGptRouteAwaitingApiConfirmation = false;
             }
             this.chatGptCanonicalTurnIds = new Set(apiRecords.map(record => record.id));
-            const acceptedDomIdentities = Array.from(this.lastChatGptTurnIdentities)
-                .filter(identity => !this.excludedChatGptTurnIdentities.has(identity));
+            const currentRouteKey = chatGptRouteKey();
+            const acceptedDomIdentities = this.lastChatGptTurnOwner === currentRouteKey
+                ? Array.from(this.lastChatGptTurnIdentities)
+                    .filter(identity => !this.excludedChatGptTurnIdentities.has(identity))
+                : [];
             this.lastChatGptTurnIdentities = new Set([
                 ...apiRecords.map(record => `id:${record.id}`),
                 ...acceptedDomIdentities
             ]);
+            this.lastChatGptTurnOwner = currentRouteKey;
             // API records are canonical where available, but mounted DOM-only turns may be newer
             // than a cached payload. Merge instead of clearing so scrolling/new output is never erased.
             const apiIds = new Set(apiRecords.map(record => record.id));
@@ -560,7 +586,10 @@
             if (mountedTurns.length === 0) return false;
             if (this.excludedChatGptTurnIdentities.size > 0) this.chatGptDomRouteTrusted = true;
             const currentIdentities = mountedTurns.map(chatGptTurnIdentity).filter(Boolean);
-            if (currentIdentities.length > 0) this.lastChatGptTurnIdentities = new Set(currentIdentities);
+            if (currentIdentities.length > 0) {
+                this.lastChatGptTurnIdentities = new Set(currentIdentities);
+                this.lastChatGptTurnOwner = chatGptRouteKey();
+            }
             mountedTurns.forEach((element, index) => {
                 const role = element.getAttribute('data-turn') || element.getAttribute('data-message-author-role');
                 if (role !== 'user' && role !== 'assistant') return;
@@ -807,6 +836,7 @@
         stripChatGptRolePrefix,
         stableTextFingerprint,
         chatGptTurnIdentity,
+        chatGptRouteKey,
         doubaoElementFingerprint
     };
 })();

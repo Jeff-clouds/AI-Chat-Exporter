@@ -110,6 +110,7 @@ function createHarness(initialTurns = []) {
         }
     }
 
+    const conversationIndex = { disconnectCalls: 0, disconnect() { this.disconnectCalls++; } };
     const window = {
         location: { href: 'https://chatgpt.com/c/jump-test' },
         CSS: { escape: value => String(value) },
@@ -119,7 +120,7 @@ function createHarness(initialTurns = []) {
         addEventListener() {},
         removeEventListener() {},
         __AI_CHAT_EXPORT_TESTS__: { jumpTimeoutMs: 20 },
-        AI_CHAT_CONVERSATION_INDEX: { disconnect() {} }
+        AI_CHAT_CONVERSATION_INDEX: conversationIndex
     };
 
     const chrome = {
@@ -151,6 +152,10 @@ function createHarness(initialTurns = []) {
         queueMicrotask
     };
     vm.runInNewContext(contentSource, context);
+    const firstExtractRuntime = window.extractAndSendOutline;
+    vm.runInNewContext(contentSource, context);
+    assert.equal(window.extractAndSendOutline, firstExtractRuntime, 'same-version reinjection must preserve the active content runtime');
+    assert.equal(conversationIndex.disconnectCalls, 0, 'same-version reinjection must not release the conversation index');
     context.extractAndSendOutline = window.extractAndSendOutline;
 
     messageListener({
@@ -177,6 +182,7 @@ function createHarness(initialTurns = []) {
         observers,
         scroller,
         window,
+        conversationIndex,
         jump,
         triggerMutations() {
             observers.filter(observer => !observer.disconnected).forEach(observer => observer.callback([]));

@@ -1,5 +1,13 @@
 (function() {
-    window.CHAT_NAVIGATOR_CONTENT_VERSION = '2026-08-26-bounded-chatgpt-jump';
+    const CONTENT_VERSION = '2026-08-26-route-stable-content-lifecycle';
+    // The side panel re-injects its file list whenever the active ChatGPT route changes.
+    // Re-running the same content runtime used to tear down the live conversation index,
+    // release both caches, and then rebuild an empty index during A→B→A navigation.
+    // Keep the already-running, same-version lifecycle authoritative until its panel port
+    // is actually disconnected.
+    if (window.CHAT_NAVIGATOR_CONTENT_VERSION === CONTENT_VERSION
+        && typeof window.extractAndSendOutline === 'function') return;
+    window.CHAT_NAVIGATOR_CONTENT_VERSION = CONTENT_VERSION;
 
     // 清理旧的实例和监听器
     if (window.chatNavigatorCleanup) {
@@ -607,6 +615,9 @@
             try { port.disconnect(); } catch (_) {}
         });
         activePanelPorts.clear();
+        window.CHAT_NAVIGATOR_CONTENT_VERSION = '';
+        window.extractAndSendOutline = null;
+        window.chatNavigatorCleanup = null;
     };
 
 })();

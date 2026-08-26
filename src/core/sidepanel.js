@@ -313,7 +313,9 @@ if (HAS_CHROME_API && chrome.runtime.onMessage?.addListener) chrome.runtime.onMe
             }
             setSiteInfo(t('currentSite', { site }));
         }
-        setOutlineReadyStatus(url);
+        if (Array.isArray(message.outline) && message.outline.length > 0) {
+            setOutlineReadyStatus(url);
+        }
     } else if (message.type === 'updateReadingPosition') {
         highlightCurrentReadingPosition(message.elementId, message.elementText);
     }
