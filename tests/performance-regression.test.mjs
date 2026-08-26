@@ -426,6 +426,7 @@ assert.match(contentSource, /window\.AI_CHAT_CONVERSATION_INDEX\?\.disconnect\?\
 assert.match(contentSource, /clearTimeout\(outlineRefreshTimer\)/);
 assert.match(contentSource, /runtime\.onConnect\.removeListener/);
 assert.match(contentSource, /CHAT_NAVIGATOR_CONTENT_VERSION === CONTENT_VERSION/);
+assert.match(contentSource, /2026-08-26-route-owned-index-status/);
 assert.match(contentSource, /window\.CHAT_NAVIGATOR_CONTENT_VERSION = ''/);
 assert.doesNotMatch(contentSource, /mainObserver\.observe\(document\.body/);
 
