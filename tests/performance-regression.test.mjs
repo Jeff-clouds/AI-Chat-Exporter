@@ -41,6 +41,8 @@ assert.match(indexSource, /scanChatGptDom\(\{ cacheMessages: true \}\)/);
 assert.match(indexSource, /observeChatGpt\(\)/);
 assert.match(indexSource, /scheduleChatGptScan/);
 assert.match(indexSource, /MAX_MOUNTED_CHATGPT_TURNS = 48/);
+assert.match(indexSource, /2026-08-26-route-owned-turns/);
+assert.match(indexSource, /getChatGptLoadState\(\)/);
 assert.match(indexSource, /\[data-message-author-role\]/);
 const pipelineSource = fs.readFileSync(new URL('../src/core/pipeline.js', import.meta.url), 'utf8');
 assert.match(pipelineSource, /if \(this\.platformId === 'CHATGPT'\)[\s\S]*?await index\.refresh\(\{ observe: true, awaitApi: false \}\)/);

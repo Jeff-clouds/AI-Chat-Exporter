@@ -36,6 +36,7 @@ const UI_COPY = {
         privacyTitle: '隐私', privacyBody: '对话内容在浏览器本地处理，不上传到开发者服务器。', activateLicense: '激活授权码',
         loadingChatgpt: '正在读取完整会话…', loadingDoubao: '正在读取当前内容；目录会随滚动补全', loadingOutline: '正在生成对话目录…',
         readyDoubao: '目录已生成；继续滚动原对话可补全更多内容', readyChatgpt: '目录已生成；长对话会优先读取完整会话', readyOutline: '目录已生成', analyzing: '正在分析页面内容…',
+        emptyOutlineStatus: '当前未生成可用目录',
         unsupportedPage: '当前页面不是支持的 AI 对话页面', injectFailed: '无法注入页面分析脚本，请刷新当前页面后重试',
         currentSite: '当前网站：{site}', demoSite: '示例页面：{site} 长对话大纲', demoReady: '示例数据：可直接点击、收起目录或切换部分导出',
         demoPurchase: '示例页面不会打开购买链接', proActive: 'Pro 已激活', activating: '激活中…', activationPrompt: '请输入 Pro 授权码', activationFailed: '激活失败：{error}', unknownError: '未知错误',
@@ -55,6 +56,7 @@ const UI_COPY = {
         privacyTitle: 'Privacy', privacyBody: 'Conversation content is processed locally in your browser and is not uploaded to our servers.', activateLicense: 'Activate license',
         loadingChatgpt: 'Reading the complete conversation…', loadingDoubao: 'Reading the current content; the outline fills in as you scroll', loadingOutline: 'Building conversation outline…',
         readyDoubao: 'Outline ready; keep scrolling the chat to add more content', readyChatgpt: 'Outline ready; long chats use the complete conversation when available', readyOutline: 'Outline ready', analyzing: 'Analyzing page content…',
+        emptyOutlineStatus: 'No usable outline is currently available',
         unsupportedPage: 'This page is not a supported AI chat', injectFailed: 'Could not analyze this page. Refresh the tab and try again.',
         currentSite: 'Current site: {site}', demoSite: 'Example: {site} long-chat outline', demoReady: 'Example data: click items, collapse the outline, or switch to partial export',
         demoPurchase: 'The example page does not open the purchase link', proActive: 'Pro is active', activating: 'Activating…', activationPrompt: 'Enter your Pro license code', activationFailed: 'Activation failed: {error}', unknownError: 'Unknown error',
@@ -323,6 +325,8 @@ if (HAS_CHROME_API && chrome.runtime.onMessage?.addListener) chrome.runtime.onMe
         }
         if (Array.isArray(message.outline) && message.outline.length > 0) {
             setOutlineReadyStatus(url);
+        } else if (!message.diagnostics?.pending) {
+            setExportStatus(t('emptyOutlineStatus'), 'neutral');
         }
     } else if (message.type === 'updateReadingPosition') {
         highlightCurrentReadingPosition(message.elementId, message.elementText);

@@ -3,7 +3,7 @@
 
     const CHATGPT_API = /chatgpt\.com/;
     const DOUBAO = /doubao\.com/;
-    const INDEX_VERSION = '2026-07-15-chatgpt-section-turns';
+    const INDEX_VERSION = '2026-08-26-route-owned-turns';
     const CHATGPT_REQUEST_TIMEOUT_MS = 20000;
     const CHATGPT_CACHE_TTL_MS = 15000;
     const MAX_CACHED_CONVERSATIONS = 2;
@@ -144,6 +144,7 @@
             this.chatGptRouteAwaitingApiConfirmation = false;
             this.routeGeneration = 0;
             this.chatGptLoads = new Map();
+            this.chatGptLoadStates = new Map();
             this.pendingChatGptRequests = new Map();
             this.connected = false;
             this.handleWindowMessage = event => {
@@ -246,6 +247,7 @@
                 this.chatGptRouteAwaitingApiConfirmation = false;
             }
             this.chatGptCanonicalTurnIds.clear();
+            this.chatGptLoadStates.clear();
             this.chatGptEmptyBaselineIdentities = null;
             this.chatGptEmptyRetryCount = 0;
             this.chatGptDomRouteTrusted = false;
@@ -306,6 +308,7 @@
             });
             this.pendingChatGptRequests.clear();
             this.chatGptLoads.clear();
+            this.chatGptLoadStates.clear();
             this.chatGptPayloadCache.clear();
             this.chatGptPayloadTimes.clear();
             this.chatGptCanonicalTurnIds.clear();
@@ -349,12 +352,18 @@
                 // The observer is scoped to the conversation root and each scan is bounded.
                 this.scanChatGptDom({ cacheMessages: true });
                 if (options.observe !== false) this.observeChatGpt();
+                const conversationId = currentConversationId();
+                const loadKey = conversationId ? `${this.routeGeneration}:${conversationId}` : '';
+                const previousLoadState = loadKey ? this.chatGptLoadStates.get(loadKey) : '';
                 const apiLoad = this.loadChatGptApi(options);
+                const startedNewLoad = loadKey
+                    && previousLoadState !== 'pending'
+                    && this.chatGptLoadStates.get(loadKey) === 'pending';
                 if (options.awaitApi === false) {
                     // The side panel must not wait for a slow internal endpoint. When API
                     // data arrives later, notify the existing panel to replace DOM records.
-                    apiLoad.then(apiLoaded => {
-                        if (!apiLoaded || location.href !== refreshUrl || typeof window.dispatchEvent !== 'function') return;
+                    apiLoad.then(() => {
+                        if (!startedNewLoad || location.href !== refreshUrl || typeof window.dispatchEvent !== 'function') return;
                         window.dispatchEvent(new CustomEvent('ai-chat-index-updated'));
                     });
                 } else {
@@ -375,6 +384,8 @@
             if (!conversationId) return false;
             const routeGeneration = this.routeGeneration;
             const requestUrl = location.href;
+            const loadKey = `${routeGeneration}:${conversationId}`;
+            if (!force && this.chatGptLoadStates.get(loadKey) === 'failed') return false;
             if (!force && this.chatGptPayloadCache.has(conversationId)) {
                 const payload = this.chatGptPayloadCache.get(conversationId);
                 const cachedAt = this.chatGptPayloadTimes.get(conversationId) || 0;
@@ -382,10 +393,13 @@
                 this.chatGptPayloadCache.delete(conversationId);
                 this.chatGptPayloadCache.set(conversationId, payload);
                 this.importChatGptPayload(payload);
-                if (Date.now() - cachedAt < CHATGPT_CACHE_TTL_MS) return this.order.length > 0;
+                if (Date.now() - cachedAt < CHATGPT_CACHE_TTL_MS) {
+                    this.chatGptLoadStates.set(loadKey, 'success');
+                    return this.order.length > 0;
+                }
             }
-            const loadKey = `${routeGeneration}:${conversationId}`;
             if (this.chatGptLoads.has(loadKey)) return this.chatGptLoads.get(loadKey);
+            this.chatGptLoadStates.set(loadKey, 'pending');
 
             const requestId = `${conversationId}:${Date.now()}:${Math.random().toString(36).slice(2)}`;
             const load = new Promise((resolve, reject) => {
@@ -413,6 +427,7 @@
                 this.cacheChatGptPayload(conversationId, payload);
                 if (conversationId !== currentConversationId()) return false;
                 this.importChatGptPayload(payload);
+                this.chatGptLoadStates.set(loadKey, 'success');
                 return this.order.length > 0;
             }).catch(error => {
                 const expectedCancellation = error?.message === 'Conversation route changed'
@@ -422,6 +437,7 @@
                     console.warn('AI Chat Export Pro: ChatGPT API unavailable; retaining bounded mounted DOM outline', error);
                 }
                 if (routeGeneration === this.routeGeneration && requestUrl === location.href && conversationId === currentConversationId()) {
+                    this.chatGptLoadStates.set(loadKey, 'failed');
                     this.chatGptRouteAwaitingApiConfirmation = false;
                     const changed = this.scanChatGptDom({ cacheMessages: true });
                     if (changed && typeof window.dispatchEvent === 'function') {
@@ -432,6 +448,12 @@
             }).finally(() => this.chatGptLoads.delete(loadKey));
             this.chatGptLoads.set(loadKey, load);
             return load;
+        }
+
+        getChatGptLoadState() {
+            const conversationId = currentConversationId();
+            if (!conversationId) return 'terminal';
+            return this.chatGptLoadStates.get(`${this.routeGeneration}:${conversationId}`) || 'idle';
         }
 
         importChatGptPayload(payload) {

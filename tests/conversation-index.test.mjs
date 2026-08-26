@@ -26,7 +26,7 @@ const payload = {
 
 const helpers = context.window.__AI_CHAT_EXPORT_TESTS__;
 const index = context.window.AI_CHAT_CONVERSATION_INDEX;
-assert.equal(index.version, '2026-07-15-chatgpt-section-turns');
+assert.equal(index.version, '2026-08-26-route-owned-turns');
 assert.deepEqual(Array.from(helpers.currentBranchNodes(payload), node => node.id), [
   'root', 'user1', 'assistant1', 'user2', 'assistant-2'
 ]);

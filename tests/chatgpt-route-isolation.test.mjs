@@ -49,6 +49,29 @@ function makeSectionMessage(role, number, sectionId, messageId, text, headings =
     };
 }
 
+// A route-owner architecture change must replace the pre-fix singleton on extension reload.
+{
+    let disconnected = 0;
+    const legacyIndex = {
+        version: '2026-07-15-chatgpt-section-turns',
+        disconnect() { disconnected++; }
+    };
+    const location = { href: 'https://chatgpt.com/c/upgrade-a', pathname: '/c/upgrade-a', origin: 'https://chatgpt.com' };
+    const window = {
+        AI_CHAT_CONVERSATION_INDEX: legacyIndex,
+        addEventListener() {}, removeEventListener() {}, postMessage() {}
+    };
+    vm.runInNewContext(indexSource, {
+        window, location,
+        document: { title: 'Upgrade A', querySelector() { return null; } },
+        MutationObserver: class { disconnect() {} },
+        setTimeout, clearTimeout, CustomEvent: class {}, console
+    });
+    assert.equal(disconnected, 1, 'reload must disconnect the pre-route-owner singleton');
+    assert.notEqual(window.AI_CHAT_CONVERSATION_INDEX, legacyIndex, 'reload must construct the new index class');
+    assert.equal(window.AI_CHAT_CONVERSATION_INDEX.lastChatGptTurnOwner, '');
+}
+
 // Current ChatGPT uses SECTION conversation turns. The role/API message ID live
 // on descendants, and one assistant SECTION may contain progress + final nodes.
 {
@@ -596,9 +619,16 @@ function makeElement() {
         type: 'outline',
         outline: [],
         requestToken: 'request-b-new',
-        diagnostics: { url: 'https://chatgpt.com/c/conversation-b' }
+        diagnostics: { url: 'https://chatgpt.com/c/conversation-b', pending: true }
     }, { tab: { id: 1, url: 'https://chatgpt.com/c/conversation-b' } });
-    assert.equal(elements.get('export-status').textContent, '正在读取完整会话…', 'an empty outline must not claim that the directory is ready');
+    assert.equal(elements.get('export-status').textContent, '正在读取完整会话…', 'a pending empty outline must retain the loading status');
+    messageListener({
+        type: 'outline',
+        outline: [],
+        requestToken: 'request-b-new',
+        diagnostics: { url: 'https://chatgpt.com/c/conversation-b', pending: false }
+    }, { tab: { id: 1, url: 'https://chatgpt.com/c/conversation-b' } });
+    assert.equal(elements.get('export-status').textContent, '当前未生成可用目录', 'a terminal empty outline must stop claiming that it is still loading');
 
     messageListener({
         type: 'outline',

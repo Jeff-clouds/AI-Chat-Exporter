@@ -112,6 +112,9 @@ window.Pipeline = class Pipeline {
         };
         try {
             const indexedOutline = await this._extractVirtualizedOutline();
+            if (this.platformId === 'CHATGPT') {
+                diagnostics.pending = window.AI_CHAT_CONVERSATION_INDEX?.getChatGptLoadState?.() === 'pending';
+            }
             if (indexedOutline.length > 0) {
                 this._fillStats(indexedOutline, diagnostics);
                 return { outline: indexedOutline, diagnostics };
