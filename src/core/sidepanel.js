@@ -2,6 +2,7 @@
 let currentTabId = null;
 let currentTabUrl = '';
 let activeContentPort = null;
+let activeContentTabId = null;
 let outlineRequestSerial = 0;
 let currentOutlineRequestToken = '';
 let tabReloadTimer = null;
@@ -156,18 +157,25 @@ async function injectCurrentContentScripts(tabId, url = '') {
 function disconnectActiveContentPort() {
     const port = activeContentPort;
     activeContentPort = null;
+    activeContentTabId = null;
     if (!port) return;
     try { port.disconnect(); } catch (_) {}
 }
 
 function connectContentLifecycle(tabId) {
+    if (activeContentPort && activeContentTabId === tabId) return activeContentPort;
     disconnectActiveContentPort();
     if (!chrome.tabs.connect) return;
     const port = chrome.tabs.connect(tabId, { name: 'ai-chat-exporter-panel' });
     activeContentPort = port;
+    activeContentTabId = tabId;
     port.onDisconnect.addListener(() => {
-        if (activeContentPort === port) activeContentPort = null;
+        if (activeContentPort === port) {
+            activeContentPort = null;
+            activeContentTabId = null;
+        }
     });
+    return port;
 }
 
 function scheduleReloadOutlineRequest() {
@@ -206,7 +214,7 @@ function requestCurrentTabOutline() {
     currentOutlineRequestToken = requestToken;
     chrome.tabs.query({active: true, currentWindow: true}, async (tabs) => {
         if (tabs[0] && requestSerial === outlineRequestSerial && requestToken === currentOutlineRequestToken) {
-            disconnectActiveContentPort();
+            if (activeContentPort && activeContentTabId !== tabs[0].id) disconnectActiveContentPort();
             currentTabId = tabs[0].id;
             currentTabUrl = tabs[0].url || '';
             const outlineContainer = clearOutlineForRequest();

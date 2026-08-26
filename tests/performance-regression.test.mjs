@@ -24,6 +24,8 @@ assert.match(sidepanelSource, /chatgpt-api-bridge\.js/);
 assert.doesNotMatch(sidepanelSource, /backend-api\/conversation/);
 assert.match(sidepanelSource, /changeInfo\.status === 'complete'/);
 assert.match(sidepanelSource, /scheduleReloadOutlineRequest\(\)/);
+assert.match(sidepanelSource, /activeContentPort && activeContentTabId === tabId/);
+assert.match(sidepanelSource, /activeContentPort && activeContentTabId !== tabs\[0\]\.id/);
 assert.match(indexSource, /CHATGPT_REQUEST_TIMEOUT_MS = 20000/);
 assert.match(indexSource, /CHATGPT_CACHE_TTL_MS = 15000/);
 assert.match(indexSource, /ai-chat-index-updated/);

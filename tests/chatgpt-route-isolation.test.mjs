@@ -531,6 +531,7 @@ function makeElement() {
 // newer request for the same URL. Only the current request token may repaint the panel.
 {
     let messageListener;
+    const connectedPorts = [];
     const elements = new Map([['outline', { ...makeElement(), innerHTML: '' }]]);
     const context = {
         console,
@@ -557,8 +558,15 @@ function makeElement() {
             scripting: { async executeScript() {} },
             tabs: {
                 create() {},
-                connect() {
-                    return { disconnect() {}, onDisconnect: { addListener() {} } };
+                connect(tabId) {
+                    const port = {
+                        tabId,
+                        disconnected: false,
+                        disconnect() { this.disconnected = true; },
+                        onDisconnect: { addListener() {} }
+                    };
+                    connectedPorts.push(port);
+                    return port;
                 },
                 onActivated: { addListener() {} },
                 onUpdated: { addListener() {} },
@@ -568,6 +576,13 @@ function makeElement() {
         }
     };
     vm.runInNewContext(sidepanelSource, context);
+    vm.runInNewContext('connectContentLifecycle(1); connectContentLifecycle(1);', context);
+    assert.equal(connectedPorts.length, 1, 'same-tab outline refresh must reuse its content lifecycle port');
+    assert.equal(connectedPorts[0].disconnected, false);
+    vm.runInNewContext('connectContentLifecycle(2);', context);
+    assert.equal(connectedPorts.length, 2, 'a different tab must receive its own lifecycle port');
+    assert.equal(connectedPorts[0].disconnected, true, 'switching tabs must clean the previous lifecycle');
+    vm.runInNewContext('disconnectActiveContentPort();', context);
     vm.runInNewContext(`
         currentTabId = 1;
         currentTabUrl = 'https://chatgpt.com/c/conversation-b';
