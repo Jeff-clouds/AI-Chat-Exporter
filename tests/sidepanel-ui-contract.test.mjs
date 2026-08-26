@@ -15,5 +15,9 @@ assert.match(script, /const UI_LANGUAGE = browserLanguage\.toLowerCase\(\)\.star
 assert.match(script, /zh:\s*\{[\s\S]*en:\s*\{/);
 assert.match(script, /function applyStaticTranslations\(\)/);
 assert.match(script, /function setSiteInfo\(text\)/);
+assert.match(script, /const jumpSerial = \+\+jumpRequestSerial/);
+assert.match(script, /url: jumpUrl,[\s\S]*requestToken: jumpRequestToken/);
+assert.match(script, /!response\?\.success[\s\S]*locateFailed/);
+assert.match(script, /setExportStatus\(t\('located'/);
 
 console.log('sidepanel ui contract ok');

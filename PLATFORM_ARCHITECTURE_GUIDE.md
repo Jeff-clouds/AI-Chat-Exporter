@@ -1,8 +1,10 @@
 # AI Chat Exporter 寄生平台架构与开发前置指南
 
+> **AI 文档提示**：本文档由 AI 撰写，可能不正确。执行前必须以当前代码、有效项目规则、真实运行态及必要的官方来源复核。
+
 > 状态：七个平台首期架构卡完成；宿主事实与当前实现分层记录
 > 代码基线：v2.1.3 / commit 8d69d53
-> 最近核验：2026-08-10
+> 最近核验：2026-08-26
 > 适用范围：平台适配、目录、跳转、导出、性能、路由、缓存和侧边栏生命周期相关改动
 
 ## 0. 先读这一页再改代码
@@ -203,8 +205,8 @@ sequence        本地首次观察顺序
 | 会话路由 | 普通会话含 /c/{conversationId}；项目/GPT 页面也可在嵌套路径中提取 /c/{id} | 真实标签 + currentConversationId |
 | 非公开运行时响应 | 在已审计样本中观察到 `/backend-api/conversation/{id}` 响应含 mapping 与 current_node | B+C：项目运行时与第三方实现交叉佐证；不构成稳定接口承诺 |
 | 长会话 DOM | 只挂载一个 turn 窗口，不代表全会话 | 2026-07-16 真实 Chrome |
-| turn 容器 | 当前样本命中 `[data-testid^="conversation-turn-"]`；旧 `[data-turn]` 未命中 | 2026-08-10 真实 Chrome |
-| 消息角色 | 当前样本以 `data-message-author-role="user"` / `"assistant"` 区分 | 2026-08-10 真实 Chrome |
+| turn 容器 | 2026-08-26 样本同时命中 `[data-testid^="conversation-turn-"]` 与 `[data-turn]`；不能把 2026-08-10 的未命中继续当作当前合约 | 2026-08-26 登录态内置浏览器宿主盲审 |
+| 消息角色 | 当前样本同时观察到 `data-turn="user|assistant"` 与 `data-message-author-role="user|assistant"`；单个 assistant SECTION 仍可能没有 message-id | 2026-08-26 登录态内置浏览器宿主盲审 |
 | 稳定消息 ID | data-message-id 位于 turn 内部消息节点，不一定在 SECTION 上 | 2026-07-16 真实 Chrome |
 | 一个回答 turn | 一个 SECTION 在该样本中可包含多个 message-id | 2026-07-16 真实 Chrome |
 | 标题 | 当前挂载回答 DOM 中可直接观察到 H1-H6；其他标题来源的覆盖范围需分别验证 | 2026-07-16 真实 Chrome + 实现审计 |
@@ -228,6 +230,8 @@ data-message-id：7
 2. assistant SECTION 数量与 message-id 数量不相等，一个回答区域可能包含多个消息记录。
 
 2026-08-10 漂移记录：固定登录态 GPT 会话已加载可读正文，旧 `[data-turn="user"]` 与 `[data-turn="assistant"]` 均未命中；`data-message-author-role` 的 user / assistant 节点及 conversation-turn 测试标记命中。该验证仅覆盖当前挂载窗口，不改变 API-first 完整会话边界，也不证明长会话、路由切换或流式验收已完成。
+
+2026-08-26 漂移记录：普通会话、项目会话和一个正文高度约 18k 的多轮样本同时命中 `data-turn`、`data-message-author-role`、conversation-turn 测试标记与稳定 message-id，因此 2026-08-10 的 `data-turn` 未命中不能继续外推。A -> B 切换时观察到“旧 DOM 暂留 -> 清空 -> 新 DOM 挂载”的异步阶段。长页面底部缺少 `conversation-turn-1`，顶部重新出现；从底部对仍挂载的 `conversation-turn-2` 执行一次用户触发的 start 定位后，`turn-1` 由宿主重新挂载。该证据证明“完整目录”和“目标当前可定位”是不同能力，也支持一次邻近锚点导航实验；它不证明本地扩展侧栏已经完成端到端验收。Network 捕获不完整，不能据此判断非公开会话端点是否存在或失效。
 
 ### 4.2 ChatGPT 数据流
 
@@ -899,6 +903,7 @@ flowchart TD
 | 2026-07-16 | Gemini | 真实登录态 Chrome | 在该样本中旧 conversation / question / answer selector 全为 0；新 custom elements 各命中 2 个候选节点 | P0 盲审新版轮次边界后更新 Gemini DOM 合约与测试 |
 | 2026-07-16 | Grok | 用户打开的真实 Chrome 会话 | 已通过 Cloudflare 进入真实会话；三种结构读取方式均超时 | 确认页面可达；后续用手工 DevTools 或更小页面审计 selector |
 | 2026-07-16 | Kimi | 单轮真实样本 + 实现探针 | 1Q、1 answer segment、2 markdown、10 heading；主 segment selector 在该样本中命中 | 增加多轮 / 多 segment 回归，约束 fallback 去重 |
+| 2026-08-26 | ChatGPT | 登录态内置浏览器宿主盲审；普通、项目和长页面样本 | `data-turn` 当前重新可见；切会话存在旧 DOM 暂留期；底部卸载 turn-1，单次定位 turn-2 后 turn-1 重新挂载 | 更新旧 selector 结论；目录跳转按 URL/token/message identity 校验，并仅做一次用户触发的邻近锚点实验；扩展 E2E 仍待复验 |
 
 每次平台变化追加一行，不覆盖历史。旧结论保留日期，避免“最新一次看起来正常”抹掉回归线索。
 

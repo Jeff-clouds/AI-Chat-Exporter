@@ -1,5 +1,5 @@
 (function() {
-    window.CHAT_NAVIGATOR_CONTENT_VERSION = '2026-07-14-panel-lifecycle';
+    window.CHAT_NAVIGATOR_CONTENT_VERSION = '2026-08-26-bounded-chatgpt-jump';
 
     // 清理旧的实例和监听器
     if (window.chatNavigatorCleanup) {
@@ -31,6 +31,9 @@
     let started = false;
     const activePanelPorts = new Set();
     const highlightTimers = new Set();
+    const pendingJumpCleanups = new Set();
+    const CHATGPT_JUMP_TIMEOUT_MS = Number(window.__AI_CHAT_EXPORT_TESTS__?.jumpTimeoutMs) || 2500;
+    let activeJumpGeneration = 0;
     let lastOutlineJson = '';
     const refreshOutlineFromIndex = () => scheduleOutlineRefresh(350);
 
@@ -189,8 +192,10 @@
     function handleMessage(message, sender, sendResponse) {
         switch (message.type) {
             case 'scrollTo':
-                scrollToOutlineTarget(message);
-                break;
+                scrollToOutlineTarget(message)
+                    .then(sendResponse)
+                    .catch(error => sendResponse({ success: false, reason: error?.message || 'jump-failed' }));
+                return true;
             case 'getOutline':
                 if (!message.requestToken || (message.url && message.url !== window.location.href)) return;
                 activeOutlineRequestToken = message.requestToken;
@@ -211,12 +216,33 @@
     }
 
     async function scrollToOutlineTarget(message) {
-        let element = findOutlineTarget(message);
-        if (!element && message.metadata) {
-            element = await findVirtualizedTarget(message);
+        const expectedUrl = window.location.href;
+        if (pipeline.platformId === 'CHATGPT' && (!message.url || !message.requestToken)) {
+            return { success: false, reason: 'missing-request-identity' };
+        }
+        if (pipeline.platformId === 'CHATGPT' && (
+            !Number.isFinite(message.metadata?.turnNumber)
+            || (!message.metadata?.messageId && !message.metadata?.turnId)
+        )) {
+            return { success: false, reason: 'missing-target-identity' };
+        }
+        if (message.url && message.url !== expectedUrl) {
+            return { success: false, reason: 'route-mismatch' };
+        }
+        if (message.requestToken && message.requestToken !== activeOutlineRequestToken) {
+            return { success: false, reason: 'request-mismatch' };
         }
 
-        if (!element) return;
+        cancelPendingJumps();
+        const jumpGeneration = ++activeJumpGeneration;
+        let element = findOutlineTarget(message);
+        if (!element && message.metadata) {
+            element = await findVirtualizedTarget(message, expectedUrl, jumpGeneration);
+        }
+
+        if (!element || window.location.href !== expectedUrl || jumpGeneration !== activeJumpGeneration) {
+            return { success: false, reason: window.location.href === expectedUrl ? 'target-not-mounted' : 'route-changed' };
+        }
 
         if (message.elementId) element.id = message.elementId;
         smoothScrollToElement(element);
@@ -230,34 +256,84 @@
             highlightTimers.delete(highlightTimer);
         }, 1500);
         highlightTimers.add(highlightTimer);
+        return { success: true, reason: 'located' };
     }
 
     function findOutlineTarget(message) {
         let element = document.getElementById(message.elementId);
         if (element && !element.textContent.trim()) element = null;
+        if (element && !targetMatchesIdentity(element, message.metadata)) element = null;
         if (!element && message.metadata) {
             element = pipeline.findElement(message.metadata);
+            if (element && !targetMatchesIdentity(element, message.metadata)) element = null;
         }
         return element;
     }
 
-    async function findVirtualizedTarget(message) {
-        const indexedTarget = await findIndexedMessageTarget(message.metadata);
-        if (indexedTarget) return indexedTarget;
+    async function findVirtualizedTarget(message, expectedUrl, jumpGeneration) {
+        const metadata = message.metadata || {};
+        if (pipeline.platformId === 'CHATGPT' && (!Number.isFinite(metadata.turnNumber) || (!metadata.messageId && !metadata.turnId))) {
+            return null;
+        }
+
+        let indexedTarget = findMountedIdentityTarget(metadata);
+        // ChatGPT API records have no authoritative DOM offset. Never let an old
+        // or synthetic offset create an extra page movement before identity checks.
+        if (!indexedTarget && pipeline.platformId !== 'CHATGPT') {
+            indexedTarget = await findIndexedMessageTarget(metadata, expectedUrl, jumpGeneration);
+        }
+        if (window.location.href !== expectedUrl || jumpGeneration !== activeJumpGeneration) return null;
+        if (indexedTarget && metadata.type !== 'answer') return indexedTarget;
 
         const turnTarget = await findChatGptTurnTarget(message);
-        if (turnTarget) return turnTarget;
-        return null;
+        if (turnTarget && metadata.type !== 'answer') return turnTarget;
+        if (pipeline.platformId !== 'CHATGPT' || !Number.isFinite(metadata.turnNumber)) return null;
+
+        // A user-initiated jump may move the page once to a nearby mounted turn.
+        // This is navigation, not a background completeness scan: no loop and no
+        // repeated scrolling are allowed if the exact message fails to mount.
+        const anchor = findNearestMountedChatGptTurn(
+            metadata.turnNumber,
+            metadata.type === 'answer' && Boolean(indexedTarget)
+        );
+        if (!anchor) return null;
+        anchor.element.scrollIntoView({
+            behavior: 'auto',
+            block: anchor.turnNumber >= metadata.turnNumber ? 'start' : 'end'
+        });
+        return waitForExactOutlineTarget(message, expectedUrl, jumpGeneration);
     }
 
-    async function findIndexedMessageTarget(metadata) {
+    function identitySelector(metadata) {
+        const value = metadata?.messageId || metadata?.turnId;
+        if (!value) return '';
+        const attr = metadata.messageId ? 'data-message-id' : 'data-turn-id';
+        const escaped = window.CSS?.escape ? CSS.escape(value) : String(value).replace(/[^a-zA-Z0-9_-]/g, '\\$&');
+        return `[${attr}="${escaped}"]`;
+    }
+
+    function findMountedIdentityTarget(metadata) {
+        const selector = identitySelector(metadata);
+        return selector ? document.querySelector(selector) : null;
+    }
+
+    function targetMatchesIdentity(element, metadata) {
+        const selector = identitySelector(metadata);
+        if (!selector) return true;
+        if (metadata?.type === 'answer' && !element.matches?.('h1,h2,h3,h4,h5,h6')) return false;
+        return Boolean(
+            element.matches?.(selector)
+            || element.closest?.(selector)
+            || element.querySelector?.(selector)
+        );
+    }
+
+    async function findIndexedMessageTarget(metadata, expectedUrl = window.location.href, jumpGeneration = activeJumpGeneration) {
         if (!metadata?.messageId && !metadata?.turnId) return null;
-        const escape = value => window.CSS?.escape ? CSS.escape(value) : String(value).replace(/[^a-zA-Z0-9_-]/g, '\\$&');
-        const selector = metadata.messageId
-            ? `[data-message-id="${escape(metadata.messageId)}"]`
-            : `[data-turn-id="${escape(metadata.turnId)}"]`;
-        let element = document.querySelector(selector);
+        const selector = identitySelector(metadata);
+        let element = findMountedIdentityTarget(metadata);
         if (element) return element;
+        if (window.location.href !== expectedUrl || jumpGeneration !== activeJumpGeneration) return null;
 
         const centerElement = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2);
         const scrollParent = getScrollParent(centerElement) || document.scrollingElement;
@@ -265,13 +341,14 @@
         if (Number.isFinite(metadata.offset)) {
             scrollParent.scrollTo({ top: metadata.offset, behavior: 'auto' });
             await new Promise(resolve => setTimeout(resolve, 180));
+            if (window.location.href !== expectedUrl || jumpGeneration !== activeJumpGeneration) return null;
             element = document.querySelector(selector);
             if (element) return element;
         }
         return null;
     }
 
-    async function findChatGptTurnTarget(message) {
+    function findChatGptTurnTarget(message) {
         const turnNumber = message.metadata?.turnNumber;
         if (pipeline.platformId !== 'CHATGPT') return null;
 
@@ -279,9 +356,72 @@
 
         const turn = document.querySelector(`[data-testid="conversation-turn-${turnNumber}"]`);
         if (!turn) return null;
+        const selector = identitySelector(message.metadata);
+        if (selector && !turn.matches?.(selector) && !turn.querySelector?.(selector)) return null;
 
         // 交给调用方做唯一一次居中滚动，避免“先虚拟跳转、再平滑居中”的双重滚动。
         return turn;
+    }
+
+    function findNearestMountedChatGptTurn(targetTurnNumber, allowExact = false) {
+        const turns = Array.from(document.querySelectorAll('[data-testid^="conversation-turn-"]'))
+            .map(element => {
+                const match = element.getAttribute('data-testid')?.match(/^conversation-turn-(\d+)$/);
+                return match ? { element, turnNumber: Number(match[1]) } : null;
+            })
+            .filter(item => item && (allowExact || item.turnNumber !== targetTurnNumber));
+        return turns.reduce((nearest, item) => {
+            if (!nearest) return item;
+            return Math.abs(item.turnNumber - targetTurnNumber) < Math.abs(nearest.turnNumber - targetTurnNumber)
+                ? item
+                : nearest;
+        }, null);
+    }
+
+    function waitForExactOutlineTarget(message, expectedUrl, jumpGeneration) {
+        return new Promise(resolve => {
+            let settled = false;
+            // The host may replace <main> during a React transition. This observer
+            // is body-scoped but exists only for one bounded, user-triggered jump.
+            const root = document.body;
+            const exactTarget = () => {
+                if (window.location.href !== expectedUrl || jumpGeneration !== activeJumpGeneration) return null;
+                const outlineTarget = findOutlineTarget(message);
+                if (outlineTarget) return outlineTarget;
+                if (message.metadata?.type === 'answer') return null;
+                return findMountedIdentityTarget(message.metadata)
+                    || findChatGptTurnTarget(message);
+            };
+            const finish = target => {
+                if (settled) return;
+                settled = true;
+                observer.disconnect();
+                clearTimeout(timer);
+                pendingJumpCleanups.delete(cancel);
+                resolve(target || null);
+            };
+            const cancel = () => finish(null);
+            const check = () => {
+                if (window.location.href !== expectedUrl || jumpGeneration !== activeJumpGeneration) return finish(null);
+                const target = exactTarget();
+                if (target) finish(target);
+            };
+            const observer = new MutationObserver(check);
+            const timer = setTimeout(() => finish(null), CHATGPT_JUMP_TIMEOUT_MS);
+            pendingJumpCleanups.add(cancel);
+            observer.observe(root, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: ['data-testid', 'data-message-id', 'data-turn-id']
+            });
+            check();
+        });
+    }
+
+    function cancelPendingJumps() {
+        Array.from(pendingJumpCleanups).forEach(cancel => cancel());
+        pendingJumpCleanups.clear();
     }
 
     // 添加消息监听；只有侧栏端口存在时才启动持续分析。
@@ -457,6 +597,8 @@
         activeOutlineRequestUrl = '';
         highlightTimers.forEach(timer => clearTimeout(timer));
         highlightTimers.clear();
+        activeJumpGeneration++;
+        cancelPendingJumps();
         window.AI_CHAT_CONVERSATION_INDEX?.disconnect?.();
         window.removeEventListener('ai-chat-index-updated', refreshOutlineFromIndex);
         chrome.runtime.onMessage.removeListener(handleMessage);

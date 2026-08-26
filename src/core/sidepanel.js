@@ -5,6 +5,7 @@ let activeContentPort = null;
 let outlineRequestSerial = 0;
 let currentOutlineRequestToken = '';
 let tabReloadTimer = null;
+let jumpRequestSerial = 0;
 
 // 全局状态：是否所有目录都已收起
 let allCollapsed = false;
@@ -40,7 +41,7 @@ const UI_COPY = {
         partialExport: '部分导出', exitSelection: '退出选择模式', extracting: '正在提取当前对话并生成 {format}', exportingSelected: '正在将选中的问题组导出为 {format}',
         demoFullExport: '示例：将导出 4 组对话', demoSelectedExport: '示例：将导出 {count} 组已选对话', exportFailed: '导出失败：{error}',
         exportedFull: '已导出 {format}：{count} 组对话', exportedSelected: '已导出 {format}：{count} 组选中对话', selectBeforeExport: '请先勾选要导出的对话',
-        demoLocated: '示例：已定位「{item}」', noOutline: '当前页面未找到可用的大纲内容，请打开你的对话', selectQuestion: '选择此问题组用于局部导出'
+        demoLocated: '示例：已定位「{item}」', located: '已开始定位「{item}」', locateFailed: '暂时无法定位「{item}」；目标内容尚未加载', noOutline: '当前页面未找到可用的大纲内容，请打开你的对话', selectQuestion: '选择此问题组用于局部导出'
     },
     en: {
         welcomeTipAria: 'First-use tip', welcomeTitle: 'Start here', welcomeBody: 'Click an outline item to jump to it. Export the full conversation for free below.',
@@ -59,7 +60,7 @@ const UI_COPY = {
         partialExport: 'Partial export', exitSelection: 'Exit selection', extracting: 'Extracting the current chat as {format}', exportingSelected: 'Exporting selected question groups as {format}',
         demoFullExport: 'Example: 4 question groups will be exported', demoSelectedExport: 'Example: {count} selected question groups will be exported', exportFailed: 'Export failed: {error}',
         exportedFull: 'Exported {format}: {count} question groups', exportedSelected: 'Exported {format}: {count} selected question groups', selectBeforeExport: 'Select at least one chat to export',
-        demoLocated: 'Example: jumped to “{item}”', noOutline: 'No usable outline was found. Open one of your chats and try again.', selectQuestion: 'Select this question group for partial export'
+        demoLocated: 'Example: jumped to “{item}”', located: 'Locating “{item}”', locateFailed: 'Could not jump to “{item}”; the target is not loaded yet.', noOutline: 'No usable outline was found. Open one of your chats and try again.', selectQuestion: 'Select this question group for partial export'
     }
 };
 function t(key, values = {}) {
@@ -692,11 +693,25 @@ function scrollToOutlineItem(item) {
         return;
     }
 
+    const jumpTabId = currentTabId;
+    const jumpUrl = currentTabUrl;
+    const jumpRequestToken = currentOutlineRequestToken;
+    const jumpSerial = ++jumpRequestSerial;
     chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+        if (!tabs[0] || tabs[0].id !== jumpTabId || tabs[0].url !== jumpUrl) return;
         chrome.tabs.sendMessage(tabs[0].id, {
             type: 'scrollTo',
             elementId: item.id,
-            metadata: item.metadata
+            metadata: item.metadata,
+            url: jumpUrl,
+            requestToken: jumpRequestToken
+        }, response => {
+            if (jumpSerial !== jumpRequestSerial || jumpTabId !== currentTabId || jumpUrl !== currentTabUrl || jumpRequestToken !== currentOutlineRequestToken) return;
+            if (chrome.runtime.lastError || !response?.success) {
+                setExportStatus(t('locateFailed', { item: item.text }), 'error');
+                return;
+            }
+            setExportStatus(t('located', { item: item.text }), 'neutral');
         });
     });
 }
