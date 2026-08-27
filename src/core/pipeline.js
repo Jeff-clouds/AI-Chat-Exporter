@@ -174,12 +174,17 @@ window.Pipeline = class Pipeline {
                 ? index.getChatGptDomHeadings(message.turnNumber, message.id)
                 : [];
             const headings = this._mergeIndexedHeadings(domHeadings, markdownHeadings);
+            const headingOccurrences = new Map();
             headings.forEach((heading, headingIndex) => {
                 const answerKey = `${heading.level}:${this._stripChatGptRolePrefix(heading.text, 'assistant')}`;
                 if (pendingAnswerKeys.has(answerKey)) return;
                 pendingAnswerKeys.add(answerKey);
+                const headingText = this._stripChatGptRolePrefix(heading.text, 'assistant');
+                const textKey = this._hash(headingText.replace(/\s+/g, ' ').trim());
+                const headingOccurrence = headingOccurrences.get(textKey) || 0;
+                headingOccurrences.set(textKey, headingOccurrence + 1);
                 outline.push({
-                    text: heading.text,
+                    text: headingText,
                     level: heading.level,
                     id: `cn-a-${this._safeId(`${message.id}-${headingIndex}-${heading.text}`)}`,
                     type: 'answer',
@@ -187,6 +192,7 @@ window.Pipeline = class Pipeline {
                         type: 'answer', answerIndex: questionIndex - 1,
                         headingIndex: Number.isFinite(heading.headingIndex) ? heading.headingIndex : headingIndex,
                         questionIndex: questionIndex - 1, key: `message:${message.id}:${headingIndex}`,
+                        textKey, headingOccurrence,
                         messageId: message.id, turnId: message.turnId || null,
                         turnNumber: message.turnNumber || null, offset: message.offset
                     }
@@ -221,14 +227,20 @@ window.Pipeline = class Pipeline {
     _mergeIndexedHeadings(domHeadings, markdownHeadings) {
         const merged = [];
         const known = new Set();
-        [...domHeadings, ...markdownHeadings].forEach(heading => {
+        // API Markdown represents the canonical answer order when available. DOM headings
+        // may be only the currently mounted subset, so putting them first can turn A/B/C
+        // into B/C/A after virtual scrolling and corrupt ordinal jump targets.
+        const sources = markdownHeadings.length > 0
+            ? [...markdownHeadings, ...domHeadings]
+            : domHeadings;
+        sources.forEach(heading => {
             const normalizedText = this._stripChatGptRolePrefix(heading.text, 'assistant');
             const key = `${heading.level}:${normalizedText}`;
             if (!normalizedText || known.has(key)) return;
             known.add(key);
             merged.push({ ...heading, text: normalizedText });
         });
-        return merged;
+        return merged.map((heading, headingIndex) => ({ ...heading, headingIndex }));
     }
 
     _fillStats(outline, diagnostics) {
@@ -840,6 +852,12 @@ window.Pipeline = class Pipeline {
     }
 
     _findByMetadata(elements, metadata, type) {
+        if (type === 'heading' && metadata.textKey && Number.isFinite(metadata.headingOccurrence)) {
+            const matches = elements.filter(element => {
+                return element.textContent.trim() && this._textKey(element) === metadata.textKey;
+            });
+            if (matches[metadata.headingOccurrence]) return matches[metadata.headingOccurrence];
+        }
         return elements.find(element => {
             if (!element.textContent.trim()) return false;
             const key = this._elementKey(element, type);

@@ -3,7 +3,7 @@
 
     const CHATGPT_API = /chatgpt\.com/;
     const DOUBAO = /doubao\.com/;
-    const INDEX_VERSION = '2026-08-26-route-owned-turns';
+    const INDEX_VERSION = '2026-08-27-descendant-message-identity';
     const CHATGPT_REQUEST_TIMEOUT_MS = 20000;
     const CHATGPT_CACHE_TTL_MS = 15000;
     const MAX_CACHED_CONVERSATIONS = 2;
@@ -30,13 +30,34 @@
         return element?.closest?.('[data-testid^="conversation-turn-"]') || element || null;
     }
 
+    function chatGptDescendantMessageNodes(element, role = '') {
+        if (!element?.querySelectorAll) return [];
+        return Array.from(element.querySelectorAll('[data-message-id]')).filter(node => {
+            const nodeRole = node.getAttribute?.('data-message-author-role') || '';
+            return !role || !nodeRole || nodeRole === role;
+        });
+    }
+
+    function chatGptPreferredMessageNode(element, role = '') {
+        const candidates = chatGptDescendantMessageNodes(element, role);
+        if (role === 'assistant') {
+            const headed = candidates.filter(node => node.querySelector?.('h1,h2,h3,h4,h5,h6'));
+            if (headed.length > 0) return headed[headed.length - 1];
+        }
+        return candidates[candidates.length - 1] || null;
+    }
+
     function chatGptElementIds(element) {
         if (!element?.getAttribute) return [];
         const container = chatGptTurnContainer(element);
+        const role = element.getAttribute('data-turn') || element.getAttribute('data-message-author-role') || '';
+        const descendantMessageIds = chatGptDescendantMessageNodes(element, role)
+            .map(node => node.getAttribute?.('data-message-id'));
         return Array.from(new Set([
             element.getAttribute('data-message-id'),
-            element.getAttribute('data-turn-id'),
+            ...descendantMessageIds,
             container?.getAttribute?.('data-message-id'),
+            element.getAttribute('data-turn-id'),
             container?.getAttribute?.('data-turn-id')
         ].filter(Boolean)));
     }
@@ -616,12 +637,23 @@
                 const role = element.getAttribute('data-turn') || element.getAttribute('data-message-author-role');
                 if (role !== 'user' && role !== 'assistant') return;
                 const container = chatGptTurnContainer(element);
-                const messageId = element.getAttribute('data-message-id') || null;
+                const preferredMessageNode = chatGptPreferredMessageNode(element, role);
+                const messageId = element.getAttribute('data-message-id')
+                    || preferredMessageNode?.getAttribute?.('data-message-id')
+                    || null;
                 const containerTurnId = container?.getAttribute?.('data-turn-id') || null;
                 const turnId = messageId || element.getAttribute('data-turn-id') || containerTurnId;
                 const indexedTurnNumber = turnId ? this.records.get(turnId)?.turnNumber : null;
                 const turnTestId = element.getAttribute('data-testid') || container?.getAttribute?.('data-testid') || '';
-                const turnNumber = Number(turnTestId.match(/conversation-turn-(\d+)/)?.[1]) || indexedTurnNumber || index + 1;
+                const parsedTurnNumber = Number(turnTestId.match(/conversation-turn-(\d+)/)?.[1]);
+                const turnNumber = Number.isFinite(parsedTurnNumber) && parsedTurnNumber > 0
+                    ? parsedTurnNumber
+                    : (Number.isFinite(indexedTurnNumber) ? indexedTurnNumber : null);
+                // A virtual window's array index is not an absolute conversation position.
+                // Persisting index + 1 across scroll windows creates duplicate turn numbers
+                // and reorders user/assistant pairs. Without a host turn number or an existing
+                // canonical message mapping, skip the unorderable DOM record.
+                if (!Number.isFinite(turnNumber)) return;
                 if (role === 'assistant') {
                     const headings = Array.from(element.querySelectorAll('h1,h2,h3,h4,h5,h6'))
                         .map((heading, headingIndex) => ({

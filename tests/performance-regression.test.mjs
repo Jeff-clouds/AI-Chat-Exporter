@@ -41,7 +41,7 @@ assert.match(indexSource, /scanChatGptDom\(\{ cacheMessages: true \}\)/);
 assert.match(indexSource, /observeChatGpt\(\)/);
 assert.match(indexSource, /scheduleChatGptScan/);
 assert.match(indexSource, /MAX_MOUNTED_CHATGPT_TURNS = 48/);
-assert.match(indexSource, /2026-08-26-route-owned-turns/);
+assert.match(indexSource, /2026-08-27-descendant-message-identity/);
 assert.match(indexSource, /getChatGptLoadState\(\)/);
 assert.match(indexSource, /\[data-message-author-role\]/);
 const pipelineSource = fs.readFileSync(new URL('../src/core/pipeline.js', import.meta.url), 'utf8');
@@ -426,7 +426,7 @@ assert.match(contentSource, /window\.AI_CHAT_CONVERSATION_INDEX\?\.disconnect\?\
 assert.match(contentSource, /clearTimeout\(outlineRefreshTimer\)/);
 assert.match(contentSource, /runtime\.onConnect\.removeListener/);
 assert.match(contentSource, /CHAT_NAVIGATOR_CONTENT_VERSION === CONTENT_VERSION/);
-assert.match(contentSource, /2026-08-26-route-owned-index-status/);
+assert.match(contentSource, /2026-08-27-descendant-message-identity/);
 assert.match(contentSource, /window\.CHAT_NAVIGATOR_CONTENT_VERSION = ''/);
 assert.doesNotMatch(contentSource, /mainObserver\.observe\(document\.body/);
 

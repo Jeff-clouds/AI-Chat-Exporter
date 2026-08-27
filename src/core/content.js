@@ -1,5 +1,5 @@
 (function() {
-    const CONTENT_VERSION = '2026-08-26-route-owned-index-status';
+    const CONTENT_VERSION = '2026-08-27-descendant-message-identity';
     // The side panel re-injects its file list whenever the active ChatGPT route changes.
     // Re-running the same content runtime used to tear down the live conversation index,
     // release both caches, and then rebuild an empty index during A→B→A navigation.

@@ -57,6 +57,53 @@ assert.deepEqual(
   ]
 );
 
+const canonicalMergedHeadings = pipeline._mergeIndexedHeadings(
+  [
+    { text: 'B', level: 'h2', headingIndex: 0 },
+    { text: 'C', level: 'h2', headingIndex: 1 }
+  ],
+  [
+    { text: 'A', level: 'h2' },
+    { text: 'B', level: 'h2' },
+    { text: 'C', level: 'h2' }
+  ]
+);
+assert.deepEqual(
+  Array.from(canonicalMergedHeadings, heading => ({ text: heading.text, headingIndex: heading.headingIndex })),
+  [
+    { text: 'A', headingIndex: 0 },
+    { text: 'B', headingIndex: 1 },
+    { text: 'C', headingIndex: 2 }
+  ],
+  'a mounted B/C subset must not reorder canonical API headings to B/C/A'
+);
+
+context.window.AI_CHAT_CONVERSATION_INDEX = {
+  refresh: async () => {},
+  getMessages: () => [
+    { id: 'u-canonical', role: 'user', text: 'Question', turnNumber: 1 },
+    { id: 'a-canonical', role: 'assistant', text: '# A\n## B\n## C', markdown: '# A\n## B\n## C', turnNumber: 2 }
+  ],
+  getChatGptDomHeadings: () => [
+    { text: 'B', level: 'h2', headingIndex: 0 },
+    { text: 'C', level: 'h2', headingIndex: 1 }
+  ]
+};
+const canonicalOutline = await pipeline._extractVirtualizedOutline();
+assert.deepEqual(
+  Array.from(canonicalOutline.filter(item => item.type === 'answer'), item => ({
+    text: item.text,
+    headingIndex: item.metadata.headingIndex,
+    hasTextKey: Boolean(item.metadata.textKey),
+    headingOccurrence: item.metadata.headingOccurrence
+  })),
+  [
+    { text: 'A', headingIndex: 0, hasTextKey: true, headingOccurrence: 0 },
+    { text: 'B', headingIndex: 1, hasTextKey: true, headingOccurrence: 0 },
+    { text: 'C', headingIndex: 2, hasTextKey: true, headingOccurrence: 0 }
+  ]
+);
+
 context.window.AI_CHAT_CONVERSATION_INDEX = { refresh: async () => {}, getMessages: () => [] };
 pipeline.extract = () => { throw new Error('ChatGPT must not fall back to a full DOM scan'); };
 const safeChatGptFallback = await pipeline.extractWithIndex();

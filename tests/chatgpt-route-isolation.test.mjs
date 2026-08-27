@@ -49,6 +49,37 @@ function makeSectionMessage(role, number, sectionId, messageId, text, headings =
     };
 }
 
+function makeCurrentTurnContainer(role, number, sectionId, messageId, text, headings = []) {
+    const messageNode = {
+        getAttribute(name) {
+            if (name === 'data-message-author-role') return role;
+            if (name === 'data-message-id') return messageId;
+            return '';
+        },
+        querySelector(selector) {
+            return selector === 'h1,h2,h3,h4,h5,h6' && headings.length > 0 ? headings[0] : null;
+        }
+    };
+    const section = {
+        textContent: text,
+        getAttribute(name) {
+            if (name === 'data-turn') return role;
+            if (name === 'data-testid') return `conversation-turn-${number}`;
+            if (name === 'data-turn-id') return sectionId;
+            return '';
+        },
+        querySelector(selector) {
+            return selector === '[data-message-id]' ? messageNode : null;
+        },
+        querySelectorAll(selector) {
+            if (selector === '[data-message-id]') return [messageNode];
+            if (selector === 'h1,h2,h3,h4,h5,h6') return headings;
+            return [];
+        }
+    };
+    return section;
+}
+
 // A route-owner architecture change must replace the pre-fix singleton on extension reload.
 {
     let disconnected = 0;
@@ -128,6 +159,125 @@ function makeSectionMessage(role, number, sectionId, messageId, text, headings =
         ['Current DOM heading'],
         'turn fallback remains available only when no authoritative message ID exists'
     );
+}
+
+// The current live page exposes both [data-turn] containers and descendant
+// [data-message-id] nodes. API import followed by a virtual-scroll DOM scan must
+// keep one canonical record per message instead of appending section-id aliases.
+{
+    const location = {
+        href: 'https://chatgpt.com/c/descendant-message-identity',
+        pathname: '/c/descendant-message-identity',
+        origin: 'https://chatgpt.com'
+    };
+    const turns = [
+        makeCurrentTurnContainer('user', 1, 'section-u', 'api-u', 'Question'),
+        makeCurrentTurnContainer('assistant', 2, 'section-a', 'api-a', 'Answer', [makeHeading('h2', 'Answer heading')])
+    ];
+    const root = {
+        querySelectorAll(selector) {
+            if (selector === '[data-turn]') return turns;
+            if (selector === '[data-message-author-role]') return [];
+            return [];
+        }
+    };
+    const window = {
+        addEventListener() {},
+        removeEventListener() {},
+        dispatchEvent() {},
+        postMessage() {}
+    };
+    const context = {
+        window,
+        location,
+        document: {
+            title: 'Descendant message identity',
+            querySelector(selector) {
+                return selector === 'main' || selector === '[role="main"]' ? root : null;
+            }
+        },
+        MutationObserver: class { disconnect() {} },
+        setTimeout,
+        clearTimeout,
+        CustomEvent: class {},
+        console
+    };
+    vm.runInNewContext(indexSource, context);
+    const index = window.AI_CHAT_CONVERSATION_INDEX;
+    index.resetForLocation();
+    index.importChatGptPayload({
+        current_node: 'api-a',
+        mapping: {
+            root: { id: 'root', parent: null },
+            'api-u': {
+                id: 'api-u', parent: 'root',
+                message: { id: 'api-u', author: { role: 'user' }, content: { parts: ['Question'] } }
+            },
+            'api-a': {
+                id: 'api-a', parent: 'api-u',
+                message: { id: 'api-a', author: { role: 'assistant' }, content: { parts: ['## Answer heading'] } }
+            }
+        }
+    });
+    assert.equal(index.scanChatGptDom({ cacheMessages: true }), true, 'new DOM heading should refresh the outline');
+    assert.deepEqual(
+        Array.from(index.getMessages(), message => message.id),
+        ['api-u', 'api-a'],
+        'descendant API message IDs must prevent section-id duplicates after scrolling'
+    );
+    assert.equal(index.records.has('section-u'), false);
+    assert.equal(index.records.has('section-a'), false);
+    assert.deepEqual(Array.from(index.getChatGptDomHeadings(2, 'api-a'), item => item.text), ['Answer heading']);
+}
+
+// A mounted virtual window without an absolute conversation-turn number cannot use
+// its local array index as durable order. Otherwise every newly observed window
+// reuses 1..N and interleaves unrelated user/assistant records.
+{
+    const location = {
+        href: 'https://chatgpt.com/c/unorderable-window',
+        pathname: '/c/unorderable-window',
+        origin: 'https://chatgpt.com'
+    };
+    const makeUnnumberedTurn = (role, messageId) => ({
+        textContent: role,
+        getAttribute(name) {
+            if (name === 'data-turn') return role;
+            return '';
+        },
+        querySelector() { return null; },
+        querySelectorAll(selector) {
+            if (selector !== '[data-message-id]') return [];
+            return [{
+                getAttribute(name) {
+                    if (name === 'data-message-id') return messageId;
+                    if (name === 'data-message-author-role') return role;
+                    return '';
+                },
+                querySelector() { return null; }
+            }];
+        }
+    });
+    const turns = [makeUnnumberedTurn('user', 'window-u'), makeUnnumberedTurn('assistant', 'window-a')];
+    const root = { querySelectorAll: selector => selector === '[data-turn]' ? turns : [] };
+    const window = { addEventListener() {}, removeEventListener() {}, dispatchEvent() {}, postMessage() {} };
+    vm.runInNewContext(indexSource, {
+        window,
+        location,
+        document: {
+            title: 'Unorderable window',
+            querySelector: selector => selector === 'main' || selector === '[role="main"]' ? root : null
+        },
+        MutationObserver: class { disconnect() {} },
+        setTimeout,
+        clearTimeout,
+        CustomEvent: class {},
+        console
+    });
+    const index = window.AI_CHAT_CONVERSATION_INDEX;
+    index.resetForLocation();
+    assert.equal(index.scanChatGptDom({ cacheMessages: true }), false);
+    assert.equal(index.getMessages().length, 0, 'unorderable virtual-window positions must not pollute the durable index');
 }
 
 // A native ChatGPT fetch that spans A→B→A is stale even though its starting and

@@ -4,7 +4,7 @@
 
 > 状态：七个平台首期架构卡完成；宿主事实与当前实现分层记录
 > 代码基线：v2.1.3 / commit 8d69d53
-> 最近核验：2026-08-26
+> 最近核验：2026-08-27
 > 适用范围：平台适配、目录、跳转、导出、性能、路由、缓存和侧边栏生命周期相关改动
 
 ## 0. 先读这一页再改代码
@@ -919,6 +919,7 @@ flowchart TD
 | 2026-07-16 | Kimi | 单轮真实样本 + 实现探针 | 1Q、1 answer segment、2 markdown、10 heading；主 segment selector 在该样本中命中 | 增加多轮 / 多 segment 回归，约束 fallback 去重 |
 | 2026-08-26 | ChatGPT | 登录态内置浏览器宿主盲审；普通、项目和长页面样本 | `data-turn` 当前重新可见；切会话存在旧 DOM 暂留期；底部卸载 turn-1，单次定位 turn-2 后 turn-1 重新挂载 | 更新旧 selector 结论；目录跳转按 URL/token/message identity 校验，并仅做一次用户触发的邻近锚点实验；扩展 E2E 仍待复验 |
 | 2026-08-26 | ChatGPT + 审计扩展 | 登录态真实 Chrome；审计版 f420406 从项目长会话进入无 conversationId 的新聊天，再返回原会话 | 宿主页重新挂载 6–8 个 turn，但侧栏诊断仍为 conversations/questions/answers/headings 全 0，且错误显示“目录已生成”；当前代码复核确认 turn identity 缺少 route owner，同 tab 重注入还会断 port 并释放缓存 | 已建立 route-owner、同 tab lifecycle 复用与空目录状态回归；检查点 `a460d62` / `eec54f5` 仍须重载 unpacked 扩展后复跑原现场，未复验前不得写“已修复” |
+| 2026-08-27 | ChatGPT + 审计扩展 | 登录态真实 Chrome；项目内自定义 GPT 长会话，轻量属性探针与插件日志；用户手动滚动验收 | 当前挂载的 11 个 `[data-turn]` 都在后代暴露 `data-message-id`；user 的 turn/message identity 相同，assistant 样本全部不同。该路由的会话请求返回 HTTP 404，插件处于 DOM 增量模式。用户观察到滚动出现新目录后排序和定位错乱，关闭再打开侧栏可恢复 | 现场支持“增量索引身份/标题缓存污染”而非 Side Panel 二次排序。已补 descendant message identity、禁止虚拟窗口 `index + 1` 持久排序、canonical 标题顺序与 text-key 跳转回归；修复仍须重载审计扩展后在原页面复验，未复验前为 PARTIAL |
 
 每次平台变化追加一行，不覆盖历史。旧结论保留日期，避免“最新一次看起来正常”抹掉回归线索。
 
