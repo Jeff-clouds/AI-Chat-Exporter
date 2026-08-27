@@ -7,6 +7,7 @@ const contentSource = fs.readFileSync(new URL('../src/core/content.js', import.m
 function createHarness(initialTurns = []) {
     const observers = [];
     const turns = [...initialTurns];
+    const sentMessages = [];
     let messageListener = null;
     let outlineToken = 'jump-token';
 
@@ -130,7 +131,7 @@ function createHarness(initialTurns = []) {
                 removeListener() {}
             },
             onConnect: { addListener() {}, removeListener() {} },
-            sendMessage() {}
+            sendMessage(message) { sentMessages.push(message); }
         }
     };
 
@@ -181,6 +182,7 @@ function createHarness(initialTurns = []) {
         turns,
         observers,
         scroller,
+        sentMessages,
         window,
         conversationIndex,
         jump,
@@ -199,6 +201,11 @@ function createHarness(initialTurns = []) {
     assert.equal(result.success, true);
     assert.equal(target.anchorScrolls, 0);
     assert.equal(harness.scroller.scrollCalls.length, 1, 'exact target receives only the final centered scroll');
+    assert.deepEqual(
+        harness.sentMessages.filter(message => message.type === 'updateReadingPosition').map(message => message.elementId),
+        ['outline-1'],
+        'a successful click must immediately synchronize the exact side-panel reading marker'
+    );
 }
 
 // Real-host hypothesis: one mounted neighboring turn causes the missing exact turn to mount.
