@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.4] - 2026-08-27
+
 ### Fixed
 
 - Refresh the current ChatGPT mounted-turn selectors to use `conversation-turn` test IDs and `data-message-author-role`; the previous `[data-turn]` contract did not match the audited 2026-08-10 logged-in sample.

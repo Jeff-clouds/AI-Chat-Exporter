@@ -5,6 +5,7 @@
 > 面向 AI 长对话的侧边栏大纲与多格式导出工具
 
 [![Chrome Web Store](https://img.shields.io/badge/Chrome_Web_Store-安装-4285F4?logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/ai-chat-exporter/eplnkdnnbmmijjadnabdefmjnjgapigm)
+[![Microsoft Edge Add-ons](https://img.shields.io/badge/Microsoft_Edge_Add--ons-安装-0078D7?logo=microsoftedge&logoColor=white)](https://microsoftedge.microsoft.com/addons/detail/ai-chat-exporter/kjhchmmjjffhhgaoocijicockllaoaah)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 **AI Chat Exporter** 帮你浏览、定位和保存 AI 长对话：在浏览器侧边栏生成对话大纲，点击标题快速跳转，并将当前对话导出为 Markdown、HTML、JSON 或 TXT 文件。
@@ -57,6 +58,12 @@ Pro 采用授权码解锁，无需注册账号、不绑定机器，激活状态�
 [前往 Chrome 应用商店安装 AI Chat Exporter](https://chromewebstore.google.com/detail/ai-chat-exporter/eplnkdnnbmmijjadnabdefmjnjgapigm)
 
 商店版本会自动更新，适合绝大多数用户。
+
+### Microsoft Edge 加载项
+
+[前往 Microsoft Edge 加载项安装 AI Chat Exporter](https://microsoftedge.microsoft.com/addons/detail/ai-chat-exporter/kjhchmmjjffhhgaoocijicockllaoaah)
+
+Edge 商店版本会自动更新。
 
 ### GitHub Releases
 
