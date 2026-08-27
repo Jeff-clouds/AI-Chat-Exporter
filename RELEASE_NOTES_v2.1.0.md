@@ -1,5 +1,7 @@
 # AI Chat Exporter v2.1.0
 
+> **AI documentation notice:** This document was written by AI and may be incorrect. Verify against current code, effective project rules, live behavior, and authoritative sources before acting on it.
+
 ## 性能修复
 
 - 页面分析只在侧边栏打开时持续运行，关闭侧边栏后自动停止观察器、定时器、消息监听和豆包索引。

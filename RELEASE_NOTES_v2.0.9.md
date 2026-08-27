@@ -1,5 +1,7 @@
 # AI Chat Exporter v2.0.9
 
+> **AI documentation notice:** This document was written by AI and may be incorrect. Verify against current code, effective project rules, live behavior, and authoritative sources before acting on it.
+
 ## 本次更新
 
 - 新增一次性、可关闭的首次使用提示：介绍目录定位和免费完整 Markdown 导出，不再用弹窗打断老用户。

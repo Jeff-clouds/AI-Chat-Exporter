@@ -1,5 +1,7 @@
 # AI Chat Exporter v2.0.8
 
+> **AI documentation notice:** This document was written by AI and may be incorrect. Verify against current code, effective project rules, live behavior, and authoritative sources before acting on it.
+
 ## 本次更新
 
 - 统一产品名称为 **AI Chat Exporter**。

@@ -1,5 +1,7 @@
 # v1.6.0 Release Notes
 
+> **AI documentation notice:** This document was written by AI and may be incorrect. Verify against current code, effective project rules, live behavior, and authoritative sources before acting on it.
+
 ## 🎨 主要改进
 
 ### ChatGPT 风格设计

@@ -1,5 +1,7 @@
 # v1.6.1 Release Notes
 
+> **AI documentation notice:** This document was written by AI and may be incorrect. Verify against current code, effective project rules, live behavior, and authoritative sources before acting on it.
+
 ## Fixed
 
 - Updated Grok outline selectors to use `[data-testid="user-message"]` and `[data-testid="assistant-message"]`.

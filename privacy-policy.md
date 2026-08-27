@@ -1,5 +1,7 @@
 # AI Chat Exporter 隐私政策 / Privacy Policy
 
+> **AI 文档提示 / AI documentation notice**：本文档由 AI 撰写，可能不正确。执行前必须以当前代码、有效项目规则、真实运行态及必要的官方来源复核。 This document was written by AI and may be incorrect; verify it against current code, effective project rules, live behavior, and authoritative sources before acting on it.
+
 ## 中文版本
 
 ### 1. 信息收集与使用

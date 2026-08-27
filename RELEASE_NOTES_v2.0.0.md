@@ -1,5 +1,7 @@
 # v2.0.0: AI Chat Export Pro
 
+> **AI documentation notice:** This document was written by AI and may be incorrect. Verify against current code, effective project rules, live behavior, and authoritative sources before acting on it.
+
 ## 主要变化
 
 - 对外名称统一为 **AI Chat Export Pro**。

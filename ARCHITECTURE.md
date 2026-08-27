@@ -1,6 +1,8 @@
 # AI Chat Exporter 架构总览
 
-> 当前基线：v2.1.3
+> **AI 文档提示**：本文档由 AI 撰写，可能不正确。执行前必须以当前代码、有效项目规则、真实运行态及必要的官方来源复核。
+
+> 发布基线：v2.1.3；当前分支另含未发布的 selector、ChatGPT 生命周期、增量索引和跳转修复，验收边界以平台指南为准
 > 平台开发的强制前置文档：[PLATFORM_ARCHITECTURE_GUIDE.md](PLATFORM_ARCHITECTURE_GUIDE.md)
 
 本文件只描述代码模块边界。ChatGPT 与豆包的真实路由、虚拟化、数据源、稳定 ID、踩坑案例和现场验收，以 PLATFORM_ARCHITECTURE_GUIDE.md 为准。
@@ -50,7 +52,7 @@ flowchart LR
 | Passive virtual index | 豆包 | 用户浏览时按 data-message-id 累计 |
 | Direct DOM pipeline | DeepSeek、元宝、Gemini、Grok、Kimi | 当前挂载 DOM 的 nested / flat selector 提取；无完整历史索引 |
 
-2026-07-16 真实 Chrome 已确认：Gemini 的 v2.1.3 旧 selector 全部为 0；DeepSeek 的 question selector 在 3 轮会话中误命中 13 个节点；元宝 16 轮主问答 selector 准确，但 thinking 会被导出路径重复纳入 content。详细证据与修复门禁见平台指南。
+历史 Chrome 审计已发现 Gemini v2.1.3 的旧 selector 为 0、DeepSeek question 候选过宽，以及元宝 thinking/content 可能重复。这些是带日期的现场或实现探针，不等于当前所有平台已验证可用；最新 selector 与未验证项以平台指南的漂移台账为准。
 
 ## 生命周期
 

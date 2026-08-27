@@ -1,5 +1,7 @@
 # AI Chat Exporter v2.1.2 — ChatGPT 目录与性能紧急修复
 
+> **AI documentation notice:** This document was written by AI and may be incorrect. Verify against current code, effective project rules, live behavior, and authoritative sources before acting on it.
+
 ## 修复内容
 
 - 恢复 ChatGPT 的 API 目录读取，解决 v2.1.1 在部分当前页面上目录为空的问题。

@@ -1,5 +1,7 @@
 # AI Chat Exporter — Chrome Web Store Listing Copy
 
+> **AI documentation notice:** This document was written by AI and may be incorrect. Verify against current code, effective project rules, live behavior, and authoritative sources before acting on it.
+
 > Purpose: Use this copy when completing the Chrome Web Store listing manually. Text inside code blocks is ready to paste; do not copy the explanatory notes into Store fields.
 
 ## Product name

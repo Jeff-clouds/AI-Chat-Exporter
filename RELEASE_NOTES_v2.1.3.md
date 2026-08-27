@@ -1,5 +1,7 @@
 # AI Chat Exporter v2.1.3 — ChatGPT 会话切换与目录稳定性更新
 
+> **AI documentation notice:** This document was written by AI and may be incorrect. Verify against current code, effective project rules, live behavior, and authoritative sources before acting on it.
+
 ## 本次更新
 
 - 每次目录请求都会绑定当前标签页地址和唯一请求标识。旧会话的迟到结果不会再覆盖当前会话目录。

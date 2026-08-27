@@ -1,5 +1,7 @@
 # v1.0.0: AI Chat Export Pro predecessor
 
+> **AI documentation notice:** This document was written by AI and may be incorrect. Verify against current code, effective project rules, live behavior, and authoritative sources before acting on it.
+
 ## 主要变化
 
 - 基于 AI Chat Outline 合并 AI Chat Exporter 的完整 Markdown 导出能力。

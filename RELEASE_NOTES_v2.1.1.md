@@ -1,5 +1,7 @@
 # AI Chat Exporter v2.1.1 — ChatGPT 紧急性能修复
 
+> **AI documentation notice:** This document was written by AI and may be incorrect. Verify against current code, effective project rules, live behavior, and authoritative sources before acting on it.
+
 ## 修复内容
 
 - 打开侧边栏时不再请求 ChatGPT 完整会话 API。

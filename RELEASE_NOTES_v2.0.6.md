@@ -1,5 +1,7 @@
 # v2.0.6: GitHub 发布仓库迁移
 
+> **AI 文档提示**：本文档由 AI 撰写，可能不正确。执行前必须以当前代码、有效项目规则、真实运行态及必要的官方来源复核。
+
 ## 变更
 
 - 代码仓库和 GitHub Release 发布地址迁移至 `Jeff-clouds/AI-Chat-Exporter`。

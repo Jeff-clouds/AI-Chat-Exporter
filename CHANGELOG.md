@@ -1,9 +1,26 @@
 # 更新日志 / Changelog
 
+> **AI 文档提示**：本文档由 AI 撰写，可能不正确。执行前必须以当前代码、有效项目规则、真实运行态及必要的官方来源复核。
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Fixed
+
+- Refresh the current ChatGPT mounted-turn selectors to use `conversation-turn` test IDs and `data-message-author-role`; the previous `[data-turn]` contract did not match the audited 2026-08-10 logged-in sample.
+- Narrow the current DeepSeek thinking selector, update Doubao answer candidates, and use Gemini's observed semantic custom elements (`user-query` / `model-response`) in both outline and export selector configurations.
+- Isolate ChatGPT outline state by route owner and request generation, preserve the same-tab side-panel lifecycle, and reject stale results during session changes.
+- Keep ChatGPT DOM increments aligned with descendant message identities, avoid virtual-window-relative turn numbers, and preserve canonical answer-heading order during partial mounting.
+- Synchronize the side-panel reading marker from the exact identity-checked target after a successful outline jump instead of relying only on delayed viewport observation.
+
+### Verification limits
+
+- These selector changes are based on the recorded mounted-window audits. They do not by themselves verify ChatGPT cold first-open, long-chat scrolling, streaming, A-to-B-to-A switching, or Gemini's full turn-boundary semantics. Those remain governed by `PLATFORM_ARCHITECTURE_GUIDE.md`.
+- Automated regressions cover the new ChatGPT identity, route, ordering, bounded-jump and cleanup contracts. The latest side-panel marker synchronization and streaming behavior still require final real-page replay before release.
 
 ## [2.1.3] - 2026-07-15
 

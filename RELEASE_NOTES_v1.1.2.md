@@ -1,5 +1,7 @@
 # v1.1.2: Streamlined Pro export layout
 
+> **AI documentation notice:** This document was written by AI and may be incorrect. Verify against current code, effective project rules, live behavior, and authoritative sources before acting on it.
+
 ## 主要变化
 
 - 普通用户顶部显示当前网站，第二行提示 Pro 可选择部分导出，并提供“激活Pro”入口。

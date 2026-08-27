@@ -1,5 +1,7 @@
 # Repository agent instructions
 
+> **AI 文档提示**：本项目的说明性文档由 AI 撰写，可能不正确。执行前必须以当前代码、有效项目规则、真实运行态及必要的官方来源复核。
+
 Before changing platform behavior in manifest.json, src/core, src/config, src/export/config, tests, or side-panel lifecycle code:
 
 1. Read PLATFORM_ARCHITECTURE_GUIDE.md first.

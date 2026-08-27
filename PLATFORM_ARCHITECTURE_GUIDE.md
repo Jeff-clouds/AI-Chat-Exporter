@@ -3,7 +3,7 @@
 > **AI 文档提示**：本文档由 AI 撰写，可能不正确。执行前必须以当前代码、有效项目规则、真实运行态及必要的官方来源复核。
 
 > 状态：七个平台首期架构卡完成；宿主事实与当前实现分层记录
-> 代码基线：v2.1.3 / commit 8d69d53
+> 发布基线：v2.1.3 / commit 8d69d53；当前未发布实现与指南覆盖至 commit a22a956
 > 最近核验：2026-08-27
 > 适用范围：平台适配、目录、跳转、导出、性能、路由、缓存和侧边栏生命周期相关改动
 
@@ -290,7 +290,7 @@ DOM 负责：
 合并规则：
 
 - 同一稳定 message ID 下，API Markdown 不得被扁平 DOM text 覆盖。
-- DOM heading 优先用于页面目录，API Markdown heading 用于补全。
+- API Markdown 在可用时决定已有标题的 canonical 顺序；DOM heading 用于补充 API 尚无的标题和提供当前页面定位证据。
 - 用 level + normalized text 去重。
 - 当响应的 conversationId、route 和 current branch 均校验一致时，可将其作为当前分支文本的优先来源；不可据此推断接口长期稳定或包含全部历史分支，也不能删除响应之后新挂载的 DOM-only turn。
 - turnNumber 只用于顺序和 fallback；跨会话绝不能只按 turnNumber 复用标题。
@@ -920,6 +920,7 @@ flowchart TD
 | 2026-08-26 | ChatGPT | 登录态内置浏览器宿主盲审；普通、项目和长页面样本 | `data-turn` 当前重新可见；切会话存在旧 DOM 暂留期；底部卸载 turn-1，单次定位 turn-2 后 turn-1 重新挂载 | 更新旧 selector 结论；目录跳转按 URL/token/message identity 校验，并仅做一次用户触发的邻近锚点实验；扩展 E2E 仍待复验 |
 | 2026-08-26 | ChatGPT + 审计扩展 | 登录态真实 Chrome；审计版 f420406 从项目长会话进入无 conversationId 的新聊天，再返回原会话 | 宿主页重新挂载 6–8 个 turn，但侧栏诊断仍为 conversations/questions/answers/headings 全 0，且错误显示“目录已生成”；当前代码复核确认 turn identity 缺少 route owner，同 tab 重注入还会断 port 并释放缓存 | 已建立 route-owner、同 tab lifecycle 复用与空目录状态回归；检查点 `a460d62` / `eec54f5` 仍须重载 unpacked 扩展后复跑原现场，未复验前不得写“已修复” |
 | 2026-08-27 | ChatGPT + 审计扩展 | 登录态真实 Chrome；项目内自定义 GPT 长会话，轻量属性探针与插件日志；用户手动滚动验收 | 当前挂载的 11 个 `[data-turn]` 都在后代暴露 `data-message-id`；user 的 turn/message identity 相同，assistant 样本全部不同。该路由的会话请求返回 HTTP 404，插件处于 DOM 增量模式。用户观察到滚动出现新目录后排序和定位错乱，关闭再打开侧栏可恢复 | 现场支持“增量索引身份/标题缓存污染”而非 Side Panel 二次排序。已补 descendant message identity、禁止虚拟窗口 `index + 1` 持久排序、canonical 标题顺序与 text-key 跳转回归；修复仍须重载审计扩展后在原页面复验，未复验前为 PARTIAL |
+| 2026-08-27 | ChatGPT + 审计扩展 | 同一长会话从 Q12 点击 Q1；用户观察与轻量位置探针 | 页面实际定位与目标黄色高亮命中 Q1，但侧边栏“当前阅读位置”符号仍停在 Q12；因此远距离页面导航本身可用，剩余错误属于侧栏状态同步 | 提交 `a22a956` 在身份校验成功后立即回传准确目录 ID，IntersectionObserver 继续只负责手动滚动更新；自动化回归已通过，重载后的真实侧栏复验仍 pending |
 
 每次平台变化追加一行，不覆盖历史。旧结论保留日期，避免“最新一次看起来正常”抹掉回归线索。
 
