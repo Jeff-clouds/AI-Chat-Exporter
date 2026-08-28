@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Verification limits
 
-- These selector changes are based on the recorded mounted-window audits. They do not by themselves verify ChatGPT cold first-open, long-chat scrolling, streaming, A-to-B-to-A switching, or Gemini's full turn-boundary semantics. Those remain governed by `PLATFORM_ARCHITECTURE_GUIDE.md`.
+- These selector changes are based on the recorded mounted-window audits. They do not by themselves verify ChatGPT cold first-open, long-chat scrolling, streaming, A-to-B-to-A switching, or Gemini's full turn-boundary semantics. Maintainers with the private workspace mapping should follow `private-docs/architecture/PLATFORM_ARCHITECTURE_GUIDE.md` for those checks.
 - Automated regressions cover the new ChatGPT identity, route, ordering, bounded-jump and cleanup contracts. The latest side-panel marker synchronization and streaming behavior still require final real-page replay before release.
 
 ## [2.1.3] - 2026-07-15

@@ -11,7 +11,7 @@ scripts废弃/
 .trae/
 .qoder/
 .lingma/
-private-docs/
+private-docs
 
 # Local maintenance and release tooling
 scripts/
