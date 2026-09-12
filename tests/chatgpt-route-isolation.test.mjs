@@ -148,7 +148,11 @@ function makeCurrentTurnContainer(role, number, sectionId, messageId, text, head
     const index = window.AI_CHAT_CONVERSATION_INDEX;
     index.resetForLocation();
     assert.equal(index.scanChatGptDom({ cacheMessages: true }), true);
-    assert.deepEqual(Array.from(index.getMessages(), message => message.id), ['api-u', 'api-progress', 'api-final']);
+    assert.deepEqual(
+        Array.from(index.getMessages(), message => message.id),
+        ['api-u', 'api-final'],
+        'a single visual assistant SECTION keeps its final/headed message rather than duplicating progress and final records'
+    );
     assert.deepEqual(
         Array.from(index.getChatGptDomHeadings(32, 'api-final'), item => item.text),
         ['Current DOM heading'],

@@ -19,10 +19,72 @@ const SUPPORTED_URL_SNIPPETS = [
     "moonshot.cn"
 ];
 const tabExtractionLocks = new Map();
+const RUNTIME_STATUS_KEY_PREFIX = 'aiChatExporterRuntimeStatus:';
 
 function isSupportedUrl(url = '') {
     return SUPPORTED_URL_SNIPPETS.some(snippet => url.includes(snippet));
 }
+
+// The panel is available only for the current supported tab. This avoids a
+// global side-panel toggle leaking into unrelated tabs.
+async function syncSidePanelAvailability(tab) {
+    if (!tab?.id) return;
+    const supported = isSupportedUrl(tab.url || '');
+    try {
+        await Promise.all([
+            chrome.sidePanel.setOptions({
+                tabId: tab.id,
+                path: 'src/core/sidepanel.html',
+                enabled: supported
+            }),
+            // An action popup takes precedence over openPanelOnActionClick.
+            // This gives unsupported tabs a useful response without exposing
+            // the outline side panel outside supported AI chat sites.
+            chrome.action.setPopup({
+                tabId: tab.id,
+                popup: supported ? '' : 'src/core/unsupported-popup.html'
+            }),
+            chrome.action.setTitle({
+                tabId: tab.id,
+                title: supported
+                    ? 'AI Chat Exporter：打开对话大纲'
+                    : 'AI Chat Exporter：请在支持的 AI 对话页面使用'
+            })
+        ]);
+    } catch (error) {
+        // Chrome rejects protected/internal pages. The UI has an unsupported
+        // state as a fallback when it is already open during navigation.
+        console.debug('AI Chat Exporter: could not update side panel availability', error);
+    }
+}
+
+function clearRetainedRuntimeStatus(tabId) {
+    return chrome.storage.session.remove(`${RUNTIME_STATUS_KEY_PREFIX}${tabId}`).catch(() => {});
+}
+
+chrome.tabs.onActivated.addListener(async ({ tabId }) => {
+    try { await syncSidePanelAvailability(await chrome.tabs.get(tabId)); } catch (_) {}
+});
+chrome.tabs.onCreated.addListener(tab => { syncSidePanelAvailability(tab); });
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+    if (changeInfo.url) clearRetainedRuntimeStatus(tabId);
+    if (changeInfo.url || changeInfo.status === 'loading') {
+        syncSidePanelAvailability({ ...tab, id: tabId });
+    }
+});
+chrome.tabs.onRemoved.addListener(tabId => { clearRetainedRuntimeStatus(tabId); });
+
+async function initializeSidePanels() {
+    // Prevent tabs without explicit options from falling back to the manifest's
+    // global panel. Supported tabs receive their own tab-specific instance below.
+    await chrome.sidePanel.setOptions({ enabled: false });
+    const tabs = await chrome.tabs.query({});
+    await Promise.all(tabs.map(syncSidePanelAvailability));
+}
+
+initializeSidePanels().catch(error => {
+    console.debug('AI Chat Exporter: could not initialize side panels', error);
+});
 
 async function getActiveTab() {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -274,6 +336,7 @@ chrome.commands.onCommand.addListener(async (command) => {
 
     // 快捷键同样按需打开侧栏，由侧栏建立 Port 后再注入分析脚本。
     // 这样从未打开过扩展的标签页也可工作，同时不会留下无主 observer。
+    await syncSidePanelAvailability(tab);
     await chrome.sidePanel.open({ tabId: tab.id });
     if (command === 'toggle_outline') return;
     setTimeout(() => {

@@ -71,7 +71,7 @@
             font-family: inherit;
         }
 
-        #help-button,
+        .panel-tool-button,
         #welcome-dismiss,
         #help-close-button,
         #help-purchase-action,
@@ -81,7 +81,7 @@
             font: inherit;
         }
 
-        #help-button {
+        .panel-tool-button {
             width: 28px;
             height: 28px;
             padding: 0;
@@ -93,33 +93,35 @@
             font-weight: 700;
         }
 
-        #help-button:hover,
+        .panel-tool-button:hover,
         #help-button[aria-expanded="true"] {
             background: var(--bg-tertiary);
             color: var(--text-primary);
         }
 
-        #site-info {
+        #panel-tools {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            padding: 10px 14px;
-            margin-bottom: 10px;
-            background-color: var(--bg-secondary);
-            border-radius: 8px;
-            font-size: 13px;
-            color: var(--text-secondary);
-            border: 1px solid var(--border-color);
+            justify-content: flex-end;
+            gap: 6px;
+            min-height: 28px;
+            margin: 0 0 8px;
         }
 
-        #site-info-text {
-            min-width: 0;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
+        #runtime-status { margin: 0 0 10px; padding: 11px 12px; border: 1px solid #60a5fa; border-radius: 8px; background: #172554; }
+        #runtime-status[hidden] { display: none; }
+        #runtime-status[data-tone="error"] { border-color: #fb7185; background: #4c0519; }
+        #runtime-status[data-tone="partial"] { border-color: #fbbf24; background: #451a03; }
+        #runtime-status-title { display: block; color: #f8fafc; font-size: 13px; font-weight: 700; }
+        #runtime-status-summary { display: block; margin-top: 3px; color: #dbeafe; font-size: 12px; font-weight: 600; }
+        #runtime-status-detail { margin: 7px 0 0; color: #e2e8f0; font-size: 12px; line-height: 1.5; }
+        #runtime-status[data-tone="error"] #runtime-status-summary, #runtime-status[data-tone="error"] #runtime-status-detail { color: #ffe4e6; }
+        #runtime-status[data-tone="partial"] #runtime-status-summary, #runtime-status[data-tone="partial"] #runtime-status-detail { color: #fef3c7; }
+        #runtime-status-actions { display: flex; gap: 8px; margin-top: 9px; }
+        #runtime-status-actions[hidden] { display: none; }
+        #runtime-status-actions button { border: 1px solid var(--border-color); border-radius: 6px; padding: 7px 9px; cursor: pointer; font: inherit; font-size: 12px; font-weight: 600; }
+        #repair-locate-button { background: var(--accent-blue); color: #fff; }
+        #cancel-repair-button { background: var(--bg-secondary); color: var(--text-primary); }
         #welcome-tip {
             position: relative;
             margin: 0 0 10px;
@@ -738,10 +740,20 @@
     </style>
 </head>
 <body>
-    <div id="site-info">
-        <span id="site-info-text"></span>
-        <button id="help-button" type="button" aria-label="打开使用帮助" data-i18n-aria-label="openHelp" aria-controls="help-drawer" aria-expanded="false">?</button>
+    <div id="panel-tools" role="toolbar" aria-label="侧边栏工具">
+        <button id="rescan-button" class="panel-tool-button" type="button" aria-label="重新检测" title="重新检测" data-i18n-aria-label="rescan">↻</button>
+        <button id="copy-diagnostics-button" class="panel-tool-button" type="button" aria-label="复制诊断信息" title="复制诊断信息" data-i18n-aria-label="copyDiagnostics">⧉</button>
+        <button id="help-button" class="panel-tool-button" type="button" aria-label="打开使用帮助" title="打开使用帮助" data-i18n-aria-label="openHelp" aria-controls="help-drawer" aria-expanded="false">?</button>
     </div>
+    <section id="runtime-status" hidden aria-live="polite" data-tone="neutral">
+        <strong id="runtime-status-title">正在检测当前页面…</strong>
+        <span id="runtime-status-summary"></span>
+        <p id="runtime-status-detail"></p>
+        <div id="runtime-status-actions" hidden>
+            <button id="repair-locate-button" type="button" hidden>修复并定位</button>
+            <button id="cancel-repair-button" type="button" hidden>取消</button>
+        </div>
+    </section>
     <section id="welcome-tip" hidden aria-label="首次使用提示" data-i18n-aria-label="welcomeTipAria">
         <strong data-i18n="welcomeTitle">从这里开始</strong>
         <span data-i18n="welcomeBody">点击目录可快速定位；底部可免费导出完整对话。</span>

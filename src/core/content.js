@@ -1,5 +1,5 @@
 (function() {
-    const CONTENT_VERSION = '2026-08-27-explicit-reading-position';
+    const CONTENT_VERSION = '2026-09-13-chatgpt-repair';
     // The side panel re-injects its file list whenever the active ChatGPT route changes.
     // Re-running the same content runtime used to tear down the live conversation index,
     // release both caches, and then rebuild an empty index during A→B→A navigation.
@@ -41,7 +41,14 @@
     const highlightTimers = new Set();
     const pendingJumpCleanups = new Set();
     const CHATGPT_JUMP_TIMEOUT_MS = Number(window.__AI_CHAT_EXPORT_TESTS__?.jumpTimeoutMs) || 2500;
+    const CHATGPT_REPAIR_MAX_STEPS = 8;
+    const CHATGPT_REPAIR_TIMEOUT_MS = 10000;
+    const CHATGPT_REPAIR_REINDEX_TIMEOUT_MS = 4000;
+    // The bounded virtual-scroll phase remains off in production until it passes
+    // real long-conversation acceptance. Tests can exercise it explicitly.
+    const CHATGPT_REPAIR_SCROLL_ENABLED = window.__AI_CHAT_EXPORT_TESTS__?.enableRepairScroll === true;
     let activeJumpGeneration = 0;
+    let activeRepair = null;
     let lastOutlineJson = '';
     const refreshOutlineFromIndex = () => scheduleOutlineRefresh(350);
 
@@ -200,9 +207,22 @@
     function handleMessage(message, sender, sendResponse) {
         switch (message.type) {
             case 'scrollTo':
+                cancelActiveRepair('superseded');
                 scrollToOutlineTarget(message)
                     .then(sendResponse)
                     .catch(error => sendResponse({ success: false, reason: error?.message || 'jump-failed' }));
+                return true;
+            case 'repairAndLocate':
+                repairAndLocate(message)
+                    .then(sendResponse)
+                    .catch(error => sendResponse({ success: false, reason: error?.message || 'repair-failed' }));
+                return true;
+            case 'cancelRepair':
+                if (cancelActiveRepair('cancelled', message.operationId)) {
+                    sendResponse({ success: true, reason: 'cancelled' });
+                } else {
+                    sendResponse({ success: false, reason: 'repair-not-active' });
+                }
                 return true;
             case 'getOutline':
                 if (!message.requestToken || (message.url && message.url !== window.location.href)) return;
@@ -436,6 +456,262 @@
         pendingJumpCleanups.clear();
     }
 
+    function repairRequestIsCurrent(message) {
+        return pipeline.platformId === 'CHATGPT'
+            && Boolean(message?.operationId)
+            && Boolean(message?.url)
+            && Boolean(message?.requestToken)
+            && message.url === window.location.href
+            && message.requestToken === activeOutlineRequestToken
+            && message.metadata?.messageId
+            && Number.isFinite(message.metadata?.turnNumber);
+    }
+
+    function reportRepair(operation, phase, detail = {}) {
+        if (activeRepair !== operation || operation.cancelled) return;
+        chrome.runtime.sendMessage({
+            type: 'repairProgress',
+            operationId: operation.id,
+            requestToken: operation.requestToken,
+            url: operation.url,
+            phase,
+            ...detail
+        });
+    }
+
+    function cancelActiveRepair(reason = 'cancelled', operationId = '') {
+        const operation = activeRepair;
+        if (!operation || (operationId && operation.id !== operationId)) return false;
+        operation.cancelled = true;
+        operation.cancelReason = reason;
+        operation.waitCleanups.forEach(cleanup => cleanup());
+        operation.waitCleanups.clear();
+        return true;
+    }
+
+    function repairIsActive(operation) {
+        return activeRepair === operation
+            && !operation.cancelled
+            && window.location.href === operation.url
+            && activeOutlineRequestToken === operation.requestToken
+            && Date.now() <= operation.deadline;
+    }
+
+    function findRepairOutlineCandidates(outline, metadata) {
+        const candidates = outline.filter(item => item?.type === metadata?.type
+            && item.metadata?.messageId === metadata?.messageId);
+        if (metadata?.type !== 'answer') return candidates;
+        return candidates.filter(item => item.metadata?.textKey === metadata.textKey
+            && item.metadata?.headingOccurrence === metadata.headingOccurrence);
+    }
+
+    function sendRepairOutline(result, operation) {
+        if (!repairIsActive(operation)) return;
+        cleanupStaleOutlineIds(result.outline);
+        lastOutlineJson = JSON.stringify(result.outline.map(item => [item.id || '', item.text, item.level, item.type]));
+        chrome.runtime.sendMessage({
+            type: 'outline',
+            outline: result.outline,
+            diagnostics: result.diagnostics,
+            requestToken: operation.requestToken
+        });
+    }
+
+    function withTimeout(promise, timeoutMs) {
+        let timer = null;
+        return Promise.race([
+            promise,
+            new Promise(resolve => { timer = setTimeout(() => resolve(null), timeoutMs); })
+        ]).finally(() => {
+            if (timer) clearTimeout(timer);
+        });
+    }
+
+    function captureRepairPosition() {
+        const focus = document.elementFromPoint?.(window.innerWidth / 2, window.innerHeight / 2);
+        const scrollParent = getScrollParent(focus) || document.scrollingElement || document.documentElement;
+        const anchor = focus?.closest?.('[data-message-id], [data-turn-id]') || null;
+        const anchorId = anchor?.getAttribute?.('data-message-id') || anchor?.getAttribute?.('data-turn-id') || '';
+        const anchorAttribute = anchor?.getAttribute?.('data-message-id') ? 'data-message-id'
+            : (anchor?.getAttribute?.('data-turn-id') ? 'data-turn-id' : '');
+        return {
+            scrollParent,
+            scrollTop: Number.isFinite(scrollParent?.scrollTop) ? scrollParent.scrollTop : 0,
+            anchorId,
+            anchorAttribute,
+            anchorTop: anchor?.getBoundingClientRect?.().top || 0
+        };
+    }
+
+    function restoreRepairPosition(position) {
+        if (!position?.scrollParent) return false;
+        let restoredByAnchor = false;
+        if (position.anchorId && position.anchorAttribute) {
+            const escaped = window.CSS?.escape
+                ? CSS.escape(position.anchorId)
+                : String(position.anchorId).replace(/[^a-zA-Z0-9_-]/g, '\\$&');
+            const anchor = document.querySelector(`[${position.anchorAttribute}="${escaped}"]`);
+            if (anchor) {
+                anchor.scrollIntoView({ behavior: 'auto', block: 'start' });
+                const adjustment = (anchor.getBoundingClientRect?.().top || 0) - position.anchorTop;
+                position.scrollParent.scrollTo?.({ top: Math.max(0, position.scrollParent.scrollTop + adjustment), behavior: 'auto' });
+                restoredByAnchor = true;
+            }
+        }
+        if (!restoredByAnchor) position.scrollParent.scrollTo?.({ top: position.scrollTop, behavior: 'auto' });
+        return true;
+    }
+
+    function mountedTurnSignature() {
+        return Array.from(document.querySelectorAll('[data-testid^="conversation-turn-"]'))
+            .map(turn => `${turn.getAttribute?.('data-testid') || ''}:${turn.getAttribute?.('data-message-id') || ''}:${turn.querySelector?.('[data-message-id]')?.getAttribute?.('data-message-id') || ''}`)
+            .join('|');
+    }
+
+    function waitForRepairMount(operation, previousSignature) {
+        return new Promise(resolve => {
+            let settled = false;
+            const finish = changed => {
+                if (settled) return;
+                settled = true;
+                observer.disconnect();
+                clearTimeout(timer);
+                operation.waitCleanups.delete(cancel);
+                resolve(changed);
+            };
+            const cancel = () => finish(false);
+            const check = () => {
+                if (!repairIsActive(operation)) return finish(false);
+                if (mountedTurnSignature() !== previousSignature) finish(true);
+            };
+            const observer = new MutationObserver(check);
+            const timer = setTimeout(() => finish(false), Math.min(900, Math.max(0, operation.deadline - Date.now())));
+            operation.waitCleanups.add(cancel);
+            observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-testid', 'data-message-id', 'data-turn-id'] });
+            check();
+        });
+    }
+
+    function selectRepairAnchor(targetTurnNumber) {
+        const turns = Array.from(document.querySelectorAll('[data-testid^="conversation-turn-"]'))
+            .map(element => {
+                const match = element.getAttribute?.('data-testid')?.match(/^conversation-turn-(\d+)$/);
+                return match ? { element, turnNumber: Number(match[1]) } : null;
+            })
+            .filter(Boolean)
+            .sort((left, right) => left.turnNumber - right.turnNumber);
+        if (turns.length === 0) return null;
+        const lower = turns.filter(turn => turn.turnNumber < targetTurnNumber).at(-1);
+        const upper = turns.find(turn => turn.turnNumber > targetTurnNumber);
+        if (lower) return { ...lower, block: 'end' };
+        if (upper) return { ...upper, block: 'start' };
+        return null;
+    }
+
+    function clickNativePromptAnchor(metadata) {
+        const promptNumber = metadata.type === 'question'
+            ? (metadata.turnNumber + 1) / 2
+            : metadata.turnNumber / 2;
+        if (!Number.isInteger(promptNumber) || promptNumber < 1) return false;
+        const button = Array.from(document.querySelectorAll('button[aria-label^="Prompt "]'))
+            .find(candidate => candidate.getAttribute('aria-label') === `Prompt ${promptNumber}`);
+        if (!button || typeof button.click !== 'function') return false;
+        button.click();
+        return true;
+    }
+
+    async function locateWithBoundedRepair(operation, message) {
+        if (!CHATGPT_REPAIR_SCROLL_ENABLED && !findOutlineTarget(message)) {
+            return { success: false, reason: 'target-not-mounted', scrollAssistAvailable: false };
+        }
+        let noProgressSteps = 0;
+        let usedNativeAnchor = false;
+        for (let step = 0; step < CHATGPT_REPAIR_MAX_STEPS; step++) {
+            if (!repairIsActive(operation)) return { success: false, reason: operation.cancelReason || 'repair-timeout' };
+            if (findOutlineTarget(message)) return scrollToOutlineTarget(message);
+            const signature = mountedTurnSignature();
+            let moved = false;
+            if (!usedNativeAnchor) {
+                usedNativeAnchor = clickNativePromptAnchor(message.metadata);
+                moved = usedNativeAnchor;
+            }
+            if (!moved) {
+                const targetTurn = document.querySelector(`[data-testid="conversation-turn-${message.metadata.turnNumber}"]`);
+                if (targetTurn) return { success: false, reason: 'identity-conflict' };
+                const anchor = selectRepairAnchor(message.metadata.turnNumber);
+                if (!anchor) return { success: false, reason: 'target-not-mounted' };
+                anchor.element.scrollIntoView({ behavior: 'auto', block: anchor.block });
+            }
+            operation.steps = step + 1;
+            reportRepair(operation, 'searching', { steps: operation.steps, maxSteps: CHATGPT_REPAIR_MAX_STEPS });
+            const changed = await waitForRepairMount(operation, signature);
+            if (findOutlineTarget(message)) return scrollToOutlineTarget(message);
+            noProgressSteps = changed ? 0 : noProgressSteps + 1;
+            if (noProgressSteps >= 2) return { success: false, reason: 'no-progress' };
+        }
+        return { success: false, reason: Date.now() > operation.deadline ? 'repair-timeout' : 'target-not-mounted' };
+    }
+
+    async function repairAndLocate(message) {
+        if (!repairRequestIsCurrent(message)) return { success: false, reason: 'invalid-repair-request' };
+        cancelActiveRepair('superseded');
+        cancelPendingJumps();
+        const operation = {
+            id: message.operationId,
+            url: message.url,
+            requestToken: message.requestToken,
+            cancelled: false,
+            cancelReason: '',
+            deadline: Date.now() + CHATGPT_REPAIR_TIMEOUT_MS,
+            steps: 0,
+            waitCleanups: new Set(),
+            position: captureRepairPosition()
+        };
+        activeRepair = operation;
+        reportRepair(operation, 'reindexing');
+        let result;
+        try {
+            result = await withTimeout(
+                pipeline.extractWithIndex({ force: true, awaitApi: true }),
+                CHATGPT_REPAIR_REINDEX_TIMEOUT_MS
+            );
+            if (!result) {
+                result = await pipeline.extractWithIndex({ force: false, awaitApi: false });
+            }
+            if (!repairIsActive(operation)) return { success: false, reason: operation.cancelReason || 'repair-timeout', restored: restoreRepairPosition(operation.position) };
+            sendRepairOutline(result, operation);
+            const candidates = findRepairOutlineCandidates(result.outline, message.metadata);
+            if (candidates.length !== 1) {
+                const reason = candidates.length === 0 ? 'stale-outline' : 'identity-conflict';
+                reportRepair(operation, 'failed', { reason, outlineReplaced: true });
+                return { success: false, reason, outlineReplaced: true, restored: restoreRepairPosition(operation.position) };
+            }
+            const target = candidates[0];
+            const repairMessage = { ...message, elementId: target.id, metadata: target.metadata };
+            reportRepair(operation, 'locating', { outlineReplaced: true });
+            const located = await locateWithBoundedRepair(operation, repairMessage);
+            if (!located.success) {
+                const reason = operation.cancelled ? operation.cancelReason || 'cancelled' : located.reason;
+                const restored = restoreRepairPosition(operation.position);
+                reportRepair(operation, reason === 'cancelled' ? 'cancelled' : 'failed', { reason, steps: operation.steps, restored });
+                return {
+                    success: false,
+                    reason,
+                    outlineReplaced: true,
+                    steps: operation.steps,
+                    restored,
+                    scrollAssistAvailable: located.scrollAssistAvailable !== false
+                };
+            }
+            reportRepair(operation, 'located', { steps: operation.steps, outlineReplaced: true });
+            return { success: true, reason: 'located', outlineReplaced: true, steps: operation.steps, restored: false };
+        } finally {
+            operation.waitCleanups.forEach(cleanup => cleanup());
+            operation.waitCleanups.clear();
+            if (activeRepair === operation) activeRepair = null;
+        }
+    }
+
     // 添加消息监听；只有侧栏端口存在时才启动持续分析。
     chrome.runtime.onMessage.addListener(handleMessage);
 
@@ -611,6 +887,7 @@
         highlightTimers.clear();
         activeJumpGeneration++;
         cancelPendingJumps();
+        cancelActiveRepair('content-cleanup');
         window.AI_CHAT_CONVERSATION_INDEX?.disconnect?.();
         window.removeEventListener('ai-chat-index-updated', refreshOutlineFromIndex);
         chrome.runtime.onMessage.removeListener(handleMessage);

@@ -4,12 +4,14 @@ import vm from 'node:vm';
 
 const contentSource = fs.readFileSync(new URL('../src/core/content.js', import.meta.url), 'utf8');
 
-function createHarness(initialTurns = []) {
+function createHarness(initialTurns = [], { enableRepairScroll = false } = {}) {
     const observers = [];
     const turns = [...initialTurns];
     const sentMessages = [];
     let messageListener = null;
     let outlineToken = 'jump-token';
+    let repairResult = { outline: [], diagnostics: { url: 'https://chatgpt.com/c/jump-test', stats: {} } };
+    const repairCalls = [];
 
     class FakeElement {
         constructor(turnNumber, messageId, { headings = [], onAnchorScroll = null, tagName = 'SECTION' } = {}) {
@@ -109,6 +111,10 @@ function createHarness(initialTurns = []) {
             if (!turn) return null;
             return metadata.type === 'answer' ? (turn.headings[metadata.headingIndex] || null) : turn;
         }
+        async extractWithIndex(options) {
+            repairCalls.push(options);
+            return repairResult;
+        }
     }
 
     const conversationIndex = { disconnectCalls: 0, disconnect() { this.disconnectCalls++; } };
@@ -120,7 +126,7 @@ function createHarness(initialTurns = []) {
         getComputedStyle(element) { return { overflowY: element === scroller ? 'auto' : 'visible' }; },
         addEventListener() {},
         removeEventListener() {},
-        __AI_CHAT_EXPORT_TESTS__: { jumpTimeoutMs: 20 },
+        __AI_CHAT_EXPORT_TESTS__: { jumpTimeoutMs: 20, enableRepairScroll },
         AI_CHAT_CONVERSATION_INDEX: conversationIndex
     };
 
@@ -177,6 +183,23 @@ function createHarness(initialTurns = []) {
         assert.equal(keptOpen, true, 'async jump response channel must remain open');
     });
 
+    const repair = (metadata, operationId = 'repair-operation', overrides = {}) => new Promise(resolve => {
+        const keptOpen = messageListener({
+            type: 'repairAndLocate',
+            operationId,
+            metadata,
+            url: window.location.href,
+            requestToken: outlineToken,
+            ...overrides
+        }, {}, resolve);
+        assert.equal(keptOpen, true, 'async repair response channel must remain open');
+    });
+
+    const cancelRepair = operationId => new Promise(resolve => {
+        const keptOpen = messageListener({ type: 'cancelRepair', operationId }, {}, resolve);
+        assert.equal(keptOpen, true, 'cancel response channel must remain open');
+    });
+
     return {
         FakeElement,
         turns,
@@ -186,6 +209,10 @@ function createHarness(initialTurns = []) {
         window,
         conversationIndex,
         jump,
+        repair,
+        cancelRepair,
+        repairCalls,
+        setRepairResult(value) { repairResult = value; },
         triggerMutations() {
             observers.filter(observer => !observer.disconnected).forEach(observer => observer.callback([]));
         }
@@ -324,6 +351,101 @@ function createHarness(initialTurns = []) {
     assert.equal(firstResult.success, false);
     assert.equal(anchor.anchorScrolls, 1, 'the first click never repeats its anchor movement');
     assert.equal(harness.observers.every(observer => observer.disconnected), true, 'superseded waits release their observers');
+}
+
+// Repair first rebuilds the outline using a forced ChatGPT index refresh, then
+// continues only when the old stable identity resolves to exactly one new item.
+{
+    const harness = createHarness();
+    harness.turns.push(new harness.FakeElement(1, 'message-1'));
+    const metadata = { type: 'question', turnNumber: 99, messageId: 'message-1' };
+    harness.setRepairResult({
+        outline: [{ id: 'repaired-question', type: 'question', text: 'Question', metadata: { ...metadata, turnNumber: 1 } }],
+        diagnostics: { url: harness.window.location.href, stats: {} }
+    });
+    const result = await harness.repair(metadata);
+    assert.equal(result.success, true);
+    assert.equal(result.outlineReplaced, true);
+    assert.equal(harness.repairCalls[0].force, true, 'repair forces a fresh index pass');
+    assert.equal(harness.repairCalls[0].awaitApi, true, 'repair waits briefly for canonical data before falling back');
+    assert.equal(harness.sentMessages.some(message => message.type === 'outline' && message.outline?.[0]?.id === 'repaired-question'), true);
+}
+
+// The production default rechecks a missing target but never moves the page
+// until the bounded scroll phase has passed live acceptance and is enabled.
+{
+    const harness = createHarness();
+    const anchor = new harness.FakeElement(2, 'message-2');
+    harness.turns.push(anchor);
+    const metadata = { type: 'question', turnNumber: 1, messageId: 'message-1' };
+    harness.setRepairResult({
+        outline: [{ id: 'missing-question', type: 'question', text: 'Question', metadata }],
+        diagnostics: { url: harness.window.location.href, stats: {} }
+    });
+    const result = await harness.repair(metadata, 'gated-repair');
+    assert.equal(result.success, false);
+    assert.equal(result.reason, 'target-not-mounted');
+    assert.equal(result.scrollAssistAvailable, false);
+    assert.equal(anchor.anchorScrolls, 0, 'the gated phase must not move a mounted neighbor');
+}
+
+// Once explicitly enabled after live acceptance, bounded repair uses an exact
+// identity check and one directional virtual-window move before final centering.
+{
+    const harness = createHarness([], { enableRepairScroll: true });
+    const anchor = new harness.FakeElement(2, 'message-2');
+    anchor.onAnchorScroll = () => {
+        harness.turns.push(new harness.FakeElement(1, 'message-1'));
+        harness.triggerMutations();
+    };
+    harness.turns.push(anchor);
+    const metadata = { type: 'question', turnNumber: 1, messageId: 'message-1' };
+    harness.setRepairResult({
+        outline: [{ id: 'mounted-after-repair', type: 'question', text: 'Question', metadata }],
+        diagnostics: { url: harness.window.location.href, stats: {} }
+    });
+    const result = await harness.repair(metadata, 'enabled-repair');
+    assert.equal(result.success, true);
+    assert.equal(result.steps, 1);
+    assert.equal(anchor.anchorScrolls, 1);
+}
+
+// Ambiguous rebuilt identities are a directory repair outcome, never permission
+// to scroll toward a potentially wrong item.
+{
+    const harness = createHarness();
+    const metadata = { type: 'question', turnNumber: 1, messageId: 'message-1' };
+    harness.setRepairResult({
+        outline: [
+            { id: 'one', type: 'question', text: 'Question A', metadata },
+            { id: 'two', type: 'question', text: 'Question B', metadata }
+        ],
+        diagnostics: { url: harness.window.location.href, stats: {} }
+    });
+    const result = await harness.repair(metadata, 'ambiguous-repair');
+    assert.equal(result.success, false);
+    assert.equal(result.reason, 'identity-conflict');
+    assert.equal(harness.scroller.scrollCalls.length, 1, 'ambiguous repair only restores the captured reading position');
+    assert.equal(harness.scroller.scrollCalls[0].top, 9_000);
+}
+
+// Cancellation invalidates the active repair before the forced reindex returns
+// and restores the captured reading position rather than continuing to scroll.
+{
+    const harness = createHarness();
+    let resolveReindex;
+    harness.setRepairResult(new Promise(resolve => { resolveReindex = resolve; }));
+    const metadata = { type: 'question', turnNumber: 1, messageId: 'message-1' };
+    const pendingRepair = harness.repair(metadata, 'cancelled-repair');
+    await Promise.resolve();
+    const cancelled = await harness.cancelRepair('cancelled-repair');
+    assert.equal(cancelled.success, true);
+    resolveReindex({ outline: [], diagnostics: { url: harness.window.location.href, stats: {} } });
+    const result = await pendingRepair;
+    assert.equal(result.success, false);
+    assert.equal(result.reason, 'cancelled');
+    assert.equal(result.restored, true);
+    assert.equal(harness.scroller.scrollCalls.at(-1).top, 9_000);
 }
 
 console.log('chatgpt bounded jump ok');

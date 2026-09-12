@@ -7,6 +7,8 @@ let outlineRequestSerial = 0;
 let currentOutlineRequestToken = '';
 let tabReloadTimer = null;
 let jumpRequestSerial = 0;
+let activeRepairOperation = null;
+let repairTargetItem = null;
 
 // 全局状态：是否所有目录都已收起
 let allCollapsed = false;
@@ -14,6 +16,8 @@ let selectionMode = false;
 let currentOutlineData = [];
 let licenseStatusState = { active: false, plan: 'free' };
 let exportInProgress = false;
+let runtimeStatus = null;
+let runtimeStatusHideTimer = null;
 const selectedQuestionIndexes = new Set();
 const collapsedQuestionKeys = new Set();
 const PURCHASE_URL = 'https://wj.qq.com/s2/26957751/9rvt/';
@@ -22,6 +26,7 @@ const DEMO_PLATFORM = /(?:^|[?&])platform=doubao(?:&|$)/.test((window.location &
 const HAS_CHROME_API = typeof chrome !== 'undefined' && Boolean(chrome.runtime && chrome.tabs && chrome.scripting);
 const HAS_LOCAL_STORAGE_API = typeof chrome !== 'undefined' && Boolean(chrome.storage?.local);
 const WELCOME_DISMISSED_KEY = 'aiChatExporterWelcomeDismissed';
+const RUNTIME_STATUS_KEY_PREFIX = 'aiChatExporterRuntimeStatus:';
 const browserLanguage = typeof navigator === 'undefined' ? 'en' : (navigator.languages?.[0] || navigator.language || 'en');
 const UI_LANGUAGE = browserLanguage.toLowerCase().startsWith('zh') ? 'zh' : 'en';
 const UI_COPY = {
@@ -36,14 +41,14 @@ const UI_COPY = {
         privacyTitle: '隐私', privacyBody: '对话内容在浏览器本地处理，不上传到开发者服务器。', activateLicense: '激活授权码',
         loadingChatgpt: '正在读取完整会话…', loadingDoubao: '正在读取当前内容；目录会随滚动补全', loadingOutline: '正在生成对话目录…',
         readyDoubao: '目录已生成；继续滚动原对话可补全更多内容', readyChatgpt: '目录已生成；长对话会优先读取完整会话', readyOutline: '目录已生成', analyzing: '正在分析页面内容…',
-        emptyOutlineStatus: '当前未生成可用目录',
+        emptyOutlineStatus: '当前未生成可用目录', rescan: '重新检测', copyDiagnostics: '复制诊断信息', copiedDiagnostics: '诊断信息已复制', copyDiagnosticsFailed: '无法复制诊断信息，请重试',
         unsupportedPage: '当前页面不是支持的 AI 对话页面', injectFailed: '无法注入页面分析脚本，请刷新当前页面后重试',
         currentSite: '当前网站：{site}', demoSite: '示例页面：{site} 长对话大纲', demoReady: '示例数据：可直接点击、收起目录或切换部分导出',
         demoPurchase: '示例页面不会打开购买链接', proActive: 'Pro 已激活', activating: '激活中…', activationPrompt: '请输入 Pro 授权码', activationFailed: '激活失败：{error}', unknownError: '未知错误',
         partialExport: '部分导出', exitSelection: '退出选择模式', extracting: '正在提取当前对话并生成 {format}', exportingSelected: '正在将选中的问题组导出为 {format}',
         demoFullExport: '示例：将导出 4 组对话', demoSelectedExport: '示例：将导出 {count} 组已选对话', exportFailed: '导出失败：{error}',
         exportedFull: '已导出 {format}：{count} 组对话', exportedSelected: '已导出 {format}：{count} 组选中对话', selectBeforeExport: '请先勾选要导出的对话',
-        demoLocated: '示例：已定位「{item}」', located: '已开始定位「{item}」', locateFailed: '暂时无法定位「{item}」；目标内容尚未加载', noOutline: '当前页面未找到可用的大纲内容，请打开你的对话', selectQuestion: '选择此问题组用于局部导出'
+        demoLocated: '示例：已定位「{item}」', located: '已开始定位「{item}」', locateFailed: '暂时无法定位「{item}」', repairLocate: '修复并定位', cancelRepair: '取消', repairReadyTitle: '无法定位该目录项', repairReadyDetail: '目录可能已过期，或目标暂未挂载。可重新校验目录后，在受限范围内协助定位。', repairReindexing: '正在重新校验目录…', repairLocating: '目录已校验，正在协助定位…', repairSearching: '正在查找目标（{steps}/{maxSteps}）…', repairLocated: '已定位「{item}」', repairCancelled: '已取消修复，并恢复原阅读位置。', repairReasonStale: '目录已更新；原条目不再属于当前对话。请从新目录重新选择。', repairReasonConflict: '目标身份存在冲突，已停止以避免定位到错误内容。', repairReasonRoute: '对话已切换，修复已停止。', repairReasonTimeout: '在受限时间内未找到目标，已恢复原阅读位置。', repairReasonNoProgress: '页面未加载更多目标内容，已恢复原阅读位置。', repairReasonMissing: '目标尚未挂载，已恢复原阅读位置。', repairManualScroll: '目录已校验，但目标尚未挂载。请手动浏览到相近位置后再点击该条目。', noOutline: '当前页面未找到可用的大纲内容，请打开你的对话', selectQuestion: '选择此问题组用于局部导出'
     },
     en: {
         welcomeTipAria: 'First-use tip', welcomeTitle: 'Start here', welcomeBody: 'Click an outline item to jump to it. Export the full conversation for free below.',
@@ -56,14 +61,14 @@ const UI_COPY = {
         privacyTitle: 'Privacy', privacyBody: 'Conversation content is processed locally in your browser and is not uploaded to our servers.', activateLicense: 'Activate license',
         loadingChatgpt: 'Reading the complete conversation…', loadingDoubao: 'Reading the current content; the outline fills in as you scroll', loadingOutline: 'Building conversation outline…',
         readyDoubao: 'Outline ready; keep scrolling the chat to add more content', readyChatgpt: 'Outline ready; long chats use the complete conversation when available', readyOutline: 'Outline ready', analyzing: 'Analyzing page content…',
-        emptyOutlineStatus: 'No usable outline is currently available',
+        emptyOutlineStatus: 'No usable outline is currently available', rescan: 'Rescan', copyDiagnostics: 'Copy diagnostics', copiedDiagnostics: 'Diagnostics copied', copyDiagnosticsFailed: 'Could not copy diagnostics. Try again.',
         unsupportedPage: 'This page is not a supported AI chat', injectFailed: 'Could not analyze this page. Refresh the tab and try again.',
         currentSite: 'Current site: {site}', demoSite: 'Example: {site} long-chat outline', demoReady: 'Example data: click items, collapse the outline, or switch to partial export',
         demoPurchase: 'The example page does not open the purchase link', proActive: 'Pro is active', activating: 'Activating…', activationPrompt: 'Enter your Pro license code', activationFailed: 'Activation failed: {error}', unknownError: 'Unknown error',
         partialExport: 'Partial export', exitSelection: 'Exit selection', extracting: 'Extracting the current chat as {format}', exportingSelected: 'Exporting selected question groups as {format}',
         demoFullExport: 'Example: 4 question groups will be exported', demoSelectedExport: 'Example: {count} selected question groups will be exported', exportFailed: 'Export failed: {error}',
         exportedFull: 'Exported {format}: {count} question groups', exportedSelected: 'Exported {format}: {count} selected question groups', selectBeforeExport: 'Select at least one chat to export',
-        demoLocated: 'Example: jumped to “{item}”', located: 'Locating “{item}”', locateFailed: 'Could not jump to “{item}”; the target is not loaded yet.', noOutline: 'No usable outline was found. Open one of your chats and try again.', selectQuestion: 'Select this question group for partial export'
+        demoLocated: 'Example: jumped to “{item}”', located: 'Locating “{item}”', locateFailed: 'Could not jump to “{item}”.', repairLocate: 'Repair and locate', cancelRepair: 'Cancel', repairReadyTitle: 'This outline item could not be located', repairReadyDetail: 'The outline may be stale or the target is not mounted. Recheck it, then search within a bounded range.', repairReindexing: 'Rechecking the outline…', repairLocating: 'Outline rechecked; locating the target…', repairSearching: 'Searching for the target ({steps}/{maxSteps})…', repairLocated: 'Located “{item}”', repairCancelled: 'Repair cancelled and the original reading position was restored.', repairReasonStale: 'The outline was updated; this item is no longer in the current chat. Choose it again from the new outline.', repairReasonConflict: 'The target identity conflicts with the current page, so locating stopped to avoid a wrong result.', repairReasonRoute: 'The conversation changed, so repair stopped.', repairReasonTimeout: 'The target was not found within the bounded time and the original reading position was restored.', repairReasonNoProgress: 'The page did not mount more target content; the original reading position was restored.', repairReasonMissing: 'The target is not mounted; the original reading position was restored.', repairManualScroll: 'The outline was rechecked, but the target is not mounted. Browse near it manually, then select the item again.', noOutline: 'No usable outline was found. Open one of your chats and try again.', selectQuestion: 'Select this question group for partial export'
     }
 };
 function t(key, values = {}) {
@@ -74,9 +79,222 @@ function applyStaticTranslations() {
     document.querySelectorAll('[data-i18n]').forEach(node => { node.textContent = t(node.dataset.i18n); });
     document.querySelectorAll('[data-i18n-aria-label]').forEach(node => { node.setAttribute('aria-label', t(node.dataset.i18nAriaLabel)); });
 }
-function setSiteInfo(text) {
-    const siteInfo = document.getElementById('site-info-text');
-    if (siteInfo) siteInfo.textContent = text;
+function getPlatformInfo(url = '') {
+    if (url.includes('deepseek.com') || url.includes('deepseek.ai')) return { key: 'deepseek', name: 'DeepSeek' };
+    if (url.includes('yuanbao.tencent.com')) return { key: 'yuanbao', name: '元宝 AI' };
+    if (url.includes('chatgpt.com')) return { key: 'chatgpt', name: 'ChatGPT' };
+    if (url.includes('gemini.google.com')) return { key: 'gemini', name: 'Google Gemini' };
+    if (url.includes('grok.com')) return { key: 'grok', name: 'Grok' };
+    if (url.includes('doubao.com')) return { key: 'doubao', name: '豆包 AI' };
+    if (url.includes('kimi.com') || url.includes('moonshot.cn')) return { key: 'kimi', name: 'Kimi' };
+    return { key: 'unsupported', name: UI_LANGUAGE === 'zh' ? '不支持的网站' : 'Unsupported site' };
+}
+
+// This deliberately keeps only operational metadata. No URL, conversation text,
+// account identifier, or export content enters the diagnostics payload.
+function makeRuntimeStatus({ url = '', diagnostics = {}, outline = [], phase = 'result', error = null } = {}) {
+    const platform = getPlatformInfo(url);
+    const stats = diagnostics.stats || {};
+    const questions = Number.isFinite(stats.questions) ? stats.questions : outline.filter(item => item.type === 'question').length;
+    const answers = Number.isFinite(stats.answers) ? stats.answers : outline.filter(item => item.type === 'answer').length;
+    const conversationDetected = questions > 0 || Number(stats.conversations) > 0 || outline.length > 0;
+    const base = { extensionVersion: chrome.runtime?.getManifest?.().version || 'unknown', platform: platform.name, pageDetected: platform.key !== 'unsupported', conversationDetected, questionsIndexed: questions, answersIndexed: answers, adapter: diagnostics.platform || platform.key, adapterStatus: 'idle', lastScan: new Date().toISOString(), status: 'unknown', errorCode: null };
+    if (platform.key === 'unsupported') return { ...base, status: 'unsupported', adapterStatus: 'not-applicable', tone: 'error', title: t('unsupportedPage'), summary: '', detail: UI_LANGUAGE === 'zh' ? '请在支持的 AI 对话页面打开插件。' : 'Open the extension on a supported AI chat page.' };
+    if (phase === 'loading') return { ...base, status: 'loading', adapterStatus: 'scanning', title: `${platform.name} · ${UI_LANGUAGE === 'zh' ? '正在读取当前对话' : 'Reading current chat'}`, summary: UI_LANGUAGE === 'zh' ? '正在建立目录和索引…' : 'Building the outline and index…', detail: '' };
+    const countSummary = `${questions} ${UI_LANGUAGE === 'zh' ? '个问题 /' : 'questions /'} ${answers} ${UI_LANGUAGE === 'zh' ? '个回答' : 'answers'}`;
+    if (error || diagnostics.error) return { ...base, status: 'failed', adapterStatus: 'failed', errorCode: error?.code || 'read-failed', tone: 'error', title: UI_LANGUAGE === 'zh' ? '当前页面暂时无法读取' : 'This page could not be read', summary: `${platform.name} · ${countSummary}`, detail: UI_LANGUAGE === 'zh' ? '页面可能尚未加载完成或网站结构已变化。请重新检测；若仍失败，可复制脱敏诊断信息反馈。' : 'The page may still be loading or its structure may have changed. Rescan, then copy the redacted diagnostics if it persists.' };
+    if (!conversationDetected) return { ...base, status: 'no-conversation', adapterStatus: 'ready-no-conversation', tone: 'error', title: UI_LANGUAGE === 'zh' ? '暂未发现对话内容' : 'No conversation found yet', summary: `${platform.name} · ${countSummary}`, detail: UI_LANGUAGE === 'zh' ? '请确认这是一个已打开的对话；页面加载完成后可重新检测。' : 'Confirm that an opened conversation is on this page, then rescan after it loads.' };
+    const partial = platform.key === 'doubao' || diagnostics.pending === true;
+    if (partial) return { ...base, status: 'partial', adapterStatus: platform.key === 'doubao' ? 'passive-indexing' : 'loading-complete-chat', tone: 'partial', title: `${platform.name} · ${UI_LANGUAGE === 'zh' ? '目录正在补全' : 'Outline is filling in'}`, summary: countSummary, detail: platform.key === 'doubao' ? (UI_LANGUAGE === 'zh' ? '当前仅显示已加载内容，继续正常浏览对话会自动补全。' : 'Only loaded content is shown. Keep browsing the chat to fill in the outline automatically.') : (UI_LANGUAGE === 'zh' ? '当前显示已读取内容，完整会话仍在读取中。' : 'Loaded content is shown while the complete chat is still being read.') };
+    return { ...base, status: 'ready', adapterStatus: 'ready', title: `${platform.name} · ${UI_LANGUAGE === 'zh' ? '当前对话已识别' : 'Current chat recognized'}`, summary: countSummary, detail: UI_LANGUAGE === 'zh' ? '页面已连接，可以浏览目录、定位或导出当前已索引的对话。' : 'The page is connected. Browse the outline, jump to an item, or export the indexed chat.' };
+}
+
+function runtimeStatusStorageKey(tabId) {
+    return `${RUNTIME_STATUS_KEY_PREFIX}${tabId}`;
+}
+
+function clearRetainedRuntimeStatus(tabId) {
+    if (!Number.isInteger(tabId) || !chrome.storage?.session?.remove) return;
+    chrome.storage.session.remove(runtimeStatusStorageKey(tabId)).catch(() => {});
+}
+
+function persistPanelState(tabId = currentTabId) {
+    if (!Number.isInteger(tabId) || !chrome.storage?.session?.set) return;
+    // This session-local cache belongs to one browser tab. It is cleared when
+    // the tab navigates to another route or closes and is never uploaded.
+    const retainedState = {
+        runtimeStatus,
+        outline: currentOutlineData,
+        selectionMode,
+        selectedQuestionIndexes: Array.from(selectedQuestionIndexes),
+        collapsedQuestionKeys: Array.from(collapsedQuestionKeys),
+        allCollapsed,
+        savedAt: Date.now()
+    };
+    chrome.storage.session.set({ [runtimeStatusStorageKey(tabId)]: retainedState }).catch(() => {});
+}
+
+async function getRetainedPanelState(tabId) {
+    if (!Number.isInteger(tabId) || !chrome.storage?.session?.get) return null;
+    try {
+        const key = runtimeStatusStorageKey(tabId);
+        const stored = (await chrome.storage.session.get(key))[key];
+        if (!stored) return null;
+        // Migrate the status-only shape produced by the previous implementation.
+        const retained = stored.runtimeStatus ? stored : { runtimeStatus: stored, outline: [] };
+        if (retained.runtimeStatus?.status === 'unsupported') return null;
+        return {
+            ...retained,
+            runtimeStatus: {
+                ...retained.runtimeStatus,
+                status: 'refreshing',
+                adapterStatus: 'refreshing',
+                title: `${retained.runtimeStatus.platform} · ${UI_LANGUAGE === 'zh' ? '正在重新检测' : 'Rescanning'}`,
+                detail: UI_LANGUAGE === 'zh'
+                    ? '已恢复该标签页的目录；正在更新。'
+                    : 'This tab\'s outline was restored and is being refreshed.'
+            }
+        };
+    } catch (_) {
+        return null;
+    }
+}
+
+function statusNeedsAttention(status) {
+    return ['failed', 'no-conversation', 'unsupported', 'partial'].includes(status?.status);
+}
+
+function hideRuntimeStatus() {
+    if (runtimeStatusHideTimer) clearTimeout(runtimeStatusHideTimer);
+    runtimeStatusHideTimer = null;
+    document.getElementById('runtime-status')?.setAttribute('hidden', '');
+}
+
+function renderRuntimeStatus(nextStatus, { persist = true } = {}) {
+    runtimeStatus = nextStatus;
+    const container = document.getElementById('runtime-status');
+    if (!container) return;
+    if (runtimeStatusHideTimer) clearTimeout(runtimeStatusHideTimer);
+    runtimeStatusHideTimer = null;
+    container.hidden = false;
+    container.dataset.tone = nextStatus.tone || 'neutral';
+    document.getElementById('runtime-status-title').textContent = nextStatus.title;
+    document.getElementById('runtime-status-summary').textContent = nextStatus.summary;
+    document.getElementById('runtime-status-detail').textContent = nextStatus.detail;
+    const rescan = document.getElementById('rescan-button');
+    const copy = document.getElementById('copy-diagnostics-button');
+    if (rescan) {
+        rescan.hidden = nextStatus.status === 'unsupported';
+        rescan.setAttribute('aria-label', t('rescan'));
+        rescan.title = t('rescan');
+    }
+    if (copy) {
+        copy.setAttribute('aria-label', t('copyDiagnostics'));
+        copy.title = t('copyDiagnostics');
+    }
+    // Success is useful confirmation, not permanent chrome. Important warnings
+    // remain visible until the user leaves the panel or a newer status replaces them.
+    if (!statusNeedsAttention(nextStatus) && nextStatus.status === 'ready') {
+        runtimeStatusHideTimer = setTimeout(() => {
+            if (runtimeStatus === nextStatus) hideRuntimeStatus();
+        }, 3600);
+    }
+    if (persist) persistPanelState();
+}
+
+function diagnosticText(status = runtimeStatus) {
+    const safe = status || makeRuntimeStatus();
+    return [`AI Chat Exporter ${safe.extensionVersion}`, `Platform: ${safe.platform}`, `Page detected: ${safe.pageDetected}`, `Conversation detected: ${safe.conversationDetected}`, `Questions indexed: ${safe.questionsIndexed}`, `Answers indexed: ${safe.answersIndexed}`, `Adapter: ${safe.adapter}`, `Adapter status: ${safe.adapterStatus}`, `Last scan: ${safe.lastScan}`, `Status: ${safe.status}`, `Error code: ${safe.errorCode || 'none'}`].join('\n');
+}
+
+function initializeRuntimeStatusControls() {
+    document.getElementById('rescan-button')?.addEventListener('click', requestCurrentTabOutline);
+    document.getElementById('copy-diagnostics-button')?.addEventListener('click', async () => {
+        try { await navigator.clipboard.writeText(diagnosticText()); setExportStatus(t('copiedDiagnostics'), 'success'); }
+        catch (_) { setExportStatus(t('copyDiagnosticsFailed'), 'error'); }
+    });
+    document.getElementById('repair-locate-button')?.addEventListener('click', startRepairAndLocate);
+    document.getElementById('cancel-repair-button')?.addEventListener('click', cancelRepairAndLocate);
+}
+
+function setRepairActions({ repair = false, cancel = false } = {}) {
+    const actions = document.getElementById('runtime-status-actions');
+    const repairButton = document.getElementById('repair-locate-button');
+    const cancelButton = document.getElementById('cancel-repair-button');
+    if (!actions || !repairButton || !cancelButton) return;
+    repairButton.hidden = !repair;
+    cancelButton.hidden = !cancel;
+    repairButton.textContent = t('repairLocate');
+    cancelButton.textContent = t('cancelRepair');
+    actions.hidden = !repair && !cancel;
+}
+
+function repairReasonText(reason) {
+    const key = {
+        'stale-outline': 'repairReasonStale',
+        'identity-conflict': 'repairReasonConflict',
+        'route-changed': 'repairReasonRoute',
+        'route-mismatch': 'repairReasonRoute',
+        'repair-timeout': 'repairReasonTimeout',
+        'no-progress': 'repairReasonNoProgress',
+        'target-not-mounted': 'repairReasonMissing',
+        'cancelled': 'repairCancelled',
+        'superseded': 'repairCancelled'
+    }[reason] || 'repairReasonMissing';
+    return t(key);
+}
+
+function showRepairCard({ title, detail, tone = 'error', repair = false, cancel = false } = {}) {
+    renderRuntimeStatus({
+        ...(runtimeStatus || makeRuntimeStatus({ url: currentTabUrl })),
+        status: cancel ? 'repairing' : 'repair-needed',
+        adapterStatus: cancel ? 'repairing' : 'repair-needed',
+        tone,
+        title,
+        summary: repairTargetItem?.text || '',
+        detail
+    });
+    setRepairActions({ repair, cancel });
+}
+
+function startRepairAndLocate() {
+    if (!repairTargetItem || activeRepairOperation || !HAS_CHROME_API) return;
+    const operationId = `${Date.now()}:${Math.random().toString(36).slice(2)}`;
+    activeRepairOperation = operationId;
+    showRepairCard({ title: t('repairReadyTitle'), detail: t('repairReindexing'), tone: 'partial', cancel: true });
+    chrome.tabs.sendMessage(currentTabId, {
+        type: 'repairAndLocate',
+        operationId,
+        metadata: repairTargetItem.metadata,
+        url: currentTabUrl,
+        requestToken: currentOutlineRequestToken
+    }, response => {
+        if (activeRepairOperation !== operationId) return;
+        activeRepairOperation = null;
+        if (chrome.runtime.lastError) {
+            showRepairCard({ title: t('repairReadyTitle'), detail: repairReasonText('target-not-mounted'), repair: true });
+            return;
+        }
+        if (response?.success) {
+            showRepairCard({ title: t('repairLocated', { item: repairTargetItem.text }), detail: '', tone: 'neutral' });
+            return;
+        }
+        if (response?.scrollAssistAvailable === false) {
+            showRepairCard({ title: t('repairReadyTitle'), detail: t('repairManualScroll') });
+            return;
+        }
+        showRepairCard({ title: t('repairReadyTitle'), detail: repairReasonText(response?.reason), repair: response?.reason !== 'stale-outline' && response?.reason !== 'identity-conflict' });
+    });
+}
+
+function cancelRepairAndLocate() {
+    const operationId = activeRepairOperation;
+    if (!operationId || !HAS_CHROME_API) return;
+    // Invalidate locally before the asynchronous response arrives so a newer
+    // outline click cannot be overwritten by stale repair progress/result UI.
+    activeRepairOperation = null;
+    chrome.tabs.sendMessage(currentTabId, { type: 'cancelRepair', operationId }, () => {});
+    showRepairCard({ title: t('repairReadyTitle'), detail: t('repairCancelled'), tone: 'neutral' });
 }
 const demoQuestion = (index, text) => `问题 ${index}: ${text}`;
 
@@ -121,7 +339,8 @@ function isSupportedUrl(url = '') {
     return SUPPORTED_URL_SNIPPETS.some(snippet => url.includes(snippet));
 }
 
-function setOutlineLoadStatus(url = '') {
+function setOutlineLoadStatus(url = '', { retained = false } = {}) {
+    if (!retained) renderRuntimeStatus(makeRuntimeStatus({ url, phase: 'loading' }), { persist: false });
     if (url.includes('chatgpt.com')) {
         setExportStatus(t('loadingChatgpt'), 'neutral');
     } else if (url.includes('doubao.com')) {
@@ -195,6 +414,9 @@ function cleanupContentLifecycle() {
 }
 
 function clearOutlineForRequest() {
+    activeRepairOperation = null;
+    repairTargetItem = null;
+    setRepairActions();
     currentOutlineData = [];
     selectedQuestionIndexes.clear();
     collapsedQuestionKeys.clear();
@@ -206,42 +428,64 @@ function clearOutlineForRequest() {
     return outlineContainer;
 }
 
-// 主动请求当前标签页大纲
-function requestCurrentTabOutline() {
+async function getBoundPanelTab() {
+    if (Number.isInteger(currentTabId)) return chrome.tabs.get(currentTabId);
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    return tab || null;
+}
+
+function restorePanelState(retainedState) {
+    if (!retainedState) return false;
+    selectionMode = retainedState.selectionMode === true;
+    selectedQuestionIndexes.clear();
+    (retainedState.selectedQuestionIndexes || []).forEach(index => selectedQuestionIndexes.add(index));
+    collapsedQuestionKeys.clear();
+    (retainedState.collapsedQuestionKeys || []).forEach(key => collapsedQuestionKeys.add(key));
+    allCollapsed = retainedState.allCollapsed === true;
+    const retainedOutline = Array.isArray(retainedState.outline) ? retainedState.outline : [];
+    if (retainedOutline.length > 0) displayOutline(retainedOutline);
+    if (retainedState.runtimeStatus) renderRuntimeStatus(retainedState.runtimeStatus, { persist: false });
+    updateToggleAllButton();
+    updatePanelState();
+    return retainedOutline.length > 0 || Boolean(retainedState.runtimeStatus);
+}
+
+// Each native panel instance binds once to the tab that created it. It never
+// follows chrome's globally active tab after that initial binding.
+async function requestCurrentTabOutline() {
     if (DEMO_MODE || !HAS_CHROME_API) return;
     if (tabReloadTimer) clearTimeout(tabReloadTimer);
     tabReloadTimer = null;
     const requestSerial = ++outlineRequestSerial;
     const requestToken = `${Date.now()}:${requestSerial}:${Math.random().toString(36).slice(2)}`;
     currentOutlineRequestToken = requestToken;
-    chrome.tabs.query({active: true, currentWindow: true}, async (tabs) => {
-        if (tabs[0] && requestSerial === outlineRequestSerial && requestToken === currentOutlineRequestToken) {
-            if (activeContentPort && activeContentTabId !== tabs[0].id) disconnectActiveContentPort();
-            currentTabId = tabs[0].id;
-            currentTabUrl = tabs[0].url || '';
-            const outlineContainer = clearOutlineForRequest();
-            setOutlineLoadStatus(currentTabUrl);
+    try {
+        const tab = await getBoundPanelTab();
+        if (!tab || requestSerial !== outlineRequestSerial || requestToken !== currentOutlineRequestToken) return;
+        if (Number.isInteger(currentTabId) && currentTabId !== tab.id) return;
+        currentTabId = tab.id;
+        currentTabUrl = tab.url || '';
 
-            try {
-                if (isSupportedUrl(tabs[0].url)) {
-                    await injectCurrentContentScripts(currentTabId, tabs[0].url || '');
-                    if (requestSerial !== outlineRequestSerial || requestToken !== currentOutlineRequestToken) return;
-                    connectContentLifecycle(currentTabId);
-                    await chrome.tabs.sendMessage(currentTabId, {
-                        type: 'getOutline',
-                        requestToken,
-                        url: currentTabUrl
-                    });
-                } else {
-                    showErrorMessage(outlineContainer, t('unsupportedPage'));
-                }
-            } catch (err) {
-                showErrorMessage(outlineContainer, t('injectFailed'), {
-                    error: err.message
-                });
-            }
+        let retained = currentOutlineData.length > 0;
+        if (!retained) retained = restorePanelState(await getRetainedPanelState(currentTabId));
+        const outlineContainer = document.getElementById('outline');
+        if (!retained) clearOutlineForRequest();
+        setOutlineLoadStatus(currentTabUrl, { retained });
+
+        if (!isSupportedUrl(currentTabUrl)) {
+            renderRuntimeStatus(makeRuntimeStatus({ url: currentTabUrl }));
+            showErrorMessage(outlineContainer, t('unsupportedPage'));
+            return;
         }
-    });
+        await injectCurrentContentScripts(currentTabId, currentTabUrl);
+        if (requestSerial !== outlineRequestSerial || requestToken !== currentOutlineRequestToken) return;
+        connectContentLifecycle(currentTabId);
+        await chrome.tabs.sendMessage(currentTabId, { type: 'getOutline', requestToken, url: currentTabUrl });
+    } catch (err) {
+        const outlineContainer = document.getElementById('outline');
+        renderRuntimeStatus(makeRuntimeStatus({ url: currentTabUrl, error: { code: 'injection-failed' } }));
+        showErrorMessage(outlineContainer, t('injectFailed'), { error: err.message });
+    }
 }
 
 // 侧边栏加载时请求大纲
@@ -251,23 +495,23 @@ window.addEventListener('load', () => {
     initializeToggleAllButton();
     initializePanelActionControls();
     initializeHelpControls();
+    initializeRuntimeStatusControls();
     initializeWelcomeTip();
     if (DEMO_MODE) {
-        setSiteInfo(t('demoSite', { site: DEMO_PLATFORM === 'chatgpt' ? 'ChatGPT' : '豆包' }));
         renderLicenseStatus({ active: true, plan: 'demo' });
         displayOutline(DEMO_OUTLINE);
         setExportStatus(t('demoReady'), 'success');
+        hideRuntimeStatus();
         return;
     }
     requestCurrentTabOutline();
     refreshLicenseStatus();
 });
 
-// 监听标签切换
+// A tab-specific panel only reacts to updates from its owning tab.
 if (HAS_CHROME_API) {
-    chrome.tabs.onActivated && chrome.tabs.onActivated.addListener(requestCurrentTabOutline);
     chrome.tabs.onUpdated && chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-        if (!tab.active) return;
+        if (tabId !== currentTabId) return;
         if (changeInfo.url) requestCurrentTabOutline();
         else if (changeInfo.status === 'complete') scheduleReloadOutlineRequest();
     });
@@ -285,6 +529,7 @@ if (HAS_CHROME_API && chrome.runtime.onMessage?.addListener) chrome.runtime.onMe
         // sender.tab.url can lag behind pushState. Only adopt it when both surfaces
         // agree; either way, invalidate the old token and re-query the active tab.
         if (!sender.tab.url || message.url === sender.tab.url) currentTabUrl = message.url;
+        clearRetainedRuntimeStatus(currentTabId);
         outlineRequestSerial++;
         currentOutlineRequestToken = '';
         clearOutlineForRequest();
@@ -300,33 +545,23 @@ if (HAS_CHROME_API && chrome.runtime.onMessage?.addListener) chrome.runtime.onMe
         if (!outlineUrl || (currentTabUrl && outlineUrl !== currentTabUrl)) return;
 
         displayOutline(message.outline, message.diagnostics);
-        // 显示网站类型
         const url = sender.tab && sender.tab.url ? sender.tab.url : '';
-        if (document.getElementById('site-info-text')) {
-            let site = '';
-            if (url.includes('deepseek.com')) {
-                site = 'DeepSeek Chat';
-            } else if (url.includes('yuanbao.tencent.com')) {
-                site = '元宝 AI';
-            } else if (url.includes('chatgpt.com')) {
-                site = 'ChatGPT';
-            } else if (url.includes('gemini.google.com')) {
-                site = 'Google Gemini';
-            } else if (url.includes('grok.com')) {
-                site = 'Grok';
-            } else if (url.includes('doubao.com')) {
-                site = '豆包 AI';
-            } else if (url.includes('kimi.com') || url.includes('kimi.moonshot.cn')) {
-                site = 'Kimi';
-            } else {
-                site = UI_LANGUAGE === 'zh' ? '普通网页' : 'Web page';
-            }
-            setSiteInfo(t('currentSite', { site }));
-        }
+        renderRuntimeStatus(makeRuntimeStatus({ url, diagnostics: message.diagnostics, outline: message.outline }));
         if (Array.isArray(message.outline) && message.outline.length > 0) {
             setOutlineReadyStatus(url);
         } else if (!message.diagnostics?.pending) {
             setExportStatus(t('emptyOutlineStatus'), 'neutral');
+        }
+        if (!activeRepairOperation) setRepairActions();
+    } else if (message.type === 'repairProgress') {
+        if (!message.operationId || message.operationId !== activeRepairOperation) return;
+        if (message.requestToken !== currentOutlineRequestToken || message.url !== currentTabUrl) return;
+        if (message.phase === 'reindexing') {
+            showRepairCard({ title: t('repairReadyTitle'), detail: t('repairReindexing'), tone: 'partial', cancel: true });
+        } else if (message.phase === 'locating') {
+            showRepairCard({ title: t('repairReadyTitle'), detail: t('repairLocating'), tone: 'partial', cancel: true });
+        } else if (message.phase === 'searching') {
+            showRepairCard({ title: t('repairReadyTitle'), detail: t('repairSearching', message), tone: 'partial', cancel: true });
         }
     } else if (message.type === 'updateReadingPosition') {
         highlightCurrentReadingPosition(message.elementId, message.elementText);
@@ -414,6 +649,7 @@ function initializePanelActionControls() {
             if (!selectionMode) selectedQuestionIndexes.clear();
             renderCurrentOutline();
             updatePanelState();
+            persistPanelState();
         });
     }
 
@@ -711,6 +947,7 @@ function scrollToOutlineItem(item) {
     const jumpUrl = currentTabUrl;
     const jumpRequestToken = currentOutlineRequestToken;
     const jumpSerial = ++jumpRequestSerial;
+    if (activeRepairOperation) cancelRepairAndLocate();
     chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
         if (!tabs[0] || tabs[0].id !== jumpTabId || tabs[0].url !== jumpUrl) return;
         chrome.tabs.sendMessage(tabs[0].id, {
@@ -722,9 +959,17 @@ function scrollToOutlineItem(item) {
         }, response => {
             if (jumpSerial !== jumpRequestSerial || jumpTabId !== currentTabId || jumpUrl !== currentTabUrl || jumpRequestToken !== currentOutlineRequestToken) return;
             if (chrome.runtime.lastError || !response?.success) {
-                setExportStatus(t('locateFailed', { item: item.text }), 'error');
+                const isChatGpt = jumpUrl.includes('chatgpt.com');
+                if (isChatGpt && response?.reason !== 'route-changed' && response?.reason !== 'route-mismatch') {
+                    repairTargetItem = item;
+                    showRepairCard({ title: t('repairReadyTitle'), detail: t('repairReadyDetail'), repair: true });
+                } else {
+                    setExportStatus(t('locateFailed', { item: item.text }), 'error');
+                }
                 return;
             }
+            repairTargetItem = null;
+            setRepairActions();
             setExportStatus(t('located', { item: item.text }), 'neutral');
         });
     });
@@ -869,6 +1114,7 @@ function renderQuestionGroup(question, answers, container) {
             selectedQuestionIndexes.delete(questionIndex);
         }
         updatePanelState();
+        persistPanelState();
     });
     questionDiv.appendChild(checkbox);
 
@@ -931,6 +1177,7 @@ function renderQuestionGroup(question, answers, container) {
 
         // 检查是否所有目录都已收起
         updateGlobalCollapseState();
+        persistPanelState();
     });
 
     // 渲染所有答案和子标题
@@ -1048,29 +1295,11 @@ function toggleAllDirectories() {
             answersContainer.addEventListener('transitionend', onEnd);
         }
     });
+    persistPanelState();
 }
 
 // 添加错误消息显示函数
 function showErrorMessage(container, message, diagnostics) {
-    let diagnosticHtml = '';
-    if (diagnostics) {
-        diagnosticHtml = `
-            <div class="diagnostic-info">
-                <details>
-                    <summary>调试诊断信息 (排查问题用)</summary>
-                    <div class="diagnostic-content">
-Platform: ${diagnostics.platform}
-Strategy: ${diagnostics.strategy}
-URL: ${diagnostics.url}
-Stats: ${JSON.stringify(diagnostics.stats, null, 2)}
-ConfigFound: ${diagnostics.configFound}
-Error: ${diagnostics.error || 'None'}
-                    </div>
-                </details>
-            </div>
-        `;
-    }
-
     container.innerHTML = `
         <div class="error-message">
             <h3>提示</h3>
@@ -1115,7 +1344,6 @@ Error: ${diagnostics.error || 'None'}
                     </li>
                 </ul>
             </div>
-            ${diagnosticHtml}
             <p style="margin-top: 15px; font-size: 12px; color: var(--text-tertiary);">
                 点击网站名称可直接访问对应网站
             </p>

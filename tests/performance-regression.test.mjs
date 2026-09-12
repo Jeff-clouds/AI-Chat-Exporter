@@ -9,13 +9,18 @@ const contentSource = fs.readFileSync(new URL('../src/core/content.js', import.m
 const sidepanelSource = fs.readFileSync(new URL('../src/core/sidepanel.js', import.meta.url), 'utf8');
 const manifest = JSON.parse(fs.readFileSync(new URL('../manifest.json', import.meta.url), 'utf8'));
 
-// ChatGPT API 只能有一个实现点，且后台不得再按安装、更新、切标签自动注入。
+// ChatGPT API 只能有一个实现点。后台可按 tab 更新 Side Panel 可用性，
+// 但不得在安装、切标签时自动注入或扫描页面。
 const allCoreSources = fs.readdirSync(new URL('../src/core/', import.meta.url))
     .filter(name => name.endsWith('.js'))
     .map(name => fs.readFileSync(new URL(`../src/core/${name}`, import.meta.url), 'utf8'))
     .join('\n');
 assert.equal((allCoreSources.match(/backend-api\/conversation/g) || []).length, 1);
-assert.doesNotMatch(backgroundSource, /runtime\.onInstalled|tabs\.onUpdated|tabs\.onActivated|action\.onClicked/);
+assert.doesNotMatch(backgroundSource, /runtime\.onInstalled|action\.onClicked/);
+assert.match(backgroundSource, /chrome\.sidePanel\.setOptions\(/);
+assert.match(backgroundSource, /const supported = isSupportedUrl\(tab\.url \|\| ''\)/);
+assert.match(backgroundSource, /enabled: supported/);
+assert.doesNotMatch(backgroundSource, /tabs\.onUpdated[\s\S]{0,400}executeScript/);
 assert.match(backgroundSource, /refresh\(\{ force: true, observe: false \}\)/);
 assert.match(backgroundSource, /if \(!retainedByPanel\) index\.disconnect\(\)/);
 assert.match(backgroundSource, /withTabExtractionLock\(tab\.id/);
@@ -25,7 +30,8 @@ assert.doesNotMatch(sidepanelSource, /backend-api\/conversation/);
 assert.match(sidepanelSource, /changeInfo\.status === 'complete'/);
 assert.match(sidepanelSource, /scheduleReloadOutlineRequest\(\)/);
 assert.match(sidepanelSource, /activeContentPort && activeContentTabId === tabId/);
-assert.match(sidepanelSource, /activeContentPort && activeContentTabId !== tabs\[0\]\.id/);
+assert.match(sidepanelSource, /if \(Number\.isInteger\(currentTabId\)\) return chrome\.tabs\.get\(currentTabId\)/);
+assert.doesNotMatch(sidepanelSource, /chrome\.tabs\.onActivated/);
 assert.match(indexSource, /CHATGPT_REQUEST_TIMEOUT_MS = 20000/);
 assert.match(indexSource, /CHATGPT_CACHE_TTL_MS = 15000/);
 assert.match(indexSource, /ai-chat-index-updated/);
@@ -45,7 +51,7 @@ assert.match(indexSource, /2026-08-31-doubao-media-message/);
 assert.match(indexSource, /getChatGptLoadState\(\)/);
 assert.match(indexSource, /\[data-message-author-role\]/);
 const pipelineSource = fs.readFileSync(new URL('../src/core/pipeline.js', import.meta.url), 'utf8');
-assert.match(pipelineSource, /if \(this\.platformId === 'CHATGPT'\)[\s\S]*?await index\.refresh\(\{ observe: true, awaitApi: false \}\)/);
+assert.match(pipelineSource, /if \(this\.platformId === 'CHATGPT'\)[\s\S]*?await index\.refresh\(\{ observe: true, awaitApi: options\.awaitApi === true, force: options\.force === true \}\)/);
 assert.match(pipelineSource, /if \(this\.platformId === 'CHATGPT'\) return \{ outline: \[\], diagnostics \}/);
 assert.match(contentSource, /if \(outlineExtraction\) \{[\s\S]*?outlineRefreshPending = true;[\s\S]*?return outlineExtraction;/);
 assert.match(contentSource, /pipeline\.platformId === 'CHATGPT' \|\| pipeline\.platformId === 'DOUBAO'/);
@@ -474,7 +480,10 @@ assert.match(contentSource, /window\.AI_CHAT_CONVERSATION_INDEX\?\.disconnect\?\
 assert.match(contentSource, /clearTimeout\(outlineRefreshTimer\)/);
 assert.match(contentSource, /runtime\.onConnect\.removeListener/);
 assert.match(contentSource, /CHAT_NAVIGATOR_CONTENT_VERSION === CONTENT_VERSION/);
-assert.match(contentSource, /2026-08-27-explicit-reading-position/);
+assert.match(contentSource, /2026-09-13-chatgpt-repair/);
+assert.match(contentSource, /CHATGPT_REPAIR_MAX_STEPS = 8/);
+assert.match(contentSource, /CHATGPT_REPAIR_TIMEOUT_MS = 10000/);
+assert.match(contentSource, /CHATGPT_REPAIR_SCROLL_ENABLED = window\.__AI_CHAT_EXPORT_TESTS__\?\.enableRepairScroll === true/);
 assert.match(contentSource, /window\.CHAT_NAVIGATOR_CONTENT_VERSION = ''/);
 assert.doesNotMatch(contentSource, /mainObserver\.observe\(document\.body/);
 

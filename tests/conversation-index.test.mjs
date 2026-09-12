@@ -48,6 +48,23 @@ assert.equal(unified.conversations[1].question, 'second question');
 assert.equal(unified.conversations[1].answer.content, '## second answer');
 assert.deepEqual(Array.from(index.getMessages(), message => message.turnNumber), [1, 2, 3, 4]);
 
+const multiAssistantPayload = {
+  current_node: 'multi-user-2',
+  mapping: {
+    root: { id: 'root', parent: null },
+    user1: { id: 'user1', parent: 'root', message: { id: 'multi-u1', author: { role: 'user' }, content: { parts: ['first'] } } },
+    progress: { id: 'progress', parent: 'user1', message: { id: 'multi-progress', author: { role: 'assistant' }, content: { parts: ['working'] } } },
+    final: { id: 'final', parent: 'progress', message: { id: 'multi-final', author: { role: 'assistant' }, content: { parts: ['final'] } } },
+    'multi-user-2': { id: 'multi-user-2', parent: 'final', message: { id: 'multi-u2', author: { role: 'user' }, content: { parts: ['second'] } } }
+  }
+};
+index.importChatGptPayload(multiAssistantPayload);
+assert.deepEqual(
+  Array.from(index.getMessages(), message => [message.id, message.turnNumber]),
+  [['multi-u1', 1], ['multi-progress', 2], ['multi-final', 2], ['multi-u2', 3]],
+  'progress and final assistant messages belong to the same visual answer turn'
+);
+
 const headingPayload = {
   current_node: 'heading-assistant',
   mapping: {

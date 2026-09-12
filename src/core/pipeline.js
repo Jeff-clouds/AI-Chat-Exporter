@@ -101,7 +101,7 @@ window.Pipeline = class Pipeline {
         }
     }
 
-    async extractWithIndex() {
+    async extractWithIndex(options = {}) {
         const diagnostics = {
             platform: this.platformId,
             url: window.location.href,
@@ -111,7 +111,7 @@ window.Pipeline = class Pipeline {
             stats: { conversations: 0, questions: 0, answers: 0, headings: 0 }
         };
         try {
-            const indexedOutline = await this._extractVirtualizedOutline();
+            const indexedOutline = await this._extractVirtualizedOutline(options);
             if (this.platformId === 'CHATGPT') {
                 diagnostics.pending = window.AI_CHAT_CONVERSATION_INDEX?.getChatGptLoadState?.() === 'pending';
             }
@@ -128,14 +128,14 @@ window.Pipeline = class Pipeline {
         return this.extract();
     }
 
-    async _extractVirtualizedOutline() {
+    async _extractVirtualizedOutline(options = {}) {
         if (this.platformId !== 'CHATGPT' && this.platformId !== 'DOUBAO') return [];
         const index = window.AI_CHAT_CONVERSATION_INDEX;
         if (!index) return [];
         // ChatGPT 只在侧栏生命周期内观察会话容器；滚动只做有界 DOM 增量扫描，
         // bridge 合并 API 请求并以精简当前分支异步升级目录。
         if (this.platformId === 'CHATGPT') {
-            await index.refresh({ observe: true, awaitApi: false });
+            await index.refresh({ observe: true, awaitApi: options.awaitApi === true, force: options.force === true });
         } else {
             // 豆包被动索引：目录刷新绝不驱动页面滚动；只读取用户浏览时挂载的消息。
             await index.refresh();
