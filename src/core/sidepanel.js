@@ -16,7 +16,7 @@ let currentOutlineData = [];
 let licenseStatusState = { active: false, plan: 'free' };
 let exportInProgress = false;
 let runtimeStatus = null;
-let runtimeStatusHideTimer = null;
+let transientStatusTimer = null;
 const selectedQuestionIndexes = new Set();
 const collapsedQuestionKeys = new Set();
 const PURCHASE_URL = 'https://wj.qq.com/s2/26957751/9rvt/';
@@ -33,14 +33,15 @@ const UI_COPY = {
         welcomeTipAria: '首次使用提示', welcomeTitle: '从这里开始', welcomeBody: '点击目录可快速定位；底部可免费导出完整对话。',
         openHelp: '打开使用帮助', closeWelcome: '关闭首次使用提示', learnPro: '了解 Pro', activatePro: '激活 Pro',
         exportFormat: '导出格式', markdownFree: 'Markdown · 免费', htmlPro: 'HTML · Pro', jsonPro: 'JSON · Pro', txtPro: 'TXT · Pro',
-        collapseAll: '收起所有', expandAll: '展开所有', exportFull: '导出完整对话', exportSelected: '导出已选对话', exporting: '导出中…',
-        helpTitle: '使用帮助', closeHelp: '关闭帮助', quickStartTitle: '快速使用', quickStartBody: '点击目录跳转到对应内容；底部“导出完整对话”可免费保存当前对话为 Markdown。',
-        longChatTitle: '长对话加载', chatgptLoadingHelp: 'ChatGPT 会优先读取完整会话；暂时无法读取时，使用当前已加载的内容。', doubaoLoadingHelp: '豆包不会被扩展自动滚动。继续浏览原对话，目录会随滚动逐步补全。',
-        freeProTitle: '免费版与 Pro', freeProBody: '大纲、定位和完整 Markdown 导出免费。Pro 可勾选重要问题组，并支持 HTML、JSON、TXT 格式。',
-        privacyTitle: '隐私', privacyBody: '对话内容在浏览器本地处理，不上传到开发者服务器。', activateLicense: '激活授权码',
+        collapseAll: '收起所有', expandAll: '展开所有', exportFull: '导出完整对话', exportFullCount: '导出完整对话（{count} 组）', exportSelected: '导出已选对话', exporting: '导出中…',
+        helpTitle: '使用帮助', closeHelp: '关闭帮助', quickStartTitle: '从哪里开始', quickStartBody: '打开一段已加载的 AI 对话后，扩展会自动生成问题与回答的目录。先等待状态行显示“已识别”或“目录正在补全”，再开始定位或导出。',
+        outlineHelpTitle: '浏览与定位目录', outlineHelpOpen: '点击问题卡片可展开或收起该问题下的回答；“收起所有 / 展开所有”只改变侧边栏的阅读状态，不会影响原对话。', outlineHelpJump: '点击目录中的具体内容会尝试定位原页面对应位置。长对话的目标若暂未挂载，可先正常浏览到相近位置，或使用“重试定位”。',
+        longChatTitle: '长对话与状态提示', chatgptLoadingHelp: 'ChatGPT 会优先读取完整会话。状态显示“正在读取”或“目录正在补全”时，请稍候；此时目录可能只包含已读取的内容。', doubaoLoadingHelp: '豆包不会被扩展自动滚动。继续正常浏览原对话，目录会随着页面加载的内容逐步补全。', statusHelp: '状态行出现红色提示时，可使用“重新检测”重新读取当前标签页；“!” 会打开详情，仅包含问题说明和复制诊断信息。',
+        freeProTitle: '导出与 Pro', freeProBody: '“导出完整对话”可免费导出当前已索引内容为 Markdown。激活 Pro 后，可勾选需要保留的问题组并导出 HTML、JSON 或 TXT；切换格式不会改动原网页内容。',
+        privacyTitle: '隐私与反馈', privacyBody: '对话内容在浏览器本地处理，不上传到开发者服务器。复制的诊断信息只用于排查运行状态，不包含对话正文、页面地址或账号信息。', activateLicense: '激活授权码',
         loadingChatgpt: '正在读取完整会话…', loadingDoubao: '正在读取当前内容；目录会随滚动补全', loadingOutline: '正在生成对话目录…',
-        readyDoubao: '目录已生成；继续滚动原对话可补全更多内容', readyChatgpt: '目录已生成；长对话会优先读取完整会话', readyOutline: '目录已生成', analyzing: '正在分析页面内容…',
-        emptyOutlineStatus: '当前未生成可用目录', rescan: '重新检测', copyDiagnostics: '复制诊断信息', copiedDiagnostics: '诊断信息已复制', copyDiagnosticsFailed: '无法复制诊断信息，请重试',
+        analyzing: '正在分析页面内容…',
+        emptyOutlineStatus: '当前未生成可用目录', rescan: '重新检测', copyDiagnostics: '复制诊断信息', copiedDiagnostics: '诊断信息已复制', copyDiagnosticsFailed: '无法复制诊断信息，请重试', statusDetails: '查看状态详情与操作', closeStatusDetails: '关闭状态详情',
         unsupportedPage: '当前页面不是支持的 AI 对话页面', injectFailed: '无法注入页面分析脚本，请刷新当前页面后重试',
         currentSite: '当前网站：{site}', demoSite: '示例页面：{site} 长对话大纲', demoReady: '示例数据：可直接点击、收起目录或切换部分导出',
         demoPurchase: '示例页面不会打开购买链接', proActive: 'Pro 已激活', activating: '激活中…', activationPrompt: '请输入 Pro 授权码', activationFailed: '激活失败：{error}', unknownError: '未知错误',
@@ -53,14 +54,15 @@ const UI_COPY = {
         welcomeTipAria: 'First-use tip', welcomeTitle: 'Start here', welcomeBody: 'Click an outline item to jump to it. Export the full conversation for free below.',
         openHelp: 'Open help', closeWelcome: 'Dismiss first-use tip', learnPro: 'Learn about Pro', activatePro: 'Activate Pro',
         exportFormat: 'Export format', markdownFree: 'Markdown · Free', htmlPro: 'HTML · Pro', jsonPro: 'JSON · Pro', txtPro: 'TXT · Pro',
-        collapseAll: 'Collapse all', expandAll: 'Expand all', exportFull: 'Export full chat', exportSelected: 'Export selected chats', exporting: 'Exporting…',
-        helpTitle: 'Help', closeHelp: 'Close help', quickStartTitle: 'Quick start', quickStartBody: 'Click an outline item to jump to it. “Export full chat” saves the current conversation as Markdown for free.',
-        longChatTitle: 'Long chats', chatgptLoadingHelp: 'ChatGPT first tries to read the complete conversation; when it is unavailable, the extension uses the content already loaded.', doubaoLoadingHelp: 'The extension never scrolls Doubao automatically. Keep browsing the original chat and the outline will fill in as you scroll.',
-        freeProTitle: 'Free and Pro', freeProBody: 'Outlines, navigation, and full Markdown exports are free. Pro lets you select question groups and export HTML, JSON, or TXT.',
-        privacyTitle: 'Privacy', privacyBody: 'Conversation content is processed locally in your browser and is not uploaded to our servers.', activateLicense: 'Activate license',
+        collapseAll: 'Collapse all', expandAll: 'Expand all', exportFull: 'Export full chat', exportFullCount: 'Export full chat ({count} groups)', exportSelected: 'Export selected chats', exporting: 'Exporting…',
+        helpTitle: 'Help', closeHelp: 'Close help', quickStartTitle: 'Start here', quickStartBody: 'Open an AI conversation that has finished loading. The extension builds an outline of its questions and answers automatically. Wait for the status line to say the chat is recognized or that the outline is filling in before jumping or exporting.',
+        outlineHelpTitle: 'Browse and jump through the outline', outlineHelpOpen: 'Click a question card to expand or collapse its answers. “Collapse all / Expand all” only changes the side-panel reading view; it never changes the original chat.', outlineHelpJump: 'Click a specific outline item to try to locate its matching place in the original page. If a long-chat target is not mounted yet, browse near it normally or use “Retry locating”.',
+        longChatTitle: 'Long chats and status', chatgptLoadingHelp: 'ChatGPT first tries to read the complete conversation. While the status says it is reading or filling in the outline, wait a moment: the outline may contain only the content read so far.', doubaoLoadingHelp: 'The extension never scrolls Doubao automatically. Keep browsing the original chat normally and the outline will fill in as its content loads.', statusHelp: 'For a red status message, use “Rescan” to read the current tab again. “!” opens details with only an explanation and a button to copy diagnostics.',
+        freeProTitle: 'Export and Pro', freeProBody: '“Export full chat” exports the currently indexed content as Markdown for free. With Pro, select the question groups to keep and export HTML, JSON, or TXT. Changing format never changes the original webpage.',
+        privacyTitle: 'Privacy and feedback', privacyBody: 'Conversation content is processed locally in your browser and is not uploaded to our servers. Copied diagnostics are operational metadata only; they contain no chat text, page URL, or account details.', activateLicense: 'Activate license',
         loadingChatgpt: 'Reading the complete conversation…', loadingDoubao: 'Reading the current content; the outline fills in as you scroll', loadingOutline: 'Building conversation outline…',
-        readyDoubao: 'Outline ready; keep scrolling the chat to add more content', readyChatgpt: 'Outline ready; long chats use the complete conversation when available', readyOutline: 'Outline ready', analyzing: 'Analyzing page content…',
-        emptyOutlineStatus: 'No usable outline is currently available', rescan: 'Rescan', copyDiagnostics: 'Copy diagnostics', copiedDiagnostics: 'Diagnostics copied', copyDiagnosticsFailed: 'Could not copy diagnostics. Try again.',
+        analyzing: 'Analyzing page content…',
+        emptyOutlineStatus: 'No usable outline is currently available', rescan: 'Rescan', copyDiagnostics: 'Copy diagnostics', copiedDiagnostics: 'Diagnostics copied', copyDiagnosticsFailed: 'Could not copy diagnostics. Try again.', statusDetails: 'View status details and actions', closeStatusDetails: 'Close status details',
         unsupportedPage: 'This page is not a supported AI chat', injectFailed: 'Could not analyze this page. Refresh the tab and try again.',
         currentSite: 'Current site: {site}', demoSite: 'Example: {site} long-chat outline', demoReady: 'Example data: click items, collapse the outline, or switch to partial export',
         demoPurchase: 'The example page does not open the purchase link', proActive: 'Pro is active', activating: 'Activating…', activationPrompt: 'Enter your Pro license code', activationFailed: 'Activation failed: {error}', unknownError: 'Unknown error',
@@ -97,11 +99,13 @@ function makeRuntimeStatus({ url = '', diagnostics = {}, outline = [], phase = '
     const questions = Number.isFinite(stats.questions) ? stats.questions : outline.filter(item => item.type === 'question').length;
     const answers = Number.isFinite(stats.answers) ? stats.answers : outline.filter(item => item.type === 'answer').length;
     const conversationDetected = questions > 0 || Number(stats.conversations) > 0 || outline.length > 0;
-    const base = { extensionVersion: chrome.runtime?.getManifest?.().version || 'unknown', platform: platform.name, pageDetected: platform.key !== 'unsupported', conversationDetected, questionsIndexed: questions, answersIndexed: answers, adapter: diagnostics.platform || platform.key, adapterStatus: 'idle', lastScan: new Date().toISOString(), status: 'unknown', errorCode: null };
+    const extensionVersion = typeof chrome !== 'undefined' ? chrome.runtime?.getManifest?.().version || 'unknown' : 'demo';
+    const base = { extensionVersion, platform: platform.name, pageDetected: platform.key !== 'unsupported', conversationDetected, questionsIndexed: questions, answersIndexed: answers, adapter: diagnostics.platform || platform.key, adapterStatus: 'idle', lastScan: new Date().toISOString(), status: 'unknown', errorCode: null };
     if (platform.key === 'unsupported') return { ...base, status: 'unsupported', adapterStatus: 'not-applicable', tone: 'error', title: t('unsupportedPage'), summary: '', detail: UI_LANGUAGE === 'zh' ? '请在支持的 AI 对话页面打开插件。' : 'Open the extension on a supported AI chat page.' };
     if (phase === 'loading') return { ...base, status: 'loading', adapterStatus: 'scanning', title: `${platform.name} · ${UI_LANGUAGE === 'zh' ? '正在读取当前对话' : 'Reading current chat'}`, summary: UI_LANGUAGE === 'zh' ? '正在建立目录和索引…' : 'Building the outline and index…', detail: '' };
     const countSummary = `${questions} ${UI_LANGUAGE === 'zh' ? '个问题 /' : 'questions /'} ${answers} ${UI_LANGUAGE === 'zh' ? '个回答' : 'answers'}`;
     if (error || diagnostics.error) return { ...base, status: 'failed', adapterStatus: 'failed', errorCode: error?.code || 'read-failed', tone: 'error', title: UI_LANGUAGE === 'zh' ? '当前页面暂时无法读取' : 'This page could not be read', summary: `${platform.name} · ${countSummary}`, detail: UI_LANGUAGE === 'zh' ? '页面可能尚未加载完成或网站结构已变化。请重新检测；若仍失败，可复制脱敏诊断信息反馈。' : 'The page may still be loading or its structure may have changed. Rescan, then copy the redacted diagnostics if it persists.' };
+    if (diagnostics.pending && !conversationDetected) return { ...base, status: 'loading', adapterStatus: 'loading-complete-chat', title: `${platform.name} · ${UI_LANGUAGE === 'zh' ? '正在读取完整会话' : 'Reading complete chat'}`, summary: UI_LANGUAGE === 'zh' ? '正在建立目录和索引…' : 'Building the outline and index…', detail: '' };
     if (!conversationDetected) return { ...base, status: 'no-conversation', adapterStatus: 'ready-no-conversation', tone: 'error', title: UI_LANGUAGE === 'zh' ? '暂未发现对话内容' : 'No conversation found yet', summary: `${platform.name} · ${countSummary}`, detail: UI_LANGUAGE === 'zh' ? '请确认这是一个已打开的对话；页面加载完成后可重新检测。' : 'Confirm that an opened conversation is on this page, then rescan after it loads.' };
     const partial = platform.key === 'doubao' || diagnostics.pending === true;
     if (partial) return { ...base, status: 'partial', adapterStatus: platform.key === 'doubao' ? 'passive-indexing' : 'loading-complete-chat', tone: 'partial', title: `${platform.name} · ${UI_LANGUAGE === 'zh' ? '目录正在补全' : 'Outline is filling in'}`, summary: countSummary, detail: platform.key === 'doubao' ? (UI_LANGUAGE === 'zh' ? '当前仅显示已加载内容，继续正常浏览对话会自动补全。' : 'Only loaded content is shown. Keep browsing the chat to fill in the outline automatically.') : (UI_LANGUAGE === 'zh' ? '当前显示已读取内容，完整会话仍在读取中。' : 'Loaded content is shown while the complete chat is still being read.') };
@@ -160,44 +164,65 @@ async function getRetainedPanelState(tabId) {
 }
 
 function statusNeedsAttention(status) {
-    return ['failed', 'no-conversation', 'unsupported', 'partial'].includes(status?.status);
+    return ['failed', 'no-conversation', 'unsupported', 'partial', 'locate-needed'].includes(status?.status);
 }
 
-function hideRuntimeStatus() {
-    if (runtimeStatusHideTimer) clearTimeout(runtimeStatusHideTimer);
-    runtimeStatusHideTimer = null;
-    document.getElementById('runtime-status')?.setAttribute('hidden', '');
+function runtimeStatusText(status) {
+    if (status?.status === 'ready') return status.summary || '';
+    return [status?.title, status?.summary].filter(Boolean).join(' · ');
 }
 
-function renderRuntimeStatus(nextStatus, { persist = true } = {}) {
-    runtimeStatus = nextStatus;
+function renderStatusLine(text, tone = 'neutral', { attention = false } = {}) {
     const container = document.getElementById('runtime-status');
     if (!container) return;
-    if (runtimeStatusHideTimer) clearTimeout(runtimeStatusHideTimer);
-    runtimeStatusHideTimer = null;
     container.hidden = false;
-    container.dataset.tone = nextStatus.tone || 'neutral';
-    document.getElementById('runtime-status-title').textContent = nextStatus.title;
-    document.getElementById('runtime-status-summary').textContent = nextStatus.summary;
-    document.getElementById('runtime-status-detail').textContent = nextStatus.detail;
-    const rescan = document.getElementById('rescan-button');
-    const copy = document.getElementById('copy-diagnostics-button');
-    if (rescan) {
-        rescan.hidden = nextStatus.status === 'unsupported';
-        rescan.setAttribute('aria-label', t('rescan'));
-        rescan.title = t('rescan');
+    container.dataset.tone = tone;
+    document.getElementById('runtime-status-text').textContent = text;
+    const detailsButton = document.getElementById('runtime-status-details-button');
+    if (detailsButton) {
+        detailsButton.hidden = !attention;
+        detailsButton.setAttribute('aria-expanded', 'false');
+        detailsButton.setAttribute('aria-label', t('statusDetails'));
+        detailsButton.title = t('statusDetails');
     }
+}
+
+function renderRuntimeStatusPopover(nextStatus) {
+    const popover = document.getElementById('runtime-status-popover');
+    if (!popover) return;
+    popover.dataset.tone = nextStatus.tone || 'neutral';
+    document.getElementById('runtime-status-popover-detail').textContent = nextStatus.detail;
+    const copy = document.getElementById('copy-diagnostics-button');
     if (copy) {
         copy.setAttribute('aria-label', t('copyDiagnostics'));
         copy.title = t('copyDiagnostics');
     }
-    // Success is useful confirmation, not permanent chrome. Important warnings
-    // remain visible until the user leaves the panel or a newer status replaces them.
-    if (!statusNeedsAttention(nextStatus) && nextStatus.status === 'ready') {
-        runtimeStatusHideTimer = setTimeout(() => {
-            if (runtimeStatus === nextStatus) hideRuntimeStatus();
-        }, 3600);
+}
+
+function setRuntimeRecoveryActions({ rescan = false, retry = false } = {}) {
+    const rescanButton = document.getElementById('rescan-button');
+    const retryButton = document.getElementById('retry-locate-button');
+    if (rescanButton) {
+        rescanButton.hidden = !rescan;
+        rescanButton.setAttribute('aria-label', t('rescan'));
+        rescanButton.title = t('rescan');
     }
+    if (retryButton) {
+        retryButton.hidden = !retry;
+        retryButton.setAttribute('aria-label', t('retryLocate'));
+        retryButton.title = t('retryLocate');
+    }
+}
+
+function renderRuntimeStatus(nextStatus, { persist = true } = {}) {
+    if (transientStatusTimer) clearTimeout(transientStatusTimer);
+    transientStatusTimer = null;
+    runtimeStatus = nextStatus;
+    renderStatusLine(runtimeStatusText(nextStatus), nextStatus.tone || 'neutral', { attention: statusNeedsAttention(nextStatus) });
+    renderRuntimeStatusPopover(nextStatus);
+    setRuntimeRecoveryActions({
+        rescan: statusNeedsAttention(nextStatus) && nextStatus.status !== 'unsupported'
+    });
     if (persist) persistPanelState();
 }
 
@@ -213,15 +238,32 @@ function initializeRuntimeStatusControls() {
         catch (_) { setExportStatus(t('copyDiagnosticsFailed'), 'error'); }
     });
     document.getElementById('retry-locate-button')?.addEventListener('click', retryLocateTarget);
+    const detailsButton = document.getElementById('runtime-status-details-button');
+    const popover = document.getElementById('runtime-status-popover');
+    const closePopover = ({ restoreFocus = false } = {}) => {
+        if (!popover) return;
+        popover.hidden = true;
+        detailsButton?.setAttribute('aria-expanded', 'false');
+        if (restoreFocus) detailsButton?.focus();
+    };
+    detailsButton?.addEventListener('click', () => {
+        if (!runtimeStatus || !statusNeedsAttention(runtimeStatus) || !popover) return;
+        popover.hidden = false;
+        detailsButton.setAttribute('aria-expanded', 'true');
+    });
+    popover?.addEventListener('click', event => {
+        if (event.target === popover) closePopover({ restoreFocus: true });
+    });
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && popover && !popover.hidden) closePopover({ restoreFocus: true });
+    });
 }
 
 function setLocateRetryAction(visible = false) {
-    const actions = document.getElementById('runtime-status-actions');
-    const retryButton = document.getElementById('retry-locate-button');
-    if (!actions || !retryButton) return;
-    retryButton.hidden = !visible;
-    retryButton.textContent = t('retryLocate');
-    actions.hidden = !visible;
+    setRuntimeRecoveryActions({
+        rescan: statusNeedsAttention(runtimeStatus) && runtimeStatus?.status !== 'unsupported',
+        retry: visible
+    });
 }
 
 function showLocateRetryCard(item, { detail = t('locateRetryDetail'), tone = 'error', retry = true } = {}) {
@@ -294,17 +336,6 @@ function setOutlineLoadStatus(url = '', { retained = false } = {}) {
         setExportStatus(t('loadingDoubao'), 'neutral');
     } else {
         setExportStatus(t('loadingOutline'), 'neutral');
-    }
-}
-
-function setOutlineReadyStatus(url = '') {
-    if (exportInProgress) return;
-    if (url.includes('doubao.com')) {
-        setExportStatus(t('readyDoubao'), 'neutral');
-    } else if (url.includes('chatgpt.com')) {
-        setExportStatus(t('readyChatgpt'), 'neutral');
-    } else {
-        setExportStatus(t('readyOutline'), 'neutral');
     }
 }
 
@@ -446,8 +477,14 @@ window.addEventListener('load', () => {
     if (DEMO_MODE) {
         renderLicenseStatus({ active: true, plan: 'demo' });
         displayOutline(DEMO_OUTLINE);
-        setExportStatus(t('demoReady'), 'success');
-        hideRuntimeStatus();
+        currentTabUrl = DEMO_PLATFORM === 'doubao'
+            ? 'https://www.doubao.com/chat/demo'
+            : 'https://chatgpt.com/c/demo';
+        renderRuntimeStatus(makeRuntimeStatus({
+            url: currentTabUrl,
+            diagnostics: { platform: DEMO_PLATFORM.toUpperCase(), stats: { questions: 4, answers: 9 } },
+            outline: DEMO_OUTLINE
+        }), { persist: false });
         return;
     }
     requestCurrentTabOutline();
@@ -493,10 +530,10 @@ if (HAS_CHROME_API && chrome.runtime.onMessage?.addListener) chrome.runtime.onMe
         displayOutline(message.outline, message.diagnostics);
         const url = sender.tab && sender.tab.url ? sender.tab.url : '';
         renderRuntimeStatus(makeRuntimeStatus({ url, diagnostics: message.diagnostics, outline: message.outline }));
-        if (Array.isArray(message.outline) && message.outline.length > 0) {
-            setOutlineReadyStatus(url);
-        } else if (!message.diagnostics?.pending) {
-            setExportStatus(t('emptyOutlineStatus'), 'neutral');
+        if (!Array.isArray(message.outline) || message.outline.length === 0) {
+            if (!message.diagnostics?.pending) {
+                setExportStatus(t('emptyOutlineStatus'), 'neutral');
+            }
         }
         setLocateRetryAction(false);
     } else if (message.type === 'updateReadingPosition') {
@@ -545,10 +582,15 @@ function updateReadingProgress(currentItem) {
 }
 
 function setExportStatus(message, tone = 'neutral') {
-    const exportStatus = document.getElementById('export-status');
-    if (!exportStatus) return;
-    exportStatus.textContent = message;
-    exportStatus.dataset.tone = tone;
+    if (transientStatusTimer) clearTimeout(transientStatusTimer);
+    renderStatusLine(message, tone, { attention: statusNeedsAttention(runtimeStatus) });
+    // Operation feedback replaces the one-line session summary briefly, then returns
+    // to the current session state. Detailed recovery stays behind the ! button.
+    transientStatusTimer = setTimeout(() => {
+        transientStatusTimer = null;
+        if (runtimeStatus) renderRuntimeStatus(runtimeStatus, { persist: false });
+    }, tone === 'error' ? 5200 : 3200);
+    transientStatusTimer?.unref?.();
 }
 
 function getQuestionIndex(question) {
@@ -774,7 +816,12 @@ function updatePanelState() {
             return;
         }
 
-        bottomExportButton.textContent = selectionMode ? t('exportSelected') : t('exportFull');
+        const questionGroupCount = currentOutlineData.filter(item => item?.type === 'question').length;
+        bottomExportButton.textContent = selectionMode
+            ? t('exportSelected')
+            : questionGroupCount > 0
+                ? t('exportFullCount', { count: questionGroupCount })
+                : t('exportFull');
         bottomExportButton.disabled = selectionMode && selectedCount === 0;
     }
 }

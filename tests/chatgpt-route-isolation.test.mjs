@@ -771,14 +771,14 @@ function makeElement() {
         requestToken: 'request-b-new',
         diagnostics: { url: 'https://chatgpt.com/c/conversation-b', pending: true }
     }, { tab: { id: 1, url: 'https://chatgpt.com/c/conversation-b' } });
-    assert.equal(elements.get('export-status').textContent, '正在读取完整会话…', 'a pending empty outline must retain the loading status');
+    assert.match(elements.get('runtime-status-text').textContent, /正在读取完整会话/, 'a pending empty outline must retain the loading status');
     messageListener({
         type: 'outline',
         outline: [],
         requestToken: 'request-b-new',
         diagnostics: { url: 'https://chatgpt.com/c/conversation-b', pending: false }
     }, { tab: { id: 1, url: 'https://chatgpt.com/c/conversation-b' } });
-    assert.equal(elements.get('export-status').textContent, '当前未生成可用目录', 'a terminal empty outline must stop claiming that it is still loading');
+    assert.equal(elements.get('runtime-status-text').textContent, '当前未生成可用目录', 'a terminal empty outline must stop claiming that it is still loading');
 
     messageListener({
         type: 'outline',
