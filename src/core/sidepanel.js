@@ -41,7 +41,7 @@ const UI_COPY = {
         privacyTitle: '隐私与反馈', privacyBody: '对话内容在浏览器本地处理，不上传到开发者服务器。复制的诊断信息只用于排查运行状态，不包含对话正文、页面地址或账号信息。', activateLicense: '激活授权码',
         loadingChatgpt: '正在读取完整会话…', loadingDoubao: '正在读取当前内容；目录会随滚动补全', loadingOutline: '正在生成对话目录…',
         analyzing: '正在分析页面内容…',
-        emptyOutlineStatus: '当前未生成可用目录', rescan: '重新检测', copyDiagnostics: '复制诊断信息', copiedDiagnostics: '诊断信息已复制', copyDiagnosticsFailed: '无法复制诊断信息，请重试', statusDetails: '查看状态详情与操作', closeStatusDetails: '关闭状态详情',
+        emptyOutlineStatus: '当前未生成可用目录', rescan: '重新检测', copyDiagnostics: '复制诊断信息', copiedDiagnostics: '诊断信息已复制', copyDiagnosticsFailed: '无法复制诊断信息，请重试', statusDetails: '查看状态详情与操作', closeStatusDetails: '关闭状态详情', errorTitle: '提示', supportedSites: '支持的网站类型：', visitSites: '点击网站名称可直接访问对应网站', yuanbaoName: '元宝 AI', doubaoName: '豆包 AI', kimiName: 'Kimi 智能助手',
         unsupportedPage: '当前页面不是支持的 AI 对话页面', injectFailed: '无法注入页面分析脚本，请刷新当前页面后重试',
         currentSite: '当前网站：{site}', demoSite: '示例页面：{site} 长对话大纲', demoReady: '示例数据：可直接点击、收起目录或切换部分导出',
         demoPurchase: '示例页面不会打开购买链接', proActive: 'Pro 已激活', activating: '激活中…', activationPrompt: '请输入 Pro 授权码', activationFailed: '激活失败：{error}', unknownError: '未知错误',
@@ -62,7 +62,7 @@ const UI_COPY = {
         privacyTitle: 'Privacy and feedback', privacyBody: 'Conversation content is processed locally in your browser and is not uploaded to our servers. Copied diagnostics are operational metadata only; they contain no chat text, page URL, or account details.', activateLicense: 'Activate license',
         loadingChatgpt: 'Reading the complete conversation…', loadingDoubao: 'Reading the current content; the outline fills in as you scroll', loadingOutline: 'Building conversation outline…',
         analyzing: 'Analyzing page content…',
-        emptyOutlineStatus: 'No usable outline is currently available', rescan: 'Rescan', copyDiagnostics: 'Copy diagnostics', copiedDiagnostics: 'Diagnostics copied', copyDiagnosticsFailed: 'Could not copy diagnostics. Try again.', statusDetails: 'View status details and actions', closeStatusDetails: 'Close status details',
+        emptyOutlineStatus: 'No usable outline is currently available', rescan: 'Rescan', copyDiagnostics: 'Copy diagnostics', copiedDiagnostics: 'Diagnostics copied', copyDiagnosticsFailed: 'Could not copy diagnostics. Try again.', statusDetails: 'View status details and actions', closeStatusDetails: 'Close status details', errorTitle: 'Notice', supportedSites: 'Supported sites:', visitSites: 'Select a site name to open it.', yuanbaoName: 'Yuanbao AI', doubaoName: 'Doubao AI', kimiName: 'Kimi',
         unsupportedPage: 'This page is not a supported AI chat', injectFailed: 'Could not analyze this page. Refresh the tab and try again.',
         currentSite: 'Current site: {site}', demoSite: 'Example: {site} long-chat outline', demoReady: 'Example data: click items, collapse the outline, or switch to partial export',
         demoPurchase: 'The example page does not open the purchase link', proActive: 'Pro is active', activating: 'Activating…', activationPrompt: 'Enter your Pro license code', activationFailed: 'Activation failed: {error}', unknownError: 'Unknown error',
@@ -79,6 +79,7 @@ function applyStaticTranslations() {
     document.documentElement.lang = UI_LANGUAGE === 'zh' ? 'zh-CN' : 'en';
     document.querySelectorAll('[data-i18n]').forEach(node => { node.textContent = t(node.dataset.i18n); });
     document.querySelectorAll('[data-i18n-aria-label]').forEach(node => { node.setAttribute('aria-label', t(node.dataset.i18nAriaLabel)); });
+    document.querySelectorAll('[data-i18n-title]').forEach(node => { node.title = t(node.dataset.i18nTitle); });
 }
 function getPlatformInfo(url = '') {
     if (url.includes('deepseek.com') || url.includes('deepseek.ai')) return { key: 'deepseek', name: 'DeepSeek' };
@@ -1297,10 +1298,10 @@ function toggleAllDirectories() {
 function showErrorMessage(container, message, diagnostics) {
     container.innerHTML = `
         <div class="error-message">
-            <h3>提示</h3>
+            <h3>${t('errorTitle')}</h3>
             <p>${message}</p>
             <div style="margin-top: 15px;">
-                <p>支持的网站类型：</p>
+                <p>${t('supportedSites')}</p>
                 <ul style="margin-top: 8px; padding-left: 20px;">
                     <li>
                         <a href="https://chat.deepseek.com/" target="_blank">
@@ -1309,7 +1310,7 @@ function showErrorMessage(container, message, diagnostics) {
                     </li>
                     <li>
                         <a href="https://yuanbao.tencent.com/" target="_blank">
-                            元宝 AI
+                            ${t('yuanbaoName')}
                         </a>
                     </li>
                     <li>
@@ -1329,18 +1330,18 @@ function showErrorMessage(container, message, diagnostics) {
                     </li>
                     <li>
                         <a href="https://doubao.com/" target="_blank">
-                            豆包 AI
+                            ${t('doubaoName')}
                         </a>
                     </li>
                     <li>
                         <a href="https://kimi.moonshot.cn/" target="_blank">
-                            Kimi 智能助手
+                            ${t('kimiName')}
                         </a>
                     </li>
                 </ul>
             </div>
             <p style="margin-top: 15px; font-size: 12px; color: var(--text-tertiary);">
-                点击网站名称可直接访问对应网站
+                ${t('visitSites')}
             </p>
         </div>
     `;

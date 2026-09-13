@@ -26,6 +26,8 @@ assert.match(html, /font-family:\s*-apple-system, BlinkMacSystemFont, "PingFang 
 assert.match(script, /const UI_LANGUAGE = browserLanguage\.toLowerCase\(\)\.startsWith\('zh'\) \? 'zh' : 'en'/);
 assert.match(script, /zh:\s*\{[\s\S]*en:\s*\{/);
 assert.match(script, /function applyStaticTranslations\(\)/);
+assert.match(script, /\[data-i18n-title\]/);
+assert.match(script, /errorTitle.*supportedSites.*visitSites/s);
 assert.match(script, /outlineHelpTitle.*outlineHelpOpen.*outlineHelpJump/s);
 assert.match(script, /statusHelp/);
 assert.match(script, /function makeRuntimeStatus\(/);
