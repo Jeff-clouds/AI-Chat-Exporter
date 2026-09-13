@@ -51,7 +51,7 @@ assert.match(indexSource, /2026-08-31-doubao-media-message/);
 assert.match(indexSource, /getChatGptLoadState\(\)/);
 assert.match(indexSource, /\[data-message-author-role\]/);
 const pipelineSource = fs.readFileSync(new URL('../src/core/pipeline.js', import.meta.url), 'utf8');
-assert.match(pipelineSource, /if \(this\.platformId === 'CHATGPT'\)[\s\S]*?await index\.refresh\(\{ observe: true, awaitApi: options\.awaitApi === true, force: options\.force === true \}\)/);
+assert.match(pipelineSource, /if \(this\.platformId === 'CHATGPT'\)[\s\S]*?await index\.refresh\(\{ observe: true, awaitApi: false \}\)/);
 assert.match(pipelineSource, /if \(this\.platformId === 'CHATGPT'\) return \{ outline: \[\], diagnostics \}/);
 assert.match(contentSource, /if \(outlineExtraction\) \{[\s\S]*?outlineRefreshPending = true;[\s\S]*?return outlineExtraction;/);
 assert.match(contentSource, /pipeline\.platformId === 'CHATGPT' \|\| pipeline\.platformId === 'DOUBAO'/);
@@ -480,10 +480,8 @@ assert.match(contentSource, /window\.AI_CHAT_CONVERSATION_INDEX\?\.disconnect\?\
 assert.match(contentSource, /clearTimeout\(outlineRefreshTimer\)/);
 assert.match(contentSource, /runtime\.onConnect\.removeListener/);
 assert.match(contentSource, /CHAT_NAVIGATOR_CONTENT_VERSION === CONTENT_VERSION/);
-assert.match(contentSource, /2026-09-13-chatgpt-repair/);
-assert.match(contentSource, /CHATGPT_REPAIR_MAX_STEPS = 8/);
-assert.match(contentSource, /CHATGPT_REPAIR_TIMEOUT_MS = 10000/);
-assert.match(contentSource, /CHATGPT_REPAIR_SCROLL_ENABLED = window\.__AI_CHAT_EXPORT_TESTS__\?\.enableRepairScroll === true/);
+assert.match(contentSource, /2026-09-13-user-locate-retry/);
+assert.doesNotMatch(contentSource, /repairAndLocate|cancelRepair|CHATGPT_REPAIR_|button\[aria-label\^="Prompt "\]/);
 assert.match(contentSource, /window\.CHAT_NAVIGATOR_CONTENT_VERSION = ''/);
 assert.doesNotMatch(contentSource, /mainObserver\.observe\(document\.body/);
 

@@ -47,13 +47,6 @@
         return candidates[candidates.length - 1] || null;
     }
 
-    function chatGptElementRole(element) {
-        return element?.getAttribute?.('data-turn')
-            || element?.getAttribute?.('data-message-author-role')
-            || chatGptPreferredMessageNode(element)?.getAttribute?.('data-message-author-role')
-            || '';
-    }
-
     function chatGptElementIds(element) {
         if (!element?.getAttribute) return [];
         const container = chatGptTurnContainer(element);
@@ -491,28 +484,15 @@
 
         importChatGptPayload(payload) {
             if (!payload?.mapping) return false;
-            let promptNumber = 0;
-            let answerTurnNumber = null;
+            let turnNumber = 0;
             const apiRecords = [];
             currentBranchNodes(payload).forEach(node => {
                 const role = node?.message?.author?.role;
                 if (role !== 'user' && role !== 'assistant') return;
+                turnNumber++;
                 const markdown = contentToMarkdown(node.message.content);
                 const text = cleanText(markdown);
                 if (!text) return;
-                // ChatGPT can emit progress/tool/final assistant messages for one
-                // rendered answer SECTION.  UI turn numbers describe exchanges, not
-                // the number of API messages, so every assistant message following a
-                // user prompt shares that prompt's even-numbered answer turn.
-                let turnNumber;
-                if (role === 'user') {
-                    promptNumber++;
-                    turnNumber = promptNumber * 2 - 1;
-                    answerTurnNumber = promptNumber * 2;
-                } else {
-                    if (!Number.isFinite(answerTurnNumber)) return;
-                    turnNumber = answerTurnNumber;
-                }
                 apiRecords.push({
                     id: node.message.id || node.id,
                     turnId: node.message.id || node.id,
@@ -583,37 +563,14 @@
         getMountedChatGptTurns() {
             const root = document.querySelector('main') || document.querySelector('[role="main"]');
             if (!root?.querySelectorAll) return [];
-            // Prefer the visual conversation container. A SECTION may contain several
-            // assistant message nodes, but it is still one rendered turn; retaining all
-            // descendants here creates duplicate records and corrupts ordering.
-            let mountedTurns = Array.from(root.querySelectorAll('[data-testid^="conversation-turn-"]'));
-            if (mountedTurns.length === 0) mountedTurns = Array.from(root.querySelectorAll('[data-turn]'));
+            let mountedTurns = Array.from(root.querySelectorAll('[data-turn]'));
             if (mountedTurns.length === 0) {
-                const byVisualTurn = new Map();
-                Array.from(root.querySelectorAll('[data-message-author-role]')).forEach(message => {
-                    const container = chatGptTurnContainer(message);
-                    const key = container?.getAttribute?.('data-testid') || container || message;
-                    const current = byVisualTurn.get(key);
-                    // For assistant turns, a headed descendant is the strongest signal
-                    // for final rendered content; otherwise retain the last message.
-                    const preferred = chatGptPreferredMessageNode(message, chatGptElementRole(message)) || message;
-                    const isHeaded = Boolean(preferred.querySelector?.('h1,h2,h3,h4,h5,h6'));
-                    if (!current || isHeaded || !current.isHeaded) {
-                        byVisualTurn.set(key, { element: message, isHeaded });
-                    }
-                });
-                mountedTurns = Array.from(byVisualTurn.values(), entry => entry.element);
-                return mountedTurns.slice(-MAX_MOUNTED_CHATGPT_TURNS);
+                // ChatGPT now renders conversation turns as SECTION elements. Role and
+                // API message IDs live on descendant message nodes, and one assistant
+                // SECTION can contain both a progress message and the final answer.
+                mountedTurns = Array.from(root.querySelectorAll('[data-message-author-role]'));
             }
-            const seen = new Set();
-            return mountedTurns
-                .map(element => chatGptTurnContainer(element))
-                .filter(element => {
-                    if (!element || seen.has(element)) return false;
-                    seen.add(element);
-                    return true;
-                })
-                .slice(-MAX_MOUNTED_CHATGPT_TURNS);
+            return mountedTurns.slice(-MAX_MOUNTED_CHATGPT_TURNS);
         }
 
         scheduleChatGptEmptyFallback() {
@@ -682,7 +639,7 @@
                 this.lastChatGptTurnOwner = chatGptRouteKey();
             }
             mountedTurns.forEach((element, index) => {
-                const role = chatGptElementRole(element);
+                const role = element.getAttribute('data-turn') || element.getAttribute('data-message-author-role');
                 if (role !== 'user' && role !== 'assistant') return;
                 const container = chatGptTurnContainer(element);
                 const preferredMessageNode = chatGptPreferredMessageNode(element, role);
@@ -703,8 +660,7 @@
                 // canonical message mapping, skip the unorderable DOM record.
                 if (!Number.isFinite(turnNumber)) return;
                 if (role === 'assistant') {
-                    const headingRoot = preferredMessageNode?.querySelectorAll ? preferredMessageNode : element;
-                    const headings = Array.from(headingRoot?.querySelectorAll?.('h1,h2,h3,h4,h5,h6') || [])
+                    const headings = Array.from(element.querySelectorAll('h1,h2,h3,h4,h5,h6'))
                         .map((heading, headingIndex) => ({
                             text: cleanText(heading.textContent),
                             level: heading.tagName.toLowerCase(),
@@ -735,8 +691,7 @@
                 const turnKey = `${role}:${turnNumber}`;
                 // API 记录保留原始 Markdown；但 API 缓存之后新挂载的 turn 仍需从 DOM 增量补入。
                 if (!cacheMessages && ((turnId && this.records.has(turnId)) || existingTurns.has(turnKey))) return;
-                const textSource = preferredMessageNode?.textContent ? preferredMessageNode : element;
-                const text = stripChatGptRolePrefix(textSource.textContent, role);
+                const text = stripChatGptRolePrefix(element.textContent, role);
                 const fallbackId = `chatgpt-${role}-turn-${turnNumber}-${text.slice(0, 80)}`;
                 const recordId = messageId || turnId || fallbackId;
                 // Never flatten and overwrite richer API Markdown for the same stable message.

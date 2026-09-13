@@ -120,8 +120,7 @@
         #runtime-status-actions { display: flex; gap: 8px; margin-top: 9px; }
         #runtime-status-actions[hidden] { display: none; }
         #runtime-status-actions button { border: 1px solid var(--border-color); border-radius: 6px; padding: 7px 9px; cursor: pointer; font: inherit; font-size: 12px; font-weight: 600; }
-        #repair-locate-button { background: var(--accent-blue); color: #fff; }
-        #cancel-repair-button { background: var(--bg-secondary); color: var(--text-primary); }
+        #retry-locate-button { background: var(--accent-blue); color: #fff; }
         #welcome-tip {
             position: relative;
             margin: 0 0 10px;
@@ -750,8 +749,7 @@
         <span id="runtime-status-summary"></span>
         <p id="runtime-status-detail"></p>
         <div id="runtime-status-actions" hidden>
-            <button id="repair-locate-button" type="button" hidden>修复并定位</button>
-            <button id="cancel-repair-button" type="button" hidden>取消</button>
+            <button id="retry-locate-button" type="button" hidden>重试定位</button>
         </div>
     </section>
     <section id="welcome-tip" hidden aria-label="首次使用提示" data-i18n-aria-label="welcomeTipAria">

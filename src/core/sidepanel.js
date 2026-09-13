@@ -7,8 +7,7 @@ let outlineRequestSerial = 0;
 let currentOutlineRequestToken = '';
 let tabReloadTimer = null;
 let jumpRequestSerial = 0;
-let activeRepairOperation = null;
-let repairTargetItem = null;
+let locateRetryTarget = null;
 
 // 全局状态：是否所有目录都已收起
 let allCollapsed = false;
@@ -48,7 +47,7 @@ const UI_COPY = {
         partialExport: '部分导出', exitSelection: '退出选择模式', extracting: '正在提取当前对话并生成 {format}', exportingSelected: '正在将选中的问题组导出为 {format}',
         demoFullExport: '示例：将导出 4 组对话', demoSelectedExport: '示例：将导出 {count} 组已选对话', exportFailed: '导出失败：{error}',
         exportedFull: '已导出 {format}：{count} 组对话', exportedSelected: '已导出 {format}：{count} 组选中对话', selectBeforeExport: '请先勾选要导出的对话',
-        demoLocated: '示例：已定位「{item}」', located: '已开始定位「{item}」', locateFailed: '暂时无法定位「{item}」', repairLocate: '修复并定位', cancelRepair: '取消', repairReadyTitle: '无法定位该目录项', repairReadyDetail: '目录可能已过期，或目标暂未挂载。可重新校验目录后，在受限范围内协助定位。', repairReindexing: '正在重新校验目录…', repairLocating: '目录已校验，正在协助定位…', repairSearching: '正在查找目标（{steps}/{maxSteps}）…', repairLocated: '已定位「{item}」', repairCancelled: '已取消修复，并恢复原阅读位置。', repairReasonStale: '目录已更新；原条目不再属于当前对话。请从新目录重新选择。', repairReasonConflict: '目标身份存在冲突，已停止以避免定位到错误内容。', repairReasonRoute: '对话已切换，修复已停止。', repairReasonTimeout: '在受限时间内未找到目标，已恢复原阅读位置。', repairReasonNoProgress: '页面未加载更多目标内容，已恢复原阅读位置。', repairReasonMissing: '目标尚未挂载，已恢复原阅读位置。', repairManualScroll: '目录已校验，但目标尚未挂载。请手动浏览到相近位置后再点击该条目。', noOutline: '当前页面未找到可用的大纲内容，请打开你的对话', selectQuestion: '选择此问题组用于局部导出'
+        demoLocated: '示例：已定位「{item}」', located: '已开始定位「{item}」', locateFailed: '暂时无法定位「{item}」', retryLocate: '重试定位', locateRetryTitle: '目标尚未挂载', locateRetryDetail: '目标当前不在页面挂载窗口。可先浏览到相近位置，或重试一次有界定位。', retryingLocate: '正在重试定位「{item}」…', retryLocated: '已定位「{item}」', noOutline: '当前页面未找到可用的大纲内容，请打开你的对话', selectQuestion: '选择此问题组用于局部导出'
     },
     en: {
         welcomeTipAria: 'First-use tip', welcomeTitle: 'Start here', welcomeBody: 'Click an outline item to jump to it. Export the full conversation for free below.',
@@ -68,7 +67,7 @@ const UI_COPY = {
         partialExport: 'Partial export', exitSelection: 'Exit selection', extracting: 'Extracting the current chat as {format}', exportingSelected: 'Exporting selected question groups as {format}',
         demoFullExport: 'Example: 4 question groups will be exported', demoSelectedExport: 'Example: {count} selected question groups will be exported', exportFailed: 'Export failed: {error}',
         exportedFull: 'Exported {format}: {count} question groups', exportedSelected: 'Exported {format}: {count} selected question groups', selectBeforeExport: 'Select at least one chat to export',
-        demoLocated: 'Example: jumped to “{item}”', located: 'Locating “{item}”', locateFailed: 'Could not jump to “{item}”.', repairLocate: 'Repair and locate', cancelRepair: 'Cancel', repairReadyTitle: 'This outline item could not be located', repairReadyDetail: 'The outline may be stale or the target is not mounted. Recheck it, then search within a bounded range.', repairReindexing: 'Rechecking the outline…', repairLocating: 'Outline rechecked; locating the target…', repairSearching: 'Searching for the target ({steps}/{maxSteps})…', repairLocated: 'Located “{item}”', repairCancelled: 'Repair cancelled and the original reading position was restored.', repairReasonStale: 'The outline was updated; this item is no longer in the current chat. Choose it again from the new outline.', repairReasonConflict: 'The target identity conflicts with the current page, so locating stopped to avoid a wrong result.', repairReasonRoute: 'The conversation changed, so repair stopped.', repairReasonTimeout: 'The target was not found within the bounded time and the original reading position was restored.', repairReasonNoProgress: 'The page did not mount more target content; the original reading position was restored.', repairReasonMissing: 'The target is not mounted; the original reading position was restored.', repairManualScroll: 'The outline was rechecked, but the target is not mounted. Browse near it manually, then select the item again.', noOutline: 'No usable outline was found. Open one of your chats and try again.', selectQuestion: 'Select this question group for partial export'
+        demoLocated: 'Example: jumped to “{item}”', located: 'Locating “{item}”', locateFailed: 'Could not jump to “{item}”.', retryLocate: 'Retry locating', locateRetryTitle: 'Target is not mounted', locateRetryDetail: 'The target is outside the page\'s mounted window. Browse near it first, or retry one bounded location attempt.', retryingLocate: 'Retrying “{item}”…', retryLocated: 'Located “{item}”', noOutline: 'No usable outline was found. Open one of your chats and try again.', selectQuestion: 'Select this question group for partial export'
     }
 };
 function t(key, values = {}) {
@@ -213,88 +212,36 @@ function initializeRuntimeStatusControls() {
         try { await navigator.clipboard.writeText(diagnosticText()); setExportStatus(t('copiedDiagnostics'), 'success'); }
         catch (_) { setExportStatus(t('copyDiagnosticsFailed'), 'error'); }
     });
-    document.getElementById('repair-locate-button')?.addEventListener('click', startRepairAndLocate);
-    document.getElementById('cancel-repair-button')?.addEventListener('click', cancelRepairAndLocate);
+    document.getElementById('retry-locate-button')?.addEventListener('click', retryLocateTarget);
 }
 
-function setRepairActions({ repair = false, cancel = false } = {}) {
+function setLocateRetryAction(visible = false) {
     const actions = document.getElementById('runtime-status-actions');
-    const repairButton = document.getElementById('repair-locate-button');
-    const cancelButton = document.getElementById('cancel-repair-button');
-    if (!actions || !repairButton || !cancelButton) return;
-    repairButton.hidden = !repair;
-    cancelButton.hidden = !cancel;
-    repairButton.textContent = t('repairLocate');
-    cancelButton.textContent = t('cancelRepair');
-    actions.hidden = !repair && !cancel;
+    const retryButton = document.getElementById('retry-locate-button');
+    if (!actions || !retryButton) return;
+    retryButton.hidden = !visible;
+    retryButton.textContent = t('retryLocate');
+    actions.hidden = !visible;
 }
 
-function repairReasonText(reason) {
-    const key = {
-        'stale-outline': 'repairReasonStale',
-        'identity-conflict': 'repairReasonConflict',
-        'route-changed': 'repairReasonRoute',
-        'route-mismatch': 'repairReasonRoute',
-        'repair-timeout': 'repairReasonTimeout',
-        'no-progress': 'repairReasonNoProgress',
-        'target-not-mounted': 'repairReasonMissing',
-        'cancelled': 'repairCancelled',
-        'superseded': 'repairCancelled'
-    }[reason] || 'repairReasonMissing';
-    return t(key);
-}
-
-function showRepairCard({ title, detail, tone = 'error', repair = false, cancel = false } = {}) {
+function showLocateRetryCard(item, { detail = t('locateRetryDetail'), tone = 'error', retry = true } = {}) {
     renderRuntimeStatus({
         ...(runtimeStatus || makeRuntimeStatus({ url: currentTabUrl })),
-        status: cancel ? 'repairing' : 'repair-needed',
-        adapterStatus: cancel ? 'repairing' : 'repair-needed',
+        status: 'locate-needed',
+        adapterStatus: 'locate-needed',
         tone,
-        title,
-        summary: repairTargetItem?.text || '',
+        title: t('locateRetryTitle'),
+        summary: item?.text || '',
         detail
     });
-    setRepairActions({ repair, cancel });
+    setLocateRetryAction(retry);
 }
 
-function startRepairAndLocate() {
-    if (!repairTargetItem || activeRepairOperation || !HAS_CHROME_API) return;
-    const operationId = `${Date.now()}:${Math.random().toString(36).slice(2)}`;
-    activeRepairOperation = operationId;
-    showRepairCard({ title: t('repairReadyTitle'), detail: t('repairReindexing'), tone: 'partial', cancel: true });
-    chrome.tabs.sendMessage(currentTabId, {
-        type: 'repairAndLocate',
-        operationId,
-        metadata: repairTargetItem.metadata,
-        url: currentTabUrl,
-        requestToken: currentOutlineRequestToken
-    }, response => {
-        if (activeRepairOperation !== operationId) return;
-        activeRepairOperation = null;
-        if (chrome.runtime.lastError) {
-            showRepairCard({ title: t('repairReadyTitle'), detail: repairReasonText('target-not-mounted'), repair: true });
-            return;
-        }
-        if (response?.success) {
-            showRepairCard({ title: t('repairLocated', { item: repairTargetItem.text }), detail: '', tone: 'neutral' });
-            return;
-        }
-        if (response?.scrollAssistAvailable === false) {
-            showRepairCard({ title: t('repairReadyTitle'), detail: t('repairManualScroll') });
-            return;
-        }
-        showRepairCard({ title: t('repairReadyTitle'), detail: repairReasonText(response?.reason), repair: response?.reason !== 'stale-outline' && response?.reason !== 'identity-conflict' });
-    });
-}
-
-function cancelRepairAndLocate() {
-    const operationId = activeRepairOperation;
-    if (!operationId || !HAS_CHROME_API) return;
-    // Invalidate locally before the asynchronous response arrives so a newer
-    // outline click cannot be overwritten by stale repair progress/result UI.
-    activeRepairOperation = null;
-    chrome.tabs.sendMessage(currentTabId, { type: 'cancelRepair', operationId }, () => {});
-    showRepairCard({ title: t('repairReadyTitle'), detail: t('repairCancelled'), tone: 'neutral' });
+function retryLocateTarget() {
+    const item = locateRetryTarget;
+    if (!item || !HAS_CHROME_API) return;
+    scrollToOutlineItem(item);
+    showLocateRetryCard(item, { detail: t('retryingLocate', { item: item.text }), tone: 'partial', retry: false });
 }
 const demoQuestion = (index, text) => `问题 ${index}: ${text}`;
 
@@ -414,9 +361,8 @@ function cleanupContentLifecycle() {
 }
 
 function clearOutlineForRequest() {
-    activeRepairOperation = null;
-    repairTargetItem = null;
-    setRepairActions();
+    locateRetryTarget = null;
+    setLocateRetryAction(false);
     currentOutlineData = [];
     selectedQuestionIndexes.clear();
     collapsedQuestionKeys.clear();
@@ -552,17 +498,7 @@ if (HAS_CHROME_API && chrome.runtime.onMessage?.addListener) chrome.runtime.onMe
         } else if (!message.diagnostics?.pending) {
             setExportStatus(t('emptyOutlineStatus'), 'neutral');
         }
-        if (!activeRepairOperation) setRepairActions();
-    } else if (message.type === 'repairProgress') {
-        if (!message.operationId || message.operationId !== activeRepairOperation) return;
-        if (message.requestToken !== currentOutlineRequestToken || message.url !== currentTabUrl) return;
-        if (message.phase === 'reindexing') {
-            showRepairCard({ title: t('repairReadyTitle'), detail: t('repairReindexing'), tone: 'partial', cancel: true });
-        } else if (message.phase === 'locating') {
-            showRepairCard({ title: t('repairReadyTitle'), detail: t('repairLocating'), tone: 'partial', cancel: true });
-        } else if (message.phase === 'searching') {
-            showRepairCard({ title: t('repairReadyTitle'), detail: t('repairSearching', message), tone: 'partial', cancel: true });
-        }
+        setLocateRetryAction(false);
     } else if (message.type === 'updateReadingPosition') {
         highlightCurrentReadingPosition(message.elementId, message.elementText);
     }
@@ -947,7 +883,8 @@ function scrollToOutlineItem(item) {
     const jumpUrl = currentTabUrl;
     const jumpRequestToken = currentOutlineRequestToken;
     const jumpSerial = ++jumpRequestSerial;
-    if (activeRepairOperation) cancelRepairAndLocate();
+    const isRetry = locateRetryTarget === item;
+    setLocateRetryAction(false);
     chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
         if (!tabs[0] || tabs[0].id !== jumpTabId || tabs[0].url !== jumpUrl) return;
         chrome.tabs.sendMessage(tabs[0].id, {
@@ -960,16 +897,27 @@ function scrollToOutlineItem(item) {
             if (jumpSerial !== jumpRequestSerial || jumpTabId !== currentTabId || jumpUrl !== currentTabUrl || jumpRequestToken !== currentOutlineRequestToken) return;
             if (chrome.runtime.lastError || !response?.success) {
                 const isChatGpt = jumpUrl.includes('chatgpt.com');
-                if (isChatGpt && response?.reason !== 'route-changed' && response?.reason !== 'route-mismatch') {
-                    repairTargetItem = item;
-                    showRepairCard({ title: t('repairReadyTitle'), detail: t('repairReadyDetail'), repair: true });
+                if (!chrome.runtime.lastError && isChatGpt && response?.reason === 'target-not-mounted') {
+                    locateRetryTarget = item;
+                    showLocateRetryCard(item);
                 } else {
                     setExportStatus(t('locateFailed', { item: item.text }), 'error');
                 }
                 return;
             }
-            repairTargetItem = null;
-            setRepairActions();
+            locateRetryTarget = null;
+            setLocateRetryAction(false);
+            if (isRetry) {
+                renderRuntimeStatus({
+                    ...(runtimeStatus || makeRuntimeStatus({ url: currentTabUrl })),
+                    status: 'ready',
+                    adapterStatus: 'ready',
+                    tone: 'neutral',
+                    title: t('retryLocated', { item: item.text }),
+                    summary: '',
+                    detail: ''
+                });
+            }
             setExportStatus(t('located', { item: item.text }), 'neutral');
         });
     });
