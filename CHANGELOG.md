@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.6] - 2026-09-13
+
+### Changed
+
+- Simplify the side-panel information hierarchy: pin the top controls, keep the outline as the independent scroll region, and retain bottom actions.
+- Replace full recovery labels with accessible icon buttons, show the full-export question-group count on the primary action, and keep status copy compact.
+- Expand the in-panel help and complete Chinese/English localization for static controls, status details, and the supported-site error view.
+
+### Verification
+
+- Eleven automated test files pass. Rendered side-panel checks cover Chinese and English copy, narrow layouts, pinned top controls, recovery actions, help, and the QA-count export label.
+
 ## [2.1.5] - 2026-09-07
 
 ### Fixed
