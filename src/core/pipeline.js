@@ -244,11 +244,19 @@ window.Pipeline = class Pipeline {
     }
 
     _fillStats(outline, diagnostics) {
+        const answerIndexes = new Set();
         outline.forEach(item => {
             if (item.type === 'question') diagnostics.stats.questions++;
-            else if (item.type === 'answer') diagnostics.stats.headings++;
+            else if (item.type === 'answer') {
+                diagnostics.stats.headings++;
+                if (Number.isFinite(item.metadata?.answerIndex)) {
+                    answerIndexes.add(item.metadata.answerIndex);
+                }
+            }
         });
-        // 注意：这里的 answers 数量在扁平模式下不直接等于 outline 项数
+        // A single answer can contain multiple headings. The status count is answer
+        // containers, not the number of outline headings rendered below it.
+        diagnostics.stats.answers = answerIndexes.size;
     }
 
     _finalizeOutline(outline) {
