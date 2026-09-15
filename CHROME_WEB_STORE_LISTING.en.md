@@ -40,7 +40,7 @@ Key features
 
 Supported platforms
 
-DeepSeek, Tencent Yuanbao, ChatGPT, Doubao, Gemini, Grok, and Kimi.
+DeepSeek, Tencent Yuanbao, ChatGPT, Doubao, and Kimi.
 
 Long-conversation loading
 

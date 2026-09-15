@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>AI Chat Exporter Store Assets</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #eef3ff; color: #142146; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  .asset { position: relative; width: 1280px; height: 800px; overflow: hidden; isolation: isolate; background: linear-gradient(135deg,#f9fbff,#e8efff); }
+  .asset::before { content: ""; position: absolute; inset: 0; background: url("image2-background.png") center/cover; opacity: .34; z-index: -2; }
+  .asset::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 14% 7%, rgba(255,255,255,.96), transparent 40%), linear-gradient(90deg,rgba(255,255,255,.91) 0%,rgba(255,255,255,.55) 45%,rgba(236,243,255,.30) 100%); z-index: -1; }
+  .brand { position:absolute; left:76px; top:62px; display:flex; align-items:center; gap:14px; color:#3856df; font-weight:800; letter-spacing:-.4px; font-size:22px; }
+  .brand .mark { width:44px; height:44px; border-radius:12px; background:#fff; box-shadow:0 8px 22px rgba(42,81,206,.15); display:grid; place-items:center; color:#5169f5; font-size:19px; line-height:15px; text-align:center; font-weight:900; }
+  .eyebrow { color:#5371ee; text-transform:uppercase; font-size:13px; letter-spacing:1.7px; font-weight:800; margin-bottom:18px; }
+  .copy { position:absolute; left:76px; top:205px; width:510px; }
+  h1 { font-size:54px; line-height:1.06; letter-spacing:-2px; margin:0 0 22px; max-width:510px; }
+  .lede { font-size:20px; line-height:1.5; color:#52617c; max-width:460px; margin:0; }
+  .chips { display:flex; gap:10px; flex-wrap:wrap; margin-top:30px; }
+  .chip { padding:9px 13px; border-radius:999px; background:rgba(255,255,255,.82); border:1px solid #d8e2ff; color:#435674; font-size:14px; font-weight:700; }
+  .panel { position:absolute; right:74px; top:120px; width:440px; min-height:562px; background:rgba(255,255,255,.97); border:1px solid #d9e2f7; border-radius:26px; box-shadow:0 26px 70px rgba(37,69,160,.18); padding:22px; }
+  .panel-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+  .panel-title { font-size:18px; font-weight:850; color:#1d2c52; }
+  .status { font-size:13px; padding:7px 10px; background:#e9efff; color:#405fd9; border-radius:999px; font-weight:750; }
+  .question { padding:14px; margin:10px 0; border:1px solid #dce5f7; border-radius:15px; background:#fff; box-shadow:0 5px 12px rgba(48,75,145,.04); }
+  .question.active { border-color:#607cf8; box-shadow:0 0 0 3px rgba(96,124,248,.12); }
+  .qtitle { font-size:14px; font-weight:800; color:#293a62; margin-bottom:8px; }
+  .answer { display:flex; align-items:center; gap:8px; color:#64738c; font-size:13px; margin:6px 0 0 4px; }
+  .dot { width:7px; height:7px; border-radius:50%; background:#ff5b57; flex:none; }
+  .action { position:absolute; left:22px; right:22px; bottom:22px; border-radius:13px; padding:14px; text-align:center; font-weight:850; font-size:14px; background:#4d68ef; color:#fff; }
+  .format-row { display:flex; gap:7px; flex-wrap:wrap; margin:12px 0; }
+  .format { padding:7px 8px; background:#f1f4ff; border-radius:8px; color:#526ad6; font-size:12px; font-weight:800; }
+  .privacy { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:15px; }
+  .privacy .card { padding:13px; border:1px solid #dce5f7; border-radius:13px; background:#fff; font-size:13px; line-height:1.35; color:#53627e; }
+  .privacy strong { display:block; color:#2b3b63; margin-bottom:4px; }
+  .platforms { position:absolute; left:76px; top:445px; display:grid; grid-template-columns:repeat(2, 170px); gap:12px; }
+  .platform { padding:13px 15px; border-radius:13px; background:rgba(255,255,255,.86); border:1px solid #dbe4fb; font-weight:800; color:#3f5277; }
+  .tile { position:relative; width:440px; height:280px; overflow:hidden; isolation:isolate; background:#f4f7ff; }
+  .tile.wide { width:1400px; height:560px; }
+  .tile::before { content:""; position:absolute; inset:0; background:url("image2-background.png") center/cover; opacity:.47; z-index:-2; }
+  .tile::after { content:""; position:absolute; inset:0; background:linear-gradient(90deg,rgba(255,255,255,.94),rgba(255,255,255,.32)); z-index:-1; }
+  .tile .brand { left:30px; top:25px; font-size:14px; gap:8px; }
+  .tile .brand .mark { width:28px; height:28px; border-radius:8px; font-size:12px; line-height:9px; }
+  .tile h2 { position:absolute; left:30px; top:91px; margin:0; font-size:36px; line-height:1.05; letter-spacing:-1.5px; max-width:270px; }
+  .tile.wide .brand { left:80px; top:60px; font-size:22px; gap:14px; }
+  .tile.wide .brand .mark { width:44px; height:44px; border-radius:12px; font-size:19px; line-height:15px; }
+  .tile.wide h2 { left:80px; top:183px; max-width:690px; font-size:68px; }
+  .mini-panel { position:absolute; right:25px; bottom:22px; width:140px; height:166px; border-radius:14px; background:rgba(255,255,255,.92); border:1px solid #dbe3fa; box-shadow:0 14px 30px rgba(46,71,148,.18); padding:12px; }
+  .mini-line { height:8px; border-radius:6px; background:#dbe4ff; margin:9px 0; }
+  .mini-line.short { width:62%; }
+  .tile.wide .mini-panel { right:100px; bottom:64px; width:350px; height:365px; padding:27px; border-radius:24px; }
+  .tile.wide .mini-line { height:18px; border-radius:9px; margin:20px 0; }
+</style>
+</head>
+<body>
+  <section class="asset" id="screenshot-01">
+    <div class="brand"><span class="mark">AI<br>MD</span> AI Chat Exporter</div>
+    <div class="copy"><div class="eyebrow">Outline every long chat</div><h1>See the Structure of Long Chats</h1><p class="lede">Turn a dense AI conversation into a clear question-and-answer outline in your browser side panel.</p><div class="chips"><span class="chip">Questions</span><span class="chip">Answers</span><span class="chip">Headings</span></div></div>
+    <div class="panel"><div class="panel-head"><span class="panel-title">Conversation outline</span><span class="status">3 questions · 3 answers</span></div><div class="question active"><div class="qtitle">How should I compare these options?</div><div class="answer"><span class="dot"></span>Key trade-offs</div><div class="answer"><span class="dot"></span>Recommended next step</div></div><div class="question"><div class="qtitle">What should I prioritize first?</div><div class="answer"><span class="dot"></span>Decision framework</div></div><div class="question"><div class="qtitle">How do I document the result?</div><div class="answer"><span class="dot"></span>Practical checklist</div></div><div class="action">Export loaded chat to Markdown</div></div>
+  </section>
+  <section class="asset" id="screenshot-02">
+    <div class="brand"><span class="mark">AI<br>MD</span> AI Chat Exporter</div>
+    <div class="copy"><div class="eyebrow">Find context instantly</div><h1>Jump Back to the Answer That Matters</h1><p class="lede">Select an outline item to return to the matching section and keep your reading position visible.</p><div class="chips"><span class="chip">Quick navigation</span><span class="chip">Reading highlight</span></div></div>
+    <div class="panel"><div class="panel-head"><span class="panel-title">Conversation outline</span><span class="status">Reading now</span></div><div class="question"><div class="qtitle">Research questions</div><div class="answer"><span class="dot"></span>Scope the problem</div></div><div class="question active"><div class="qtitle">Decision criteria</div><div class="answer"><span class="dot"></span>Compare the alternatives</div><div class="answer"><span class="dot"></span>Choose a direction</div></div><div class="question"><div class="qtitle">Implementation plan</div><div class="answer"><span class="dot"></span>Next milestones</div></div><div class="action">Current section highlighted</div></div>
+  </section>
+  <section class="asset" id="screenshot-03">
+    <div class="brand"><span class="mark">AI<br>MD</span> AI Chat Exporter</div>
+    <div class="copy"><div class="eyebrow">Free Markdown export</div><h1>Export Loaded Chat Content to Markdown — Free</h1><p class="lede">Keep your loaded conversation as a clean Markdown file for your notes and knowledge workflow.</p><div class="chips"><span class="chip">Markdown</span><span class="chip">Local file</span><span class="chip">No account required</span></div></div>
+    <div class="panel"><div class="panel-head"><span class="panel-title">Ready to export</span><span class="status">Local only</span></div><div class="question"><div class="qtitle">Loaded conversation content</div><div class="answer"><span class="dot"></span>Text and headings</div><div class="answer"><span class="dot"></span>Readable code blocks</div></div><div class="question"><div class="qtitle">Export format</div><div class="format-row"><span class="format">Markdown · Free</span></div></div><div class="privacy"><div class="card"><strong>Your browser</strong>Content stays local.</div><div class="card"><strong>Your file</strong>Save it where you work.</div></div><div class="action">Export full chat to Markdown</div></div>
+  </section>
+  <section class="asset" id="screenshot-04">
+    <div class="brand"><span class="mark">AI<br>MD</span> AI Chat Exporter</div>
+    <div class="copy"><div class="eyebrow">Pro export controls</div><h1>Select Important Q&amp;A. Export Your Way with Pro.</h1><p class="lede">Keep only the question groups you need, then choose HTML, JSON, or TXT alongside Markdown.</p><div class="chips"><span class="chip">Partial export</span><span class="chip">HTML</span><span class="chip">JSON</span><span class="chip">TXT</span></div></div>
+    <div class="panel"><div class="panel-head"><span class="panel-title">Selected question groups</span><span class="status">Pro</span></div><div class="question active"><div class="qtitle">✓ Product requirements</div><div class="answer"><span class="dot"></span>Requirements summary</div></div><div class="question active"><div class="qtitle">✓ Technical approach</div><div class="answer"><span class="dot"></span>Implementation notes</div></div><div class="question"><div class="qtitle">○ Background discussion</div></div><div class="question"><div class="qtitle">Export format</div><div class="format-row"><span class="format">Markdown</span><span class="format">HTML · Pro</span><span class="format">JSON · Pro</span><span class="format">TXT · Pro</span></div></div><div class="action">Export selected Q&amp;A</div></div>
+  </section>
+  <section class="asset" id="screenshot-05">
+    <div class="brand"><span class="mark">AI<br>MD</span> AI Chat Exporter</div>
+    <div class="copy"><div class="eyebrow">Designed for your workflow</div><h1>Works Across AI Chat Platforms. Processed Locally.</h1><p class="lede">Use one side-panel workflow to browse, navigate, and export the AI chats you open.</p></div>
+    <div class="platforms"><span class="platform">ChatGPT</span><span class="platform">DeepSeek</span><span class="platform">Doubao</span><span class="platform">Tencent Yuanbao</span><span class="platform">Kimi</span></div>
+    <div class="panel"><div class="panel-head"><span class="panel-title">Privacy by design</span><span class="status">On device</span></div><div class="privacy"><div class="card"><strong>Local processing</strong>Your conversation content is processed in the browser.</div><div class="card"><strong>No advertising use</strong>Content is not used for ads or profiling.</div></div><div class="question" style="margin-top:18px"><div class="qtitle">Run when you choose</div><div class="answer"><span class="dot"></span>Open the side panel</div><div class="answer"><span class="dot"></span>Export on demand</div></div><div class="action">AI Chat Exporter</div></div>
+  </section>
+  <section class="tile" id="promo-small"><div class="brand"><span class="mark">AI<br>MD</span> AI Chat Exporter</div><h2>Outline.<br>Navigate.<br>Export.</h2><div class="mini-panel"><div class="mini-line"></div><div class="mini-line short"></div><div class="mini-line"></div><div class="mini-line short"></div><div class="mini-line"></div></div></section>
+  <section class="tile wide" id="promo-marquee"><div class="brand"><span class="mark">AI<br>MD</span> AI Chat Exporter</div><h2>Turn Long AI Chats into Useful Notes</h2><div class="mini-panel"><div class="mini-line"></div><div class="mini-line short"></div><div class="mini-line"></div><div class="mini-line short"></div><div class="mini-line"></div></div></section>
+</body>
+</html>

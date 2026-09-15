@@ -1,5 +1,7 @@
 # AI Chat Exporter
 
+[中文（默认）](README.md) | [English](README.en.md)
+
 > **AI 文档提示**：本文档由 AI 撰写，可能不正确。执行前必须以当前代码、有效项目规则、真实运行态及必要的官方来源复核。
 
 > 面向 AI 长对话的侧边栏大纲与多格式导出工具
@@ -47,8 +49,8 @@ Pro 采用授权码解锁，无需注册账号、不绑定机器，激活状态�
 | 腾讯元宝 | yuanbao.tencent.com | 对话、深度思考、参考链接和卡片内容 |
 | ChatGPT | chatgpt.com | 对话、回答内标题和代码块 |
 | 豆包 | doubao.com | 对话、回答内标题和搜索来源 |
-| Gemini | gemini.google.com | 对话和草稿内容 |
-| Grok | grok.com | 对话和 Markdown 内容 |
+| Gemini | gemini.google.com | 遗留兼容：对话和草稿内容（已停止维护） |
+| Grok | grok.com | 遗留兼容：对话和 Markdown 内容（已停止维护） |
 | Kimi | kimi.com / moonshot.cn | 对话、代码块和 Markdown 内容 |
 
 ## 安装
